@@ -1,0 +1,25 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+secrets/
+state/
+backups/
+*.key
+*.pem
+*.log
+
+# Local assistant and editor settings
+.claude/settings.local.json
+.claude/worktrees/
+.codex/
+.idea/
+.vscode/
+
+# Local runtime artifacts
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+__pycache__/

@@ -1,0 +1,1 @@
+{"routing":{"domainStrategy":"AsIs","rules":[{"ruleTag":"lab-route","type":"field","inboundTag":["lab-socks"],"outboundTag":"direct"}]}}
