@@ -29,7 +29,14 @@ jobs:
           cache: false
 
       - name: Go version
-        run: go version
+        run: |
+          go version
+          expected=$(awk '$1 == "toolchain" { print $2 }' go.mod)
+          actual=$(go env GOVERSION)
+          if [ "$actual" != "$expected" ]; then
+            printf 'Go version mismatch: got %s, want %s\n' "$actual" "$expected"
+            exit 1
+          fi
 
       - name: Go formatting
         run: |
