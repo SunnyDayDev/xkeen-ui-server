@@ -6,7 +6,7 @@
 ## 2. Минимальный workflow
 
 - [x] 2.1 Разрешить полные SHA стабильных выпусков официальных checkout/setup-go по release tags, записать версии и источники в `verification.md`; проверить поддержку `go-version-file` с директивой toolchain и выбранного GitHub-hosted runner.
-- [x] 2.2 Создать `.github/workflows/ci.yml`: один job `checks`, `ubuntu-24.04`, лимит 15 минут, push веток и pull_request без фильтра путей, `contents: read`, `persist-credentials: false`, Go из `go.mod`, `GOTOOLCHAIN=local`, вывод версии и отключённый кеш. Проверить YAML через `actionlint` и вручную проверить события, SHA actions, полномочия и отсутствие secrets/publishing.
+- [ ] 2.2 Создать `.github/workflows/ci.yml`: один job `checks`, `ubuntu-24.04`, лимит 15 минут, push веток и pull_request без фильтра путей, `contents: read`, `persist-credentials: false`, Go из `go.mod`, `GOTOOLCHAIN=local`, вывод версии и отключённый кеш. Проверить YAML через `actionlint` и вручную проверить события, SHA actions, полномочия и отсутствие secrets/publishing.
 - [x] 2.3 Добавить отдельные шаги проверки форматирования и `sh -n scripts/run-server.sh`. На временной копии проверить отказ при нарушенном форматировании с выводом пути и без изменения файла, затем восстановление с кодом 0; исправить обработку exit codes при необходимости и повторить обе проверки. Записать фактические результаты.
 - [x] 2.4 Добавить существующие `go test ./... -count=1 -v`, `go vet ./...`, `go test -race ./... -count=1 -v` и обе Linux-сборки без cgo из design §3. Выполнить команды локально в подходящем окружении; проверить коды завершения, наличие обоих бинарников и явный `CGO_ENABLED=1` для race. После упрощения workflow повторить `actionlint`; Go-поведение и новые тестовые интерфейсы не добавлять.
 

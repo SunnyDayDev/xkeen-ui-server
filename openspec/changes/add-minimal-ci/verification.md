@@ -32,3 +32,9 @@ ARM64-сборка не подтверждает выполнение на Entwa
 - Go 1.27.1 darwin/arm64: полный `go test ./... -count=1 -v`, `go vet ./...`, `CGO_ENABLED=1 go test -race ./... -count=1 -v` прошли; IPv6 не пропущен.
 - Обе Linux-сборки из design выполнены без cgo; ELF machine AMD64/AArch64 подтверждены, PT_INTERP и PT_DYNAMIC отсутствуют.
 - Локальные ссылки в изменённых документах и артефактах проверены; частных путей и ключей не найдено.
+
+## Обнаруженный дефект выбора Go
+
+Первые runs [push](https://github.com/SunnyDayDev/xkeen-ui-server/actions/runs/34185394095) и [PR](https://github.com/SunnyDayDev/xkeen-ui-server/actions/runs/34185401531) на `d4a98db136815736b499f370a8edadeafbd8c65d` прошли, но журнал показал Go 1.27.0. Они не засчитываются как выполнение требования toolchain 1.27.1. В setup-go v7.0.0 заранее заданный GOTOOLCHAIN=local выбирает директиву go; сам action устанавливает local после разбора версии. До исправления добавлена проверка совпадения GOVERSION с toolchain в go.mod.
+
+Red подтверждён: [PR run 34185546122](https://github.com/SunnyDayDev/xkeen-ui-server/actions/runs/34185546122), commit `55166907213bfc34a6e035b6bf31d936a9793a88`: шаг Go version вернул exit 1, «got go1.27.0, want go1.27.1». После этого удалён преждевременный env; проверка точной версии сохранена.

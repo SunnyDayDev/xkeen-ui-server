@@ -26,7 +26,7 @@ Design нужен для выбора внешних actions, полномочи
 
 ### 2. Toolchain из одного источника
 
-Использовать официальный `actions/setup-go` с `go-version-file: go.mod`; при наличии `toolchain` action выбирает эту версию. Установить `GOTOOLCHAIN=local` и вывести `go version`, чтобы дальнейшие команды не переключали SDK автоматически. Кеш setup-go отключить (`cache: false`) для простого первого запуска без сторонних модулей. Эти входы поддерживает [setup-go](https://github.com/actions/setup-go).
+Использовать официальный `actions/setup-go` с `go-version-file: go.mod`; при наличии `toolchain` action выбирает эту версию. Не задавать `GOTOOLCHAIN=local` до setup-go: его parser в этом режиме выбирает директиву `go`. Сам action устанавливает `local` после выбора SDK. Вывести `go version` и проверить совпадение `go env GOVERSION` с директивой `toolchain`; дальнейшие команды не переключают SDK автоматически. Кеш setup-go отключить (`cache: false`) для простого первого запуска без сторонних модулей. Эти входы поддерживает [setup-go](https://github.com/actions/setup-go).
 
 Официальные `actions/checkout` и `actions/setup-go` закрепить полными commit SHA проверенных стабильных выпусков, рядом указать версии в комментариях. При реализации разрешить SHA соответствующих release tags и записать их в отчёт; использование плавающих major tags не требуется. Дублировать номер Go в YAML или выбирать `stable` не нужно.
 

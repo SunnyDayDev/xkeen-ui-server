@@ -8,9 +8,6 @@ on:
 permissions:
   contents: read
 
-env:
-  GOTOOLCHAIN: local
-
 jobs:
   checks:
     name: checks
@@ -23,6 +20,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Go
+        # setup-go sets GOTOOLCHAIN=local after resolving the toolchain directive.
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
