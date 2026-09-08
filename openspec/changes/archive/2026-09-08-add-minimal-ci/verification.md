@@ -8,7 +8,7 @@
 | Корректный PR | Успешный check на проверяемой версии PR | PASS: run 34185613682, Go 1.27.1 |
 | Неверное форматирование | Ненулевой код, путь, файл не исправлен | PASS: exit 1, путь cmd/probe.go, исходник неизменен; после gofmt exit 0 |
 | Падающее ожидание TestHealth | Tests и job failure, видны имя и причина; merge заблокирован | PASS: run 34185804095, Tests failure, PR mergeStateStatus BLOCKED |
-| Восстановление ожидания | Все проверки успешны, блокировка CI снята | — |
+| Восстановление ожидания | Все проверки успешны, блокировка CI снята | PASS: runs 34185898055/34185895561; PR mergeStateStatus CLEAN |
 | Ошибка команды | Ненулевой код не подавляется | PASS: синтаксическая ошибка входа gofmt завершает тот же shell-шаг ненулевым кодом |
 | Защита веток | PR, required check с актуальной базой, запрет force push/удаления, без bypass | PASS: активный ruleset 22507237, правила перечитаны для main и master |
 
@@ -50,3 +50,15 @@ Green выбора toolchain: [push](https://github.com/SunnyDayDev/xkeen-ui-ser
 Commit `6ae23444771a6c0aa7ea82d8275323511aca4436` временно заменил ожидаемое status:ok на status:ci-probe в helper существующего TestHealth. Локальный `go test ./internal/server -run TestHealth -count=1 -v` вернул 1: фактическое status:ok не совпало с ожиданием. Общий helper также используется TestUnsupportedRequests.
 
 [PR run](https://github.com/SunnyDayDev/xkeen-ui-server/actions/runs/34185804095) и [push run](https://github.com/SunnyDayDev/xkeen-ui-server/actions/runs/34185801168) завершились failure на Tests; последующие проверки и сборки пропущены. PR #10 имел mergeable=MERGEABLE, но mergeStateStatus=BLOCKED при двух FAILURE checks. Конфликта кода не было; слияние блокировала обязательная проверка.
+
+## Восстановление и итоговая сверка
+
+Commit `bba2610a5e6d0786415005e37057963ce8f29d72` восстановил исходные ожидания. Локальный TestHealth прошёл. [PR run](https://github.com/SunnyDayDev/xkeen-ui-server/actions/runs/34185898055) и [push run](https://github.com/SunnyDayDev/xkeen-ui-server/actions/runs/34185895561) прошли целиком; PR #10 перешёл из BLOCKED в CLEAN.
+
+`git diff origin/main -- cmd internal go.mod scripts openspec/specs` пуст: проверочная мутация удалена, продуктовые файлы и specs не меняются. Валидация `openspec validate add-minimal-ci --strict --json` прошла с skip_specs. Проверены 48 локальных ссылок/якорей и 16 shell/JSON-блоков изменённых документов и артефактов; actionlint и git diff --check без замечаний.
+
+HTTPS push сначала отклонён из-за отсутствия workflow scope у OAuth-токена; использован уже настроенный SSH-доступ того же аккаунта. Права токена и remote origin не изменялись. Это ограничение способа доставки, а не Red тестов.
+
+## Завершение
+
+Change архивирован 2026-09-08 через OpenSpec с skip_specs, без изменений основных specs. На момент вызова archive оставался только пункт 4.2 — само архивирование и закрытие issue; после проверки архива и CLOSED issue #5 он отмечен выполненным. Все 13 задач выполнены. Последний коммит оформления архива и документации проходит обычный CI перед слиянием PR #10.

@@ -47,7 +47,7 @@ Workflow имеет только `contents: read`, checkout не сохраня�
 
 ## Защита main/master
 
-При завершении A04 активируется ruleset `Protect main and master` для `refs/heads/main` и `refs/heads/master`; существующая основная ветка — `main`, создавать `master` не требуется. Настройка и её проверка выполняются после первого успешного CI run.
+Активен ruleset [Protect main and master](https://github.com/SunnyDayDev/xkeen-ui-server/rules/22507237) для `refs/heads/main` и `refs/heads/master`; существующая основная ветка — `main`, создавать `master` не требуется. Защита включена после первого успешного CI run с закреплённым toolchain; параметры проверены для обоих имён веток.
 
 - Изменения принимаются через PR.
 - Обязательна проверка `checks` от GitHub Actions; PR должен быть актуален относительно базовой ветки.

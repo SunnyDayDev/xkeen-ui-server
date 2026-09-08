@@ -28,11 +28,11 @@
 
 **Результат A01:** [исследование языка сервера и хранилища](server-stack-research.md), [issue #2](https://github.com/SunnyDayDev/xkeen-ui-server/issues/2). Выбрано направление Go + SQLite без cgo, с размещением в Docker и Entware aarch64. Само исследование проверяло документацию; последующая реализация A03 описана ниже. A02, A05 и A07 остаются отдельными независимыми задачами.
 
-**Результат A03:** [каркас Go-сервера](server-skeleton.md), [issue #4](https://github.com/SunnyDayDev/xkeen-ui-server/issues/4), change `add-server-skeleton`. Реализованы запуск одной командой, `/healthz`, ошибки и остановка. Выполнены тесты по циклам Red/Green, проверка гонок, `go vet`, Linux ARM64-сборка без cgo и изолированная Entware-проба с повторным запуском. Подробности — в [отчёте](../openspec/changes/archive/2026-09-08-add-server-skeleton/verification.md). Change архивирован 2026-09-08; требования синхронизированы с [основной спецификацией](../openspec/specs/server-lifecycle/spec.md). Следующая зависимая задача — A04; подключение хранилища остаётся C01.
+**Результат A03:** [каркас Go-сервера](server-skeleton.md), [issue #4](https://github.com/SunnyDayDev/xkeen-ui-server/issues/4), change `add-server-skeleton`. Реализованы запуск одной командой, `/healthz`, ошибки и остановка. Выполнены тесты по циклам Red/Green, проверка гонок, `go vet`, Linux ARM64-сборка без cgo и изолированная Entware-проба с повторным запуском. Подробности — в [отчёте](../openspec/changes/archive/2026-09-08-add-server-skeleton/verification.md). Change архивирован 2026-09-08; требования синхронизированы с [основной спецификацией](../openspec/specs/server-lifecycle/spec.md). A04 завершена следующим изменением; подключение хранилища остаётся C01.
+
+**Результат A04:** [CI и защита main/master](ci.md), [issue #5](https://github.com/SunnyDayDev/xkeen-ui-server/issues/5) закрыта. Проверены push/PR, Go 1.27.1, обе Linux-сборки, намеренный отказ теста, блокировка слияния и восстановление. Change `add-minimal-ci` архивирован 2026-09-08 с `skip_specs`; [отчёт](../openspec/changes/archive/2026-09-08-add-minimal-ci/verification.md). Процессные требования остаются в правилах и документации. Дальше доступны независимые A02, A05 и A07.
 
 ## 2. Чистое ядро конфигурации
-
-**В работе A04:** [CI и защита main/master](ci.md), [issue #5](https://github.com/SunnyDayDev/xkeen-ui-server/issues/5), change `add-minimal-ci`. Локальные и GitHub-проверки, включая отказ/восстановление и запрет слияния при красном CI, фиксируются в отчёте change. Процессные требования не добавляются в продуктовые specs.
 
 Начинать после A06/A08. Задачи не требуют работающего роутера.
 
