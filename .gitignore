@@ -17,6 +17,7 @@ backups/
 .vscode/
 
 # Local runtime artifacts
+.build/
 *.sqlite
 *.sqlite3
 *.db

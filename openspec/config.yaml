@@ -1,32 +1,22 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Общие инструкции проекта находятся в AGENTS.md.
+  Согласованные требования DDD, Clean Architecture, SOLID и TDD/BDD и их применение
+  описаны в docs/architecture.md, раздел «Принципы разработки».
+  Порядок работы над UI описан в docs/design.md; изменения интерфейса
+  сначала отражаются в design/xkeen-ui-server-design.pen через MCP Pencil.
+  Учитывай эти документы при подготовке артефактов; статус открытых решений
+  проверяй по актуальной документации и артефактам изменения.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
-
-# Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+rules:
+  specs:
+    - До реализации опиши наблюдаемые сценарии, входы, ожидаемые результаты, ошибки и применимые граничные случаи; используй их как основу тестов.
+  design:
+    - Опиши применимые к изменению границы модулей, направление зависимостей и владельцев доменных инвариантов согласно docs/architecture.md.
+    - Определи контракты затронутых интерфейсов и способ их проверки до реализации логики.
+    - Если изменение затрагивает UI, укажи связанные экраны и состояния макета согласно docs/design.md.
+  tasks:
+    - Включи целевые проверки затронутых доменных правил и инфраструктурных адаптеров согласно архитектурным решениям изменения.
+    - Для каждого небольшого сценария поведения явно задай порядок TDD/BDD — тест по спецификации, запуск и подтверждение Red, минимальная реализация для Green, рефакторинг и повторная проверка. Предусмотри запись фактических результатов проверок.
+    - Для задач UI поставь обновление и проверку макета через MCP Pencil перед тестами и реализацией интерфейса; после реализации предусмотрите визуальную сверку с макетом согласно docs/design.md.
