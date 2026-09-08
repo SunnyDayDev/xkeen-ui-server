@@ -1213,7 +1213,7 @@
                           "fill": "$muted"
                         },
                         "foW2s": {
-                          "content": "block-telemetry  ·  appcenter.ms → block"
+                          "content": "block-telemetry  ·  telemetry.example → block"
                         },
                         "rA4ae": {
                           "fill": "$bg"
