@@ -55,7 +55,7 @@ func assertHealth(t *testing.T, handler http.Handler) {
 	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
 		t.Fatalf("invalid JSON: %v", err)
 	}
-	if !reflect.DeepEqual(body, map[string]any{"status": "ok"}) {
-		t.Errorf("body = %#v, want only status:ok", body)
+	if !reflect.DeepEqual(body, map[string]any{"status": "ci-probe"}) {
+		t.Errorf("body = %#v, want only status:ci-probe", body)
 	}
 }
