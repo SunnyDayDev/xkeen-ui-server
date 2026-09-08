@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        # setup-go sets GOTOOLCHAIN=local after resolving the toolchain directive.
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Go version
+        run: |
+          go version
+          expected=$(awk '$1 == "toolchain" { print $2 }' go.mod)
+          actual=$(go env GOVERSION)
+          if [ "$actual" != "$expected" ]; then
+            printf 'Go version mismatch: got %s, want %s\n' "$actual" "$expected"
+            exit 1
+          fi
+
+      - name: Go formatting
+        run: |
+          unformatted=$(gofmt -l cmd internal)
+          if [ -n "$unformatted" ]; then
+            printf '%s\n' "$unformatted"
+            exit 1
+          fi
+
+      - name: Launcher syntax
+        run: sh -n scripts/run-server.sh
+
+      - name: Tests
+        run: go test ./... -count=1 -v
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Race tests
+        env:
+          CGO_ENABLED: '1'
+        run: go test -race ./... -count=1 -v
+
+      - name: Build Linux AMD64
+        env:
+          CGO_ENABLED: '0'
+          GOOS: linux
+          GOARCH: amd64
+        run: |
+          mkdir -p .build
+          go build -trimpath -o .build/xkeen-ui-server-linux-amd64 ./cmd/xkeen-ui-server
+
+      - name: Build Linux ARM64
+        env:
+          CGO_ENABLED: '0'
+          GOOS: linux
+          GOARCH: arm64
+        run: |
+          mkdir -p .build
+          go build -trimpath -o .build/xkeen-ui-server-linux-arm64 ./cmd/xkeen-ui-server
