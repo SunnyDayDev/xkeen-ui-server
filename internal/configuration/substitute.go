@@ -9,6 +9,7 @@ import (
 
 // Issue locates a problem without retaining the input JSON or supplied data.
 type Issue struct {
+	ExpectedType string // Set only for type_mismatch.
 	Code         string
 	ElementID    string
 	Source       string
