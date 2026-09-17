@@ -4,7 +4,6 @@ package configuration
 import (
 	"encoding/json"
 	"strconv"
-	"strings"
 )
 
 // Issue locates a problem without retaining the input JSON or supplied data.
@@ -22,14 +21,18 @@ type Issue struct {
 // element. Values retain their JSON types; all inputs are read-only. On failure
 // the result is nil and issues locate the problem without retaining input data.
 //
-// Callers must prepare valid names and selected values first. This internal step
-// is not a complete configuration validator: definitions, defaults, required
-// values, null checks and the full reference/escaping grammar belong to the
-// later preparation and validation stages. Do not publish its result directly.
+// It validates the original template's nulls and reference/escaping syntax.
+// Callers must first prepare names and selected values with PrepareValues;
+// definitions, defaults and required values are not checked here. Use
+// AssembleElement for the complete variable contract of one element. Neither
+// operation validates Xray or establishes readiness for publication.
 func SubstituteValues(elementID string, template json.RawMessage, values map[string]json.RawMessage) (json.RawMessage, []Issue) {
 	tree, issue := parseJSON(template, Issue{ElementID: elementID, Source: "template"})
 	if issue != nil {
 		return nil, []Issue{*issue}
+	}
+	if path, found := nullPath(tree, ""); found {
+		return nil, []Issue{{Code: "null_not_allowed", ElementID: elementID, Source: "template", Path: &path}}
 	}
 	prepared := make(map[string]any, len(values))
 	for name, raw := range values {
@@ -70,12 +73,18 @@ func substitute(tree any, elementID string, values map[string]any, path string) 
 		}
 		return object, nil
 	}
-	if s, ok := tree.(string); ok && strings.HasPrefix(s, "${") && strings.HasSuffix(s, "}") {
-		name := s[2 : len(s)-1]
-		if value, found := values[name]; found {
+	if s, ok := tree.(string); ok {
+		literal, name, code := parseTemplateString(s)
+		if code != "" {
+			return nil, &Issue{Code: code, ElementID: elementID, Source: "template", VariableName: name, Path: &path}
+		}
+		if name == nil {
+			return literal, nil
+		}
+		if value, found := values[*name]; found {
 			return value, nil
 		}
-		return nil, &Issue{Code: "unknown_variable", ElementID: elementID, Source: "template", VariableName: &name, Path: &path}
+		return nil, &Issue{Code: "unknown_variable", ElementID: elementID, Source: "template", VariableName: name, Path: &path}
 	}
 	return tree, nil
 }

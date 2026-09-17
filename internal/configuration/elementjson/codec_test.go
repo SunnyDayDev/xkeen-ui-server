@@ -231,3 +231,28 @@ func TestElementEditingLifecycle(t *testing.T) {
 		t.Fatal("changed earlier states")
 	}
 }
+
+func TestDraftRoundTripBeforeAssembly(t *testing.T) {
+	for _, tc := range []struct{ content, code string }{
+		{`{"optional":null}`, "null_not_allowed"},
+		{`{"address":"https://${host}/path"}`, "unsupported_interpolation"},
+		{`{"address":"${host}"}`, "missing_value"},
+	} {
+		t.Run(tc.code, func(t *testing.T) {
+			input := configuration.Element{ID: id, Content: tc.content}
+			got := roundTrip(t, input)
+			before, errors := elementjson.Encode(*got, location, &input.ID)
+			if len(errors) != 0 {
+				t.Fatal(errors)
+			}
+			result, issues := configuration.AssembleElement(got.ID, []byte(got.Content), got.Variables, nil)
+			if result != nil || len(issues) == 0 || issues[0].Code != tc.code {
+				t.Fatalf("expected %s without result: %s %+v", tc.code, result, issues)
+			}
+			after, errors := elementjson.Encode(*got, location, &input.ID)
+			if len(errors) != 0 || !bytes.Equal(before, after) {
+				t.Fatal("assembly changed stored draft")
+			}
+		})
+	}
+}
