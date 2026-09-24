@@ -1,5 +1,5 @@
 {
-  "version": "2.18",
+  "version": "2.19",
   "children": [
     {
       "type": "frame",
@@ -1053,7 +1053,7 @@
                   "fill": "$ink",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "Меняйте позицию общих и локальных правил в полном списке. Содержимое наследуется отдельно; до сохранения роутеры не получат изменения.",
+                  "content": "Отключённое правило сохраняет JSON и место в порядке. Его можно включить снова, но при отсутствующем входе черновик получит ошибку ссылки.",
                   "fontFamily": "$font",
                   "fontSize": 13,
                   "fontWeight": "normal"
@@ -5936,7 +5936,7 @@
                           "fill": "$warn",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "Сначала уберите ссылку на socks из этих правил.",
+                          "content": "Отключите или исключите зависимые правила либо исправьте inboundTag.",
                           "fontFamily": "$font",
                           "fontSize": 12,
                           "fontWeight": "normal"
@@ -6219,7 +6219,7 @@
                   "fill": "$accent",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "Поля формы построены по переменным выбранного элемента шаблона. Неизвестные интерфейсу структуры редактируются как JSON.",
+                  "content": "Удаление используемого выхода сохраняет черновик, но оставляет ошибку ссылки. Перед применением восстановите выход или исправьте правила.",
                   "fontFamily": "$font",
                   "fontSize": 13,
                   "fontWeight": "normal"
@@ -6376,7 +6376,7 @@
                       "fill": "$muted",
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
-                      "content": "Роутинг использует идентификаторы входов и выходов. При переопределении ID блока сохраняется.",
+                      "content": "Зависимости ищутся по итоговым Xray-тегам, включая собственный JSON и локальные правила.",
                       "fontFamily": "$font",
                       "fontSize": 13,
                       "fontWeight": "normal"
@@ -7139,7 +7139,7 @@
               "fill": "$muted",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "Фрагмент демонстрирует сборку правил. В полном файле также сохраняются остальные заданные поля, включая inboundTag.",
+              "content": "Показан готовый результат. При неразрешённой ссылке предпросмотр должен показать ошибку и её место; применять такой черновик нельзя.",
               "fontFamily": "$font",
               "fontSize": 12,
               "fontWeight": "normal"
@@ -10296,7 +10296,7 @@
                           "fill": "$success",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "Выключение и удаление доступны. Проверка повторится при сохранении изменений.",
+                          "content": "Вход свободен: выключение и удаление доступны. Если позже включить правило со ссылкой на него, черновик станет неготовым.",
                           "fontFamily": "$font",
                           "fontSize": 13,
                           "fontWeight": "normal"
@@ -12495,6 +12495,1126 @@
                   }
                 }
               ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Mpf6A",
+      "x": 6320,
+      "y": 3320,
+      "name": "08 / Шаблоны / Ошибка зависимости",
+      "clip": true,
+      "width": 1500,
+      "height": 1030,
+      "fill": "$bg",
+      "children": [
+        {
+          "id": "h3AAF8",
+          "type": "ref",
+          "ref": "XKSrZ",
+          "name": "Sidebar",
+          "width": 206,
+          "height": "fill_container",
+          "descendants": {
+            "WL8zi": {
+              "fill": "#30435C"
+            },
+            "WL8zi/G2nPu4": {
+              "fill": "#FFFFFF"
+            },
+            "d1esl": {
+              "fill": "$ink"
+            },
+            "d1esl/G2nPu4": {
+              "fill": "#ACBAC9"
+            },
+            "zxib9": {
+              "fill": "$ink"
+            },
+            "zxib9/G2nPu4": {
+              "fill": "#ACBAC9"
+            }
+          }
+        },
+        {
+          "type": "frame",
+          "id": "c0ANO",
+          "name": "Main",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 24,
+          "padding": 32,
+          "children": [
+            {
+              "type": "frame",
+              "id": "i0R8MX",
+              "name": "Breadcrumb",
+              "width": "fill_container",
+              "gap": 16,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "VXxZd",
+                  "name": "Path",
+                  "fill": "$muted",
+                  "content": "Шаблоны",
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "id": "kwbwt",
+                  "type": "ref",
+                  "ref": "idKcX",
+                  "name": "Концепт · данные для примера",
+                  "fill": "$warn-soft",
+                  "descendants": {
+                    "eMbtm": {
+                      "content": "Концепт · данные для примера",
+                      "fill": "$warn"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "NSkcC",
+              "name": "Page heading",
+              "width": "fill_container",
+              "gap": 20,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "LFYsX",
+                  "name": "Identity",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "KT5oG",
+                      "name": "Title",
+                      "fill": "$ink",
+                      "content": "Проверка изменений · ошибка ссылки",
+                      "fontFamily": "$font",
+                      "fontSize": 30,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "uJqUH",
+                      "name": "Subtitle",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Базовый профиль · новое правило ссылается на отсутствующий вход",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "id": "A2Gxlx",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Сохранить",
+                  "fill": "$accent",
+                  "stroke": "$accent",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Сохранить черновик",
+                      "fill": "#FFFFFF"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "k0ogwX",
+              "name": "Change summary",
+              "width": "fill_container",
+              "gap": 20,
+              "alignItems": "center",
+              "children": [
+                {
+                  "id": "KT3zM",
+                  "type": "ref",
+                  "ref": "idKcX",
+                  "name": "Ошибка зависимости",
+                  "fill": "$error-soft",
+                  "descendants": {
+                    "eMbtm": {
+                      "content": "Ошибка зависимости",
+                      "fill": "$error"
+                    }
+                  }
+                },
+                {
+                  "type": "text",
+                  "id": "PAhLw",
+                  "name": "Impact",
+                  "fill": "$muted",
+                  "content": "Роутер A: ссылка inboundTag не разрешена · публикация остановлена",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "YSpVe",
+              "name": "Изменение порядка в шаблоне",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 18,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Q6DEph",
+                  "name": "Title",
+                  "fill": "$ink",
+                  "content": "Изменение порядка в шаблоне",
+                  "fontFamily": "$font",
+                  "fontSize": 20,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "ovaft",
+                  "name": "Before and after",
+                  "width": "fill_container",
+                  "gap": 24,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "kffNh",
+                      "name": "Было",
+                      "width": "fill_container",
+                      "fill": "$bg",
+                      "cornerRadius": 4,
+                      "layout": "vertical",
+                      "gap": 12,
+                      "padding": 18,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "nnbv8",
+                          "name": "Title",
+                          "fill": "$muted",
+                          "content": "Было",
+                          "fontFamily": "$font",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "W7Cen",
+                          "name": "Rule difference",
+                          "fill": "$muted",
+                          "content": "1  UDP и QUIC\n2  Выбранные домены\n3  Остальной трафик",
+                          "lineHeight": 1.7,
+                          "fontFamily": "$mono",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "k9ESQK",
+                      "name": "Будет",
+                      "width": "fill_container",
+                      "fill": "$success-soft",
+                      "cornerRadius": 4,
+                      "layout": "vertical",
+                      "gap": 12,
+                      "padding": 18,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "wPxOi",
+                          "name": "Title",
+                          "fill": "$muted",
+                          "content": "Будет",
+                          "fontFamily": "$font",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "hrTrJ",
+                          "name": "Rule difference",
+                          "fill": "$success",
+                          "content": "1  UDP и QUIC\n2  Новое правило\n3  Выбранные домены\n4  Остальной трафик",
+                          "lineHeight": 1.7,
+                          "fontFamily": "$mono",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "A31fS1",
+              "name": "Affected routers",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "b25ncy",
+                  "name": "Роутер A",
+                  "width": "fill_container",
+                  "stroke": "$line",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "gap": 20,
+                  "padding": 20,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "SwAxH",
+                      "name": "Router",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": 160,
+                      "content": "Роутер A",
+                      "fontFamily": "$font",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "pJXlG",
+                      "name": "State",
+                      "width": 160,
+                      "layout": "vertical",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "id": "nG05A",
+                          "type": "ref",
+                          "ref": "idKcX",
+                          "name": "Нужен вход",
+                          "fill": "$error-soft",
+                          "descendants": {
+                            "eMbtm": {
+                              "content": "Нужен вход",
+                              "fill": "$error"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "iRJm0",
+                      "name": "Apply plan",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 7,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "klhlV",
+                          "name": "Method",
+                          "fill": "$ink",
+                          "content": "2-я строка полного списка",
+                          "fontFamily": "$font",
+                          "fontSize": 15,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "X3Uvyz",
+                          "name": "Reason",
+                          "fill": "$muted",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Ошибка /routing/rules/1/inboundTag/0: вход lan-in отсутствует. Восстановите вход либо измените правило.",
+                          "fontFamily": "$font",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "BLMBI",
+                  "name": "Роутер B",
+                  "width": "fill_container",
+                  "stroke": "$line",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "gap": 20,
+                  "padding": 20,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "lA6O7",
+                      "name": "Router",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": 160,
+                      "content": "Роутер B",
+                      "fontFamily": "$font",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "QZU7D",
+                      "name": "State",
+                      "width": 160,
+                      "layout": "vertical",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "id": "n6qRXS",
+                          "type": "ref",
+                          "ref": "idKcX",
+                          "name": "По шаблону",
+                          "fill": "$success-soft",
+                          "descendants": {
+                            "eMbtm": {
+                              "content": "По шаблону",
+                              "fill": "$success"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "e5Ogd",
+                      "name": "Apply plan",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 7,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "V6SRVv",
+                          "name": "Method",
+                          "fill": "$ink",
+                          "content": "Проверен",
+                          "fontFamily": "$font",
+                          "fontSize": 15,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "JnkSt",
+                          "name": "Reason",
+                          "fill": "$muted",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "UDP → Новое → Домены → Остальное. Агент на связи.",
+                          "fontFamily": "$font",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "RNxxJ",
+                  "name": "Роутер C",
+                  "width": "fill_container",
+                  "stroke": "$line",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "gap": 20,
+                  "padding": 20,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "OkTAz",
+                      "name": "Router",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": 160,
+                      "content": "Роутер C",
+                      "fontFamily": "$font",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "a4dKj",
+                      "name": "State",
+                      "width": 160,
+                      "layout": "vertical",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "id": "wKtOx",
+                          "type": "ref",
+                          "ref": "idKcX",
+                          "name": "Нет связи",
+                          "fill": "$warn-soft",
+                          "descendants": {
+                            "eMbtm": {
+                              "content": "Нет связи",
+                              "fill": "$warn"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "OD8Oh",
+                      "name": "Apply plan",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 7,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "d6lLD",
+                          "name": "Method",
+                          "fill": "$ink",
+                          "content": "Ожидает проверки после исправления",
+                          "fontFamily": "$font",
+                          "fontSize": 15,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "FdYvS",
+                          "name": "Reason",
+                          "fill": "$muted",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Желаемая ревизия обновится после сохранения; агент получит её при подключении.",
+                          "fontFamily": "$font",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "KRHlf",
+              "name": "Notice",
+              "width": "fill_container",
+              "fill": "$warn-soft",
+              "cornerRadius": 6,
+              "layout": "vertical",
+              "gap": 8,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Kov8c",
+                  "name": "Message",
+                  "fill": "$warn",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Черновик можно сохранить. Применение остановлено до исправления ссылки и повторной проверки всех затронутых роутеров.",
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "u7vEGR",
+              "name": "Application semantics",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Отключённое правило не удерживает вход. Повторное включение может вернуть ошибку зависимости.",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "er0ZR",
+              "name": "Review actions",
+              "width": "fill_container",
+              "gap": 16,
+              "alignItems": "center",
+              "children": [
+                {
+                  "id": "tUZVP",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Вернуться к редактированию",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Вернуться к редактированию",
+                      "fill": "$ink"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "ASbVT",
+      "x": 7900,
+      "y": 3320,
+      "name": "07 / Роутер / Ошибка ссылки",
+      "clip": true,
+      "width": 1500,
+      "height": 1030,
+      "fill": "$bg",
+      "children": [
+        {
+          "id": "FpaPa",
+          "type": "ref",
+          "ref": "XKSrZ",
+          "name": "Sidebar",
+          "width": 206,
+          "height": "fill_container",
+          "descendants": {
+            "WL8zi": {
+              "fill": "$ink"
+            },
+            "WL8zi/G2nPu4": {
+              "fill": "#ACBAC9"
+            },
+            "d1esl": {
+              "fill": "$ink"
+            },
+            "d1esl/G2nPu4": {
+              "fill": "#ACBAC9"
+            },
+            "zxib9": {
+              "fill": "#30435C"
+            },
+            "zxib9/G2nPu4": {
+              "fill": "#FFFFFF"
+            }
+          }
+        },
+        {
+          "type": "frame",
+          "id": "NTCbL",
+          "name": "Main",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 24,
+          "padding": 32,
+          "children": [
+            {
+              "type": "frame",
+              "id": "Copz5",
+              "name": "Breadcrumb",
+              "width": "fill_container",
+              "gap": 16,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "HE4VH",
+                  "name": "Path",
+                  "fill": "$muted",
+                  "content": "Роутеры / Роутер A",
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "id": "L1u4a",
+                  "type": "ref",
+                  "ref": "idKcX",
+                  "name": "Концепт · данные для примера",
+                  "fill": "$warn-soft",
+                  "descendants": {
+                    "eMbtm": {
+                      "content": "Концепт · данные для примера",
+                      "fill": "$warn"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "V28c7",
+              "name": "Page heading",
+              "width": "fill_container",
+              "gap": 20,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "keOCa",
+                  "name": "Identity",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "y0ado",
+                      "name": "Title",
+                      "fill": "$ink",
+                      "content": "Роутер A",
+                      "fontFamily": "$font",
+                      "fontSize": 30,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "MoNn5",
+                      "name": "Subtitle",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Черновик после повторного включения правила",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "id": "K1cQz",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Проверить изменения",
+                  "fill": "$accent",
+                  "stroke": "$accent",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Проверить изменения",
+                      "fill": "#FFFFFF"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "owFNE",
+              "name": "Configuration tabs",
+              "width": "fill_container",
+              "stroke": "$line",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "gap": 28,
+              "padding": [
+                12,
+                0
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "oCH21",
+                  "name": "Общее",
+                  "fill": "$muted",
+                  "content": "Общее",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "Tl6Q1",
+                  "name": "Входы",
+                  "fill": "$muted",
+                  "content": "Входы",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "e2QG4",
+                  "name": "Выходы",
+                  "fill": "$muted",
+                  "content": "Выходы",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "y4dWR",
+                  "name": "Маршрутизация",
+                  "fill": "$muted",
+                  "content": "Маршрутизация",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "BSpQP",
+                  "name": "Итоговый конфиг",
+                  "fill": "$accent",
+                  "content": "Итоговый конфиг",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "KWCJt",
+              "name": "Config toolbar",
+              "width": "fill_container",
+              "gap": 16,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Msatu",
+                  "name": "Revision status",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "FsZln",
+                      "type": "ref",
+                      "ref": "idKcX",
+                      "name": "Предпросмотр",
+                      "fill": "$accent-soft",
+                      "descendants": {
+                        "eMbtm": {
+                          "content": "Предпросмотр",
+                          "fill": "$accent"
+                        }
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "id": "dQkz8",
+                      "name": "Rule count",
+                      "fill": "$error",
+                      "content": "1 ошибка ссылки · конфигурация не готова",
+                      "fontFamily": "$font",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "id": "zCtAN",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Скачать конфигурацию",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Скачать конфигурацию",
+                      "fill": "$ink"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "IcLFp",
+              "name": "Files and source",
+              "width": "fill_container",
+              "gap": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "PkMVA",
+                  "name": "File viewer",
+                  "width": "fill_container",
+                  "fill": "$surface",
+                  "cornerRadius": 6,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "thUAh",
+                      "name": "File picker",
+                      "width": "fill_container",
+                      "stroke": "$line",
+                      "strokeWidth": {
+                        "bottom": 1
+                      },
+                      "gap": 12,
+                      "padding": 16,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "id": "JSKgH",
+                          "type": "ref",
+                          "ref": "Em9H6",
+                          "name": "Config file",
+                          "width": 300,
+                          "descendants": {
+                            "m9t6A": {
+                              "content": "05_routing.json"
+                            }
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "id": "mLPca",
+                          "name": "File mode",
+                          "fill": "$muted",
+                          "content": "Черновик",
+                          "fontFamily": "$font",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Qu369",
+                      "name": "JSON viewer",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 16,
+                      "padding": 22,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "nGOTx",
+                          "name": "Routing JSON",
+                          "fill": "$ink",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Ошибка зависимости\n\nПравило: block-telemetry\nИсточник: роутер A · общее правило\nПуть: /inboundTag/0\nВход lan-in отсутствует.\n\nВосстановите вход или исправьте правило, затем повторите проверку.",
+                          "lineHeight": 1.6,
+                          "fontFamily": "$mono",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "bzj1Y",
+                  "name": "Откуда взялись настройки",
+                  "width": 320,
+                  "fill": "$surface",
+                  "cornerRadius": 6,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 18,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "T9S2RN",
+                      "name": "Title",
+                      "fill": "$ink",
+                      "content": "Почему файл не готов",
+                      "fontFamily": "$font",
+                      "fontSize": 20,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Q5A0O",
+                      "name": "Из шаблона",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "children": [
+                        {
+                          "id": "mDw8P",
+                          "type": "ref",
+                          "ref": "idKcX",
+                          "name": "Из шаблона",
+                          "fill": "$accent-soft",
+                          "descendants": {
+                            "eMbtm": {
+                              "content": "Из шаблона",
+                              "fill": "$accent"
+                            }
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "id": "C9hA6M",
+                          "name": "Explanation",
+                          "fill": "$muted",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Правило block-telemetry снова включено и ссылается на отсутствующий вход lan-in.",
+                          "fontFamily": "$font",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "q5n5oY",
+                      "name": "Локальное",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "children": [
+                        {
+                          "id": "qvByj",
+                          "type": "ref",
+                          "ref": "idKcX",
+                          "name": "Локальное",
+                          "fill": "$local-soft",
+                          "descendants": {
+                            "eMbtm": {
+                              "content": "Локальное",
+                              "fill": "$local"
+                            }
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "id": "wTuvL",
+                          "name": "Explanation",
+                          "fill": "$muted",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Черновик сохранён; применение остановлено до исправления ссылки.",
+                          "fontFamily": "$font",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "bR1xm",
+                      "name": "Заменено",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "children": [
+                        {
+                          "id": "EWjaz",
+                          "type": "ref",
+                          "ref": "idKcX",
+                          "name": "Заменено",
+                          "fill": "$warn-soft",
+                          "descendants": {
+                            "eMbtm": {
+                              "content": "Заменено",
+                              "fill": "$warn"
+                            }
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "id": "E6tza1",
+                          "name": "Explanation",
+                          "fill": "$muted",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "После исправления будет сформирован новый итоговый файл.",
+                          "fontFamily": "$font",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "z6OFE",
+                      "name": "Disabled explanation",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Отключённое правило не удерживало вход до повторного включения.",
+                      "fontFamily": "$font",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "f6Rps",
+                      "name": "Editing action",
+                      "fill": "$accent",
+                      "content": "Открыть маршрутизацию →",
+                      "fontFamily": "$font",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "TwI7d",
+              "name": "Preview disclosure",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Диагностика показывает место ссылки без сырого JSON и персональных значений.",
+              "fontFamily": "$font",
+              "fontSize": 12,
+              "fontWeight": "normal"
             }
           ]
         }
