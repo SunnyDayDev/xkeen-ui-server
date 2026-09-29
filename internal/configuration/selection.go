@@ -79,30 +79,47 @@ func SelectRouterElements(input RouterSelectionInput) (*RouterSelection, []Selec
 		if _, found := excluded[shared.Element.ID]; found {
 			continue
 		}
-		location := ElementLocation{Owner: input.Template, Position: shared.Position}
-		routerLocation := ElementLocation{Owner: input.Router, Position: "/shared/" + strconv.Itoa(i)}
-		var personal *ContentOverride
-		if override, found := overrides[shared.Element.ID]; found {
-			personal = &override.Override
-			routerLocation.Position = override.Position
-		}
-		content, issues := SelectElementContent(shared.Element, location, routerLocation, personal)
+		effective, issues := selectSharedElement(input, shared, i, overrides)
 		if len(issues) != 0 {
-			converted := make([]SelectionIssue, len(issues))
-			for j, issue := range issues {
-				converted[j] = SelectionIssue{Issue: issue.Issue, Location: issue.Location}
-			}
-			return nil, converted
+			return nil, issues
 		}
-		result.Elements[shared.Element.ID] = EffectiveElement{Content: content.Content, Origin: "shared", Location: location, Source: &content.Source, Mode: content.Mode}
+		result.Elements[shared.Element.ID] = effective
 	}
 	for _, local := range input.Local {
-		if _, issue := parseJSON(local.Content, Issue{ElementID: local.ID, Source: "content"}); issue != nil {
-			return nil, []SelectionIssue{{Issue: *issue, Location: ElementLocation{Owner: input.Router, Position: local.Position}}}
+		effective, issues := selectLocalElement(input.Router, local)
+		if len(issues) != 0 {
+			return nil, issues
 		}
-		result.Elements[local.ID] = EffectiveElement{Content: bytes.Clone(local.Content), Origin: "local", Location: ElementLocation{Owner: input.Router, Position: local.Position}}
+		result.Elements[local.ID] = effective
 	}
 	return result, nil
+}
+
+func selectSharedElement(input RouterSelectionInput, shared SharedElement, index int, overrides map[string]LocatedContentOverride) (EffectiveElement, []SelectionIssue) {
+	location := ElementLocation{Owner: input.Template, Position: shared.Position}
+	routerLocation := ElementLocation{Owner: input.Router, Position: "/shared/" + strconv.Itoa(index)}
+	var personal *ContentOverride
+	if override, found := overrides[shared.Element.ID]; found {
+		personal = &override.Override
+		routerLocation.Position = override.Position
+	}
+	content, issues := SelectElementContent(shared.Element, location, routerLocation, personal)
+	if len(issues) != 0 {
+		converted := make([]SelectionIssue, len(issues))
+		for j, issue := range issues {
+			converted[j] = SelectionIssue{Issue: issue.Issue, Location: issue.Location}
+		}
+		return EffectiveElement{}, converted
+	}
+	return EffectiveElement{Content: content.Content, Origin: "shared", Location: location, Source: &content.Source, Mode: content.Mode}, nil
+}
+
+func selectLocalElement(router Owner, local LocalContent) (EffectiveElement, []SelectionIssue) {
+	location := ElementLocation{Owner: router, Position: local.Position}
+	if _, issue := parseJSON(local.Content, Issue{ElementID: local.ID, Source: "content"}); issue != nil {
+		return EffectiveElement{}, []SelectionIssue{{Issue: *issue, Location: location}}
+	}
+	return EffectiveElement{Content: bytes.Clone(local.Content), Origin: "local", Location: location}, nil
 }
 
 // Validate the entire snapshot before inspecting any active content.
