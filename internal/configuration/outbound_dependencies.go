@@ -108,6 +108,10 @@ func AnalyzeOutboundDependencies(input OutboundSnapshot) (*OutboundAnalysis, []S
 	if len(issues) != 0 {
 		return nil, issues
 	}
+	return resolvePreparedOutbounds(order.Full, parsedRules, balancers, providers)
+}
+
+func resolvePreparedOutbounds(full []RuleOrderEntry, parsedRules []parsedOutgoingRule, balancers map[string]nestedBalancer, providers map[string]outboundProvider) (*OutboundAnalysis, []SelectionIssue) {
 	references := make([]OutboundReference, 0, len(parsedRules))
 	ready := true
 	for _, parsed := range parsedRules {
@@ -140,7 +144,7 @@ func AnalyzeOutboundDependencies(input OutboundSnapshot) (*OutboundAnalysis, []S
 		}
 		references = append(references, ref)
 	}
-	return &OutboundAnalysis{FullRules: order.Full, References: references, Ready: ready}, nil
+	return &OutboundAnalysis{FullRules: full, References: references, Ready: ready}, nil
 }
 
 func readOutgoingRule(id string, effective EffectiveElement) (*parsedOutgoingRule, []SelectionIssue) {
@@ -187,6 +191,10 @@ func readOutgoingRule(id string, effective EffectiveElement) (*parsedOutgoingRul
 }
 
 func indexActiveOutbounds(input RouterSelectionInput, refs []parsedOutgoingRule, balancers map[string]nestedBalancer) (map[string]outboundProvider, []SelectionIssue) {
+	return indexSelectedOutbounds(input, refs, balancers, selectSnapshotElement)
+}
+
+func indexSelectedOutbounds(input RouterSelectionInput, refs []parsedOutgoingRule, balancers map[string]nestedBalancer, selectElement func(RouterSelectionInput, string) (EffectiveElement, []SelectionIssue)) (map[string]outboundProvider, []SelectionIssue) {
 	excluded := make(map[string]struct{}, len(input.Exclusions))
 	for _, exclusion := range input.Exclusions {
 		excluded[exclusion.Source.ElementID] = struct{}{}
@@ -196,7 +204,7 @@ func indexActiveOutbounds(input RouterSelectionInput, refs []parsedOutgoingRule,
 		if _, found := excluded[id]; found {
 			continue
 		}
-		effective, issues := selectSnapshotElement(input, id)
+		effective, issues := selectElement(input, id)
 		if len(issues) != 0 {
 			return nil, issues
 		}
@@ -372,6 +380,10 @@ func matchOutboundPrefix(providers map[string]outboundProvider, prefix string) [
 }
 
 func indexReachableBalancers(input RouterSelectionInput, refs []parsedOutgoingRule) (map[string]nestedBalancer, []SelectionIssue) {
+	return indexSelectedBalancers(input, refs, selectSnapshotElement)
+}
+
+func indexSelectedBalancers(input RouterSelectionInput, refs []parsedOutgoingRule, selectElement func(RouterSelectionInput, string) (EffectiveElement, []SelectionIssue)) (map[string]nestedBalancer, []SelectionIssue) {
 	requested := make(map[string][]parsedOutgoingRule)
 	for _, ref := range refs {
 		if ref.reference.Kind == "balancer" {
@@ -390,7 +402,7 @@ func indexReachableBalancers(input RouterSelectionInput, refs []parsedOutgoingRu
 		if _, found := excluded[id]; found {
 			continue
 		}
-		effective, issues := selectSnapshotElement(input, id)
+		effective, issues := selectElement(input, id)
 		if len(issues) != 0 {
 			return nil, issues
 		}

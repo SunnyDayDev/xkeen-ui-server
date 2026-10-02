@@ -172,6 +172,14 @@ func analyzeInboundDependencies(input InboundSnapshot, targetID string) (*inboun
 		}
 		activeInbounds[id] = effective
 	}
+	result, issues := analyzePreparedInbounds(input.Inbounds, order.Full, active, activeInbounds)
+	if len(issues) != 0 {
+		return nil, issues
+	}
+	return &inboundAnalysisInternal{result: result, activeInbounds: activeInbounds}, nil
+}
+
+func analyzePreparedInbounds(input RouterSelectionInput, full []RuleOrderEntry, active []OrderedRule, activeInbounds map[string]EffectiveElement) (*InboundAnalysis, []SelectionIssue) {
 	parsed := make([]parsedInboundReference, 0)
 	for _, rule := range active {
 		found, issues := readInboundReferences(rule)
@@ -180,7 +188,7 @@ func analyzeInboundDependencies(input InboundSnapshot, targetID string) (*inboun
 		}
 		parsed = append(parsed, found...)
 	}
-	providers, issues := indexActiveInbounds(input.Inbounds, activeInbounds, parsed)
+	providers, issues := indexActiveInbounds(input, activeInbounds, parsed)
 	if len(issues) != 0 {
 		return nil, issues
 	}
@@ -196,7 +204,7 @@ func analyzeInboundDependencies(input InboundSnapshot, targetID string) (*inboun
 			ready = false
 		}
 	}
-	return &inboundAnalysisInternal{result: &InboundAnalysis{FullRules: order.Full, References: references, Ready: ready}, activeInbounds: activeInbounds}, nil
+	return &InboundAnalysis{FullRules: full, References: references, Ready: ready}, nil
 }
 
 type inboundProvider struct {
