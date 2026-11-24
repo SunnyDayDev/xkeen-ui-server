@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/preparation"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/agentrevision"
 )
 
 type restoreFixture struct {
@@ -183,5 +184,30 @@ func TestRollbackFinalJournalFailureDoesNotClaimRestoredRuntime(t *testing.T) {
 		f.record.LastRollback != nil || f.record.LocalBaseline != nil || f.record.Pending == nil ||
 		f.record.Pending.Rollback.State != RollbackActive || f.record.Pending.Rollback.Started == nil {
 		t.Fatalf("ambiguous terminal write claimed a restored result: %v, %v", result, err)
+	}
+}
+
+func TestNewUnchangedRevisionClearsObsoleteRollbackRetry(t *testing.T) {
+	f := newApplyFixture(t)
+	prior := f.first
+	failed := prior.Snapshot
+	failed.Number = 2
+	failedTag, err := agentrevision.Tag(f.scope.RouterID, failed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.record.Current = &Confirmed{AttemptID: "01010101010101010101010101010101", Number: 1, Tag: prior.Tag, Baseline: f.old}
+	f.record.LastRollback = &RollbackResult{AttemptID: "02020202020202020202020202020202", TargetTag: failedTag,
+		TargetNumber: 2, FailedPhase: FilesVerified, RetryApproved: true}
+	f.first.Snapshot.Number = 3
+	f.first.Tag, err = agentrevision.Tag(f.scope.RouterID, f.first.Snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.second, f.proposed = f.first, f.first.Tag
+	got, err := New(f.scope, f, f, f, f).Apply(t.Context(), "synthetic", f.proposed)
+	if err != nil || got.Number != 3 || got.Baseline.Runtime != f.old.Runtime ||
+		f.record.LastRollback.RetryApproved || f.record.LastRollback.TargetTag != failedTag || !validRecord(f.scope, f.record) {
+		t.Fatalf("new verified no-op left obsolete retry authority or changed runtime: %v", err)
 	}
 }
