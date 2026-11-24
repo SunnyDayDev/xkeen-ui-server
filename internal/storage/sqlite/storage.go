@@ -82,6 +82,7 @@ var migrations = []string{
 	createContactStorage,
 	createWebAdminStorage,
 	createExternalAccess,
+	createRouterVisibility,
 }
 
 func Open(ctx context.Context, path string) (*sql.DB, error) {

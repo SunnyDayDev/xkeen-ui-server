@@ -99,6 +99,10 @@ func (c *Contacts) Accept(ctx context.Context, id agentcredentials.Identity, rep
 	if n, err := result.RowsAffected(); err != nil || n != 1 {
 		return reporting.ErrUnavailable
 	}
+	if _, err := tx.ExecContext(ctx, `DELETE FROM hidden_router_visibility WHERE router_id=?`, id.RouterID); err != nil {
+		return reporting.ErrUnavailable
+	}
+
 	if tx.Commit() != nil {
 		return reporting.ErrUnavailable
 	}
