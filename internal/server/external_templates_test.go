@@ -69,3 +69,23 @@ func TestExternalDraftWire(t *testing.T) {
 		}
 	}
 }
+
+func TestExternalPatchRequiresCondition(t *testing.T) {
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("PATCH", "/api/v1/templates/item?templateId=example", nil)
+	NewExternalTemplates(&extTemplateFixture{})(w, r, externalaccess.Permit{Version: 4})
+	if w.Code != 428 {
+		t.Fatalf("missing If-Match: got %d, want 428", w.Code)
+	}
+}
+
+func (f *extTemplateFixture) ReplaceExternalTemplate(ctx context.Context, p externalaccess.Permit, draft configuration.TemplateDraft, expected int64) (int64, error) {
+	if p.Version != 4 {
+		return 0, externalaccess.ErrUnauthorized
+	}
+	if expected != f.snapshot.Version {
+		return 0, templates.ErrVersionConflict
+	}
+	f.snapshot = &templates.Snapshot{TemplateDraft: draft, Version: expected + 1}
+	return expected + 1, nil
+}

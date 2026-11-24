@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/externalaccess"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/templates"
@@ -35,4 +36,27 @@ func (s *ExternalAccess) ReadExternalTemplate(ctx context.Context, permit extern
 		return nil, err
 	}
 	return templates.RestoreSnapshot(id, snap)
+}
+
+func (s *ExternalAccess) ReplaceExternalTemplate(ctx context.Context, permit externalaccess.Permit, draft configuration.TemplateDraft, expected int64) (int64, error) {
+	raw, err := encodeRestoredTemplate(draft)
+	if err != nil {
+		return 0, err
+	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+	if err := requireExternalPermit(ctx, tx, permit); err != nil {
+		return 0, err
+	}
+	version, err := replaceTemplate(ctx, tx, draft.ID, raw, expected)
+	if err != nil {
+		return 0, err
+	}
+	if err = tx.Commit(); err != nil {
+		return 0, err
+	}
+	return version, nil
 }
