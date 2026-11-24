@@ -140,6 +140,11 @@ func (p *Publications) CommitTemplateGroup(ctx context.Context, plan publication
 	if err := tx.Commit(); err != nil {
 		return nil, operationError("commit publication group", ctx.Err())
 	}
+	for _, outcome := range result.Routers {
+		if outcome.Changed {
+			p.signal(outcome.RouterID)
+		}
+	}
 	return result, nil
 }
 

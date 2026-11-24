@@ -13,13 +13,14 @@ import (
 )
 
 type AgentCredentials struct {
-	db *sql.DB
+	db     *sql.DB
+	notify []func(string)
 }
 
 var _ agentcredentials.Repository = (*AgentCredentials)(nil)
 
-func NewAgentCredentials(db *sql.DB) *AgentCredentials {
-	return &AgentCredentials{db: db}
+func NewAgentCredentials(db *sql.DB, notify ...func(string)) *AgentCredentials {
+	return &AgentCredentials{db: db, notify: notify}
 }
 
 func (s *AgentCredentials) Issue(ctx context.Context, routerID string, purpose agentcredentials.Purpose, proof agentcredential.Proof, now func() time.Time) error {
@@ -96,6 +97,9 @@ func (s *AgentCredentials) Redeem(ctx context.Context, invitation, working agent
 	}
 	if err := commitCredentials(ctx, tx); err != nil {
 		return agentcredentials.Identity{}, err
+	}
+	for _, fn := range s.notify {
+		fn(id.RouterID)
 	}
 	return id, nil
 }
@@ -197,7 +201,13 @@ func (s *AgentCredentials) Revoke(ctx context.Context, routerID string) error {
 	if err != nil || outstanding {
 		return credentialDatabaseError(ctx)
 	}
-	return commitCredentials(ctx, tx)
+	if err := commitCredentials(ctx, tx); err != nil {
+		return err
+	}
+	for _, fn := range s.notify {
+		fn(routerID)
+	}
+	return nil
 }
 
 type credentialRegistration struct {

@@ -25,21 +25,23 @@ type AgentAuthenticator interface {
 
 // NewAgentHandler adds the agent endpoints to the existing health endpoint.
 // A directly established TLS connection is required before invoking the port.
-func NewAgentHandler(authenticator AgentAuthenticator, desired DesiredRevisionReader, contacts ContactService) http.Handler {
+func NewAgentHandler(authenticator AgentAuthenticator, desired DesiredRevisionReader, contacts ContactService, watchers ...AgentWatch) http.Handler {
 	health := NewHandler()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case "/agent/v1/enroll", "/agent/v1/identity", "/agent/v1/desired", "/agent/v1/contact":
+		case "/agent/v1/enroll", "/agent/v1/identity", "/agent/v1/desired", "/agent/v1/contact", "/agent/v1/watch":
 			if r.TLS == nil || r.TLS.Version < tls.VersionTLS12 {
 				http.NotFound(w, r)
 				return
 			}
-			deadline := time.Now().Add(5 * time.Second)
-			if err := http.NewResponseController(w).SetReadDeadline(deadline); err != nil && !errors.Is(err, http.ErrNotSupported) {
-				agentError(w, http.StatusServiceUnavailable, "unavailable")
-				return
+			if r.URL.Path != "/agent/v1/watch" {
+				deadline := time.Now().Add(5 * time.Second)
+				if err := http.NewResponseController(w).SetReadDeadline(deadline); err != nil && !errors.Is(err, http.ErrNotSupported) {
+					agentError(w, http.StatusServiceUnavailable, "unavailable")
+					return
+				}
 			}
-			if r.URL.RawQuery != "" || r.URL.ForceQuery {
+			if r.URL.Path != "/agent/v1/watch" && (r.URL.RawQuery != "" || r.URL.ForceQuery) {
 				agentError(w, http.StatusBadRequest, "invalid_request")
 				return
 			}
@@ -50,6 +52,12 @@ func NewAgentHandler(authenticator AgentAuthenticator, desired DesiredRevisionRe
 				identifyAgent(w, r, authenticator)
 			case "/agent/v1/desired":
 				readAgentDesired(w, r, authenticator, desired)
+			case "/agent/v1/watch":
+				if len(watchers) == 0 {
+					http.NotFound(w, r)
+					return
+				}
+				watchAgent(w, r, authenticator, watchers[0])
 			case "/agent/v1/contact":
 				if contacts == nil {
 					http.NotFound(w, r)
