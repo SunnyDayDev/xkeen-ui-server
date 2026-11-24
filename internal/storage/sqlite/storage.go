@@ -20,6 +20,31 @@ const createRouterSettings = `CREATE TABLE router_settings (
 	snapshot BLOB NOT NULL
 )`
 
+const createPublicationStorage = `
+	ALTER TABLE router_settings ADD COLUMN generation INTEGER NOT NULL DEFAULT 1
+		CHECK (typeof(generation) = 'integer' AND generation >= 1);
+	CREATE TABLE accepted_templates (
+		template_id TEXT NOT NULL COLLATE BINARY,
+		version INTEGER NOT NULL CHECK (typeof(version) = 'integer' AND version >= 1),
+		draft BLOB NOT NULL,
+		PRIMARY KEY (template_id, version)
+	);
+	CREATE TABLE active_router_publications (
+		router_id TEXT NOT NULL PRIMARY KEY COLLATE BINARY,
+		template_id TEXT NOT NULL COLLATE BINARY,
+		generation INTEGER NOT NULL CHECK (typeof(generation) = 'integer' AND generation >= 1),
+		settings BLOB NOT NULL,
+		order_basis BLOB
+	);
+	CREATE INDEX active_router_publications_template_id ON active_router_publications(template_id);
+	CREATE TABLE desired_router_revisions (
+		router_id TEXT NOT NULL COLLATE BINARY,
+		revision INTEGER NOT NULL CHECK (typeof(revision) = 'integer' AND revision >= 1),
+		profile TEXT NOT NULL,
+		files BLOB NOT NULL,
+		PRIMARY KEY (router_id, revision)
+	)`
+
 // Migrations are indexed by version minus one and remain immutable once released.
 var migrations = []string{
 	createMigrationHistory,
@@ -27,6 +52,7 @@ var migrations = []string{
 	createRouterSettings,
 	`ALTER TABLE templates ADD COLUMN version INTEGER NOT NULL DEFAULT 1
 		CHECK (typeof(version) = 'integer' AND version >= 1)`,
+	createPublicationStorage,
 }
 
 func Open(ctx context.Context, path string) (*sql.DB, error) {
