@@ -19,6 +19,7 @@ var (
 )
 
 type Draft struct {
+	Exclusion            *ExclusionOverride
 	ID, Name, TemplateID string
 	Groups               []Group
 	// Nil inherits template order. An empty non-nil slice is explicit.
@@ -84,6 +85,9 @@ func invalid(position, reason string) error {
 
 // ValidateDraft checks the editable snapshot independently of SQLite and assembly.
 func ValidateDraft(draft Draft) error {
+	if !draft.Exclusion.valid(draft) {
+		return invalid("/exclusion", "invalid source or personal settings")
+	}
 	if !validID(draft.ID) {
 		return invalid("/id", "invalid identity")
 	}

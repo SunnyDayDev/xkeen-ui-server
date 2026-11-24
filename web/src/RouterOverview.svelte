@@ -129,6 +129,7 @@
         <p>Шаблон: <bdi>{detail.templateId}</bdi></p>
         {@render status(detail)}
         <a href={path} onclick={(event) => openVariables(event,path)}>Переменные</a>
+        <a href={'/ui/routers/exclusions?' + new URLSearchParams({routerId:detail.routerId})}>Исключения XKeen</a>
         <a href={keys} onclick={event => openEnrollment(event,keys)}>Рабочий ключ</a>
         <a href={'/ui/routers/rules?' + new URLSearchParams({routerId:detail.routerId})}
           onclick={(event) => openRules(event,event.currentTarget.pathname+event.currentTarget.search)}>Маршрутизация</a>

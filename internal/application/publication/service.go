@@ -99,15 +99,15 @@ func (s *Service) Publish(ctx context.Context, request PublishRequest) (*Publish
 	if request.Mode == ConfirmInitial {
 		shared = inputs.TemplateDraft
 	}
-	if err := checkXrayOnlyExclusions(inputs.Exclusions); err != nil {
-		return nil, err
-	}
 	settings, basis, err := selectPersonalSource(request, inputs)
 	if err != nil {
 		return nil, err
 	}
 	if err := routersettings.ValidateDraft(settings); err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrInvalidCandidate, err)
+	}
+	if err := checkXrayOnlyExclusions(inputs.Exclusions, settings); err != nil {
+		return nil, err
 	}
 	prepared, issues := PrepareRouterCandidate(shared, &settings, basis)
 	if len(issues) != 0 {
@@ -291,8 +291,8 @@ func safeStoreError(err, fallback error) error {
 }
 
 // The installed revision protocol currently attests Xray only.
-func checkXrayOnlyExclusions(source *configuration.ExclusionSource) error {
-	file, issue := configuration.AssembleXKeenExclusions(source, nil, nil)
+func checkXrayOnlyExclusions(source *configuration.ExclusionSource, settings routersettings.Draft) error {
+	file, issue := settings.AssembleExclusions(source)
 	if issue != nil {
 		return ErrInvalidCandidate
 	}

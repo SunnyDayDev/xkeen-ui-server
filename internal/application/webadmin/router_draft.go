@@ -3,6 +3,7 @@ package webadmin
 import (
 	"context"
 	"errors"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 	"time"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/publication"
@@ -23,6 +24,7 @@ type RouterDraftBasis struct {
 }
 
 type RouterDraftSnapshot struct {
+	Exclusions *configuration.ExclusionSource
 	Basis      RouterDraftBasis
 	Name       string
 	Accepted   *templates.Snapshot

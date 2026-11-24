@@ -109,6 +109,7 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 		routerDrafts := sqlite.NewWebRouterDrafts(db)
 		variables := webadmin.NewRouterVariableEditor(routerDrafts, time.Now)
 		handler = server.NewWebRouterVariableHandler(cfg.webOrigin, variables, sessions, handler)
+		handler = server.NewWebRouterExclusionsHandler(cfg.webOrigin, webadmin.RouterExclusionEditor{Store: routerDrafts, Now: time.Now}, sessions, handler)
 		replacement := webadmin.NewRouterReplacementEditor(routerDrafts, time.Now)
 		handler = server.NewWebRouterReplacementHandler(cfg.webOrigin, replacement, sessions, handler)
 		rules := webadmin.NewRouterRuleEditor(routerDrafts, time.Now)

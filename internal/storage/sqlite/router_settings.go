@@ -70,7 +70,28 @@ func decodeRouterDraft(id string, raw []byte) (routersettings.Draft, error) {
 // Check the exact stored field names before decoding. encoding/json accepts
 // case-insensitive aliases and treats a missing slice as nil.
 func validRouterRecord(tree any) bool {
-	record := routerRecord(tree, "Name", "TemplateID", "Groups", "PersonalOrder", "DisabledRules", "DisabledInbounds")
+	fields := []string{"Name", "TemplateID", "Groups", "PersonalOrder", "DisabledRules", "DisabledInbounds"}
+	if object, ok := tree.(map[string]any); ok {
+		if raw, exists := object["Exclusion"]; exists {
+			part := routerRecord(raw, "Source", "Values", "Replacement")
+			if part == nil || !validRouterSource(part["Source"]) {
+				return false
+			}
+			if raw := part["Values"]; raw != nil {
+				values, ok := raw.(map[string]any)
+				if !ok {
+					return false
+				}
+				for _, v := range values {
+					if _, ok := v.(string); !ok {
+						return false
+					}
+				}
+			}
+			fields = append(fields, "Exclusion")
+		}
+	}
+	record := routerRecord(tree, fields...)
 	if record == nil {
 		return false
 	}
@@ -127,6 +148,7 @@ func routerRecords(value any, valid func(any) bool) bool {
 // Store raw JSON as bytes. Embedding RawMessage would compact it and may rewrite
 // string escapes. The regular JSON envelope also preserves nil versus [].
 type storedRouterDraft struct {
+	Exclusion                       *routersettings.ExclusionOverride `json:",omitempty"`
 	Name, TemplateID                string
 	Groups                          []storedRouterGroup
 	PersonalOrder                   []string
@@ -154,7 +176,7 @@ type storedRouterOverride struct {
 
 func encodeRouterDraft(draft routersettings.Draft) storedRouterDraft {
 	stored := storedRouterDraft{
-		Name: draft.Name, TemplateID: draft.TemplateID, PersonalOrder: draft.PersonalOrder,
+		Exclusion: draft.Exclusion, Name: draft.Name, TemplateID: draft.TemplateID, PersonalOrder: draft.PersonalOrder,
 		DisabledRules: draft.DisabledRules, DisabledInbounds: draft.DisabledInbounds,
 	}
 	if draft.Groups != nil {
@@ -184,7 +206,7 @@ func encodeRouterDraft(draft routersettings.Draft) storedRouterDraft {
 
 func (stored storedRouterDraft) draft(id string) routersettings.Draft {
 	draft := routersettings.Draft{
-		ID: id, Name: stored.Name, TemplateID: stored.TemplateID, PersonalOrder: stored.PersonalOrder,
+		Exclusion: stored.Exclusion, ID: id, Name: stored.Name, TemplateID: stored.TemplateID, PersonalOrder: stored.PersonalOrder,
 		DisabledRules: stored.DisabledRules, DisabledInbounds: stored.DisabledInbounds,
 	}
 	if stored.Groups != nil {

@@ -53,6 +53,8 @@ func TestRouterSettingsRoundTripAfterReopen(t *testing.T) {
 	defer db.Close()
 	service := routersettings.NewService(NewRouterSettings(db))
 	first := routerFixture()
+	blank := ""
+	first.Exclusion = &routersettings.ExclusionOverride{Source: first.Groups[0].Exclusions[0], Values: map[string]string{"address": "192.0.2.4"}, Replacement: &blank}
 	inherited := routersettings.Draft{ID: "Router.example", Name: "Other", TemplateID: first.TemplateID}
 	explicit := routersettings.Draft{ID: "router-empty.example", TemplateID: first.TemplateID, PersonalOrder: []string{}}
 	for _, draft := range []routersettings.Draft{first, inherited, explicit} {
