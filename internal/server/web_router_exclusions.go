@@ -2,10 +2,11 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
-	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/webadmin"
 	"net/http"
 	"strconv"
+
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/webadmin"
 )
 
 func NewWebRouterExclusionsHandler(origin WebOrigin, editor webadmin.RouterExclusionEditor, admission webPreparationAdmission, next http.Handler) http.Handler {
@@ -54,7 +55,13 @@ func NewWebRouterExclusionsHandler(origin WebOrigin, editor webadmin.RouterExclu
 			webRouterVariableFailure(w, err)
 			return
 		}
-		wire := map[string]any{"name": state.Name, "templateId": state.Basis.TemplateID, "elementId": state.Source.ElementID, "acceptedVersion": strconv.FormatInt(state.Basis.AcceptedVersion, 10), "activeGeneration": strconv.FormatInt(state.Basis.ActiveGeneration, 10), "draftGeneration": strconv.FormatInt(state.Basis.DraftGeneration, 10), "source": state.Source.Text, "variables": state.Source.Variables, "hasOverride": state.Override != nil}
+		wire := map[string]any{
+			"name": state.Name, "templateId": state.Basis.TemplateID, "elementId": state.Source.ElementID,
+			"acceptedVersion":  strconv.FormatInt(state.Basis.AcceptedVersion, 10),
+			"activeGeneration": strconv.FormatInt(state.Basis.ActiveGeneration, 10),
+			"draftGeneration":  strconv.FormatInt(state.Basis.DraftGeneration, 10),
+			"source":           state.Source.Text, "variables": state.Source.Variables, "hasOverride": state.Override != nil,
+		}
 		if state.Override != nil {
 			wire["values"] = state.Override.Values
 			wire["replacement"] = state.Override.Replacement

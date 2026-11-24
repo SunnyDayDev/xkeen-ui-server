@@ -44,5 +44,18 @@ export async function checkRouterExclusions(parent,origin,database) {
     await page.getByRole('button',{name:'Подтвердить'}).click();
     await page.locator('pre').last().getByText('192.0.2.4',{exact:false}).waitFor();
     assert.equal(await page.getByLabel('Своё значение network').isChecked(),false);
+    const rival=await ctx.newPage();
+    await rival.goto(page.url());
+    await rival.getByRole('button',{name:'Сохранить значения'}).click();
+    await rival.getByText('Черновик сохранён.').waitFor();
+    await page.getByRole('button',{name:'Сохранить значения'}).click();
+    await page.getByText('Настройки изменились. Перечитайте актуальные данные.').waitFor();
+    await page.getByRole('button',{name:'Перечитать'}).click();
+    await page.getByRole('button',{name:'Сохранить значения',disabled:false}).waitFor();
+    db.prepare('INSERT INTO hidden_router_visibility VALUES (?)').run(routers[0]);
+    await page.getByRole('button',{name:'Сохранить значения'}).click();
+    await page.getByText('Роутер или общий список недоступен.').waitFor();
+    assert.equal(await page.locator('textarea, pre').count(),0);
+    await rival.close();
   } finally {db.close();await ctx.close()}
 }

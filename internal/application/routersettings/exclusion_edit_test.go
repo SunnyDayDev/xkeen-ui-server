@@ -1,8 +1,9 @@
 package routersettings
 
 import (
-	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 	"testing"
+
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 )
 
 func TestExclusionReturnAndReset(t *testing.T) {
