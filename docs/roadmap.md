@@ -107,6 +107,8 @@
 
 **Результат C03:** [условная замена черновика шаблона](configuration-model.md#реализованный-шаг-c03), [issue #41](https://github.com/SunnyDayDev/xkeen-ui-server/issues/41), change `version-template-drafts`. Миграция v4 устанавливает версию 1 существующим записям. Проверены сохранность при перезапуске и атомарность двух правок через отдельные соединения SQLite. Публикация относится к C05–C07. OpenSpec архивирован, требования синхронизированы. [Отчёт о проверке](../openspec/changes/archive/2026-11-24-version-template-drafts/verification.md).
 
+**Результат C05:** [контракт принятия желаемых ревизий](../openspec/specs/configuration-revision-publication/spec.md), [issue #43](https://github.com/SunnyDayDev/xkeen-ui-server/issues/43). Определены принятый снимок шаблона, первое и действующее назначения, серверная проверка точных файлов, пересчёт порядка и атомарность. Реализация остаётся C06/C07, смена действующего шаблона — G01/G02. [Архив C05](../openspec/changes/archive/2026-11-24-define-revision-publication/).
+
 ## 4. Идентификация и синхронизация агента
 
 | ID | Сессия | После | Готово |
