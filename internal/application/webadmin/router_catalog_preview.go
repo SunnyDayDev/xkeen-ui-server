@@ -33,15 +33,21 @@ func (s RouterCatalogPreview) Read(ctx context.Context, token, routerID string, 
 	if err != nil {
 		return nil, err
 	}
-	preview, err := publication.PreviewRouterFiles(inputs, mode)
-	if err != nil {
-		return nil, err
+	preview, assemblyErr := publication.PreviewRouterFiles(inputs, mode)
+	var expected publication.Expectations
+	if assemblyErr != nil {
+		expected, err = publication.RouterPreviewExpectations(inputs, mode)
+		if err != nil {
+			return nil, assemblyErr
+		}
+	} else {
+		expected = preview.Expected
 	}
-	if preview.Expected.RouterID != routerID {
+	if expected.RouterID != routerID {
 		return nil, publication.ErrStoredState
 	}
-	if err := s.store.CheckCatalog(ctx, digest, s.now, mode, preview.Expected); err != nil {
+	if err := s.store.CheckCatalog(ctx, digest, s.now, mode, expected); err != nil {
 		return nil, err
 	}
-	return preview, nil
+	return preview, assemblyErr
 }

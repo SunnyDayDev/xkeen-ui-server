@@ -100,7 +100,7 @@ try {
     sql.prepare('INSERT INTO templates(id, draft, version) VALUES (?,?,?)').run('branch-east', '[]', 2);
     const preparationFixture = [{name:'outbounds',elements:[{disabled:false,record:{
       id:'550e8400-e29b-41d4-a716-446655440000',
-      content:'{"protocol":"${protocol}","tag":"${label}"}',
+      content:'{"protocol":"${protocol}","tag":"${label}","fixturePrecision":9007199254740993}',
       variables:[{name:'protocol',type:'string'},{name:'label',type:'string'},
         {name:'timeoutSeconds',type:'number',default:5}]
     }}]}, {name:'inbounds',elements:[{disabled:true,record:{

@@ -18,39 +18,53 @@ type RouterCatalogPreview struct {
 	Files    []configuration.CatalogFile
 }
 
-// PreviewRouterFiles uses the same accepted input and assembler as publication.
-// No validator or writer is involved. Desired mode copies the persisted bytes.
-func PreviewRouterFiles(inputs *Inputs, mode RouterPreviewMode) (*RouterCatalogPreview, error) {
+// RouterPreviewExpectations describes the inputs used by preview without assembling any files.
+func RouterPreviewExpectations(inputs *Inputs, mode RouterPreviewMode) (Expectations, error) {
 	if inputs == nil || inputs.Active == nil || inputs.Accepted == nil || inputs.Desired == nil {
-		return nil, ErrSourceMissing
+		return Expectations{}, ErrSourceMissing
 	}
 	expected := Expectations{
 		RouterID: inputs.RouterID, TemplateID: inputs.TemplateID, AcceptedVersion: inputs.Accepted.Version,
 		ActiveGeneration: inputs.Active.Generation, DesiredNumber: inputs.Desired.Number,
 	}
-	if !validIdentity(expected.RouterID) || !validIdentity(expected.TemplateID) || expected.ActiveGeneration < 1 ||
-		expected.AcceptedVersion < 1 || expected.DesiredNumber < 1 || !matchesExpectedInputs(inputs, expected) {
-		return nil, ErrStoredState
-	}
 	switch mode {
 	case PreviewDesired:
-		return &RouterCatalogPreview{Mode: mode, Expected: expected, Files: copyCatalogFiles(inputs.Desired.Catalog.Files)}, nil
 	case PreviewPersonal:
 		if !inputs.RouterDraftRequested {
-			return nil, ErrInvalidCommand
+			return Expectations{}, ErrInvalidCommand
 		}
+		var generation int64
+		if saved := inputs.RouterDraft; saved != nil {
+			if saved.Generation < 1 {
+				return Expectations{}, ErrStoredState
+			}
+			generation = saved.Generation
+		}
+		expected.RouterDraftGeneration = &generation
 	default:
-		return nil, ErrInvalidCommand
+		return Expectations{}, ErrInvalidCommand
+	}
+	if !validIdentity(expected.RouterID) || !validIdentity(expected.TemplateID) || expected.ActiveGeneration < 1 ||
+		expected.AcceptedVersion < 1 || expected.DesiredNumber < 1 || !matchesExpectedInputs(inputs, expected) {
+		return Expectations{}, ErrStoredState
+	}
+	return expected, nil
+}
+
+// PreviewRouterFiles uses the same accepted input and assembler as publication.
+// No validator or writer is involved. Desired mode copies the persisted bytes.
+func PreviewRouterFiles(inputs *Inputs, mode RouterPreviewMode) (*RouterCatalogPreview, error) {
+	expected, err := RouterPreviewExpectations(inputs, mode)
+	if err != nil {
+		return nil, err
+	}
+	if mode == PreviewDesired {
+		return &RouterCatalogPreview{Mode: mode, Expected: expected, Files: copyCatalogFiles(inputs.Desired.Catalog.Files)}, nil
 	}
 	draft, basis := inputs.Active.Draft, inputs.Active.OrderBasis
-	var draftGeneration int64
 	if saved := inputs.RouterDraft; saved != nil {
-		if saved.Generation < 1 {
-			return nil, ErrStoredState
-		}
-		draftGeneration, draft, basis = saved.Generation, saved.Draft, EditableRuleOrderBasis(saved, inputs.Active)
+		draft, basis = saved.Draft, EditableRuleOrderBasis(saved, inputs.Active)
 	}
-	expected.RouterDraftGeneration = &draftGeneration
 	if draft.ID != expected.RouterID || draft.TemplateID != expected.TemplateID {
 		return nil, ErrSourceMismatch
 	}

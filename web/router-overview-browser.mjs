@@ -1,3 +1,4 @@
+import { checkRouterCatalog } from './router-catalog-browser.mjs';
 import { checkRouterInbound } from './router-inbound-browser.mjs';
 import { checkRouterRuleOrder } from './router-rule-order-browser.mjs';
 import { checkLocalRule } from './router-local-rule-browser.mjs';
@@ -22,10 +23,17 @@ export async function checkRouterOverview(page,{origin,database,enrolledRouter,r
   await drawer.getByText(enrolledRouter,{exact:true}).waitFor();
   await drawer.getByText('Связь: на связи',{exact:true}).waitFor();
   await drawer.getByText('Применение: нет подтверждения',{exact:true}).waitFor();
+  await checkRouterCatalog(page,enrolledRouter,resetSession,password);
   await checkRouterVariables(page, enrolledRouter, resetSession, password);
   await checkLocalRule(page,enrolledRouter,database);
   await checkRouterRuleOrder(page,enrolledRouter,database,resetSession,password);
   await checkRouterInbound(page,enrolledRouter,database,resetSession,password);
+  await drawer.getByRole('link',{name:'Файлы',exact:true}).press('Enter');
+  await page.getByRole('button',{name:'Собрать предпросмотр',exact:true}).press('Enter');
+  await page.getByText('Не удалось собрать каталог.',{exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Скачать файл',exact:true}).count(),0);
+  await page.getByRole('link',{name:'К роутеру'}).press('Enter');
+  await drawer.getByText(enrolledRouter,{exact:true}).waitFor();
   await drawer.getByRole('button',{name:'Закрыть панель'}).click();
   assert.equal(await selected.evaluate(link=>document.activeElement===link),true);
   await page.goBack();
@@ -73,6 +81,10 @@ export async function checkRouterOverview(page,{origin,database,enrolledRouter,r
     await page.goto(origin+'/ui/routers/variables?routerId='+encodeURIComponent(enrolledRouter));
     await page.getByText('Роутер недоступен в текущем обзоре.',{exact:true}).waitFor();
     assert.equal(await page.getByLabel('Секция Xray').count(),0);
+    await page.goto(origin+'/ui/routers/catalog?routerId='+encodeURIComponent(enrolledRouter));
+    await page.getByRole('button',{name:'Действующие файлы',exact:true}).press('Enter');
+    await page.getByText('Роутер недоступен в текущем обзоре.',{exact:true}).waitFor();
+    assert.equal(await page.getByRole('button',{name:'Скачать файл',exact:true}).count(),0);
     await page.getByRole('link',{name:'К роутеру'}).click();
     await drawer.getByText('Роутер недоступен в текущем списке.',{exact:true}).waitFor();
 
