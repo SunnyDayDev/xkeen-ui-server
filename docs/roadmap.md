@@ -109,11 +109,13 @@
 
 **Результат C05:** [контракт принятия желаемых ревизий](../openspec/specs/configuration-revision-publication/spec.md), [issue #43](https://github.com/SunnyDayDev/xkeen-ui-server/issues/43). Определены принятый снимок шаблона, первое и действующее назначения, серверная проверка точных файлов, пересчёт порядка и атомарность. Реализация остаётся C06/C07, смена действующего шаблона — G01/G02. [Архив C05](../openspec/changes/archive/2026-11-24-define-revision-publication/).
 
-**Поставки C06:** [подготовка кандидата C06.1](https://github.com/SunnyDayDev/xkeen-ui-server/issues/50), [изолированная проверка Xray C06.2](https://github.com/SunnyDayDev/xkeen-ui-server/issues/51), [согласованное чтение и атомарная фиксация C06.3](https://github.com/SunnyDayDev/xkeen-ui-server/issues/52), затем внутренняя операция публикации C06.4.
+**Поставки C06:** [подготовка кандидата C06.1](https://github.com/SunnyDayDev/xkeen-ui-server/issues/50), [изолированная проверка Xray C06.2](https://github.com/SunnyDayDev/xkeen-ui-server/issues/51), [согласованное чтение и атомарная фиксация C06.3](https://github.com/SunnyDayDev/xkeen-ui-server/issues/52), [внутренняя операция публикации C06.4](https://github.com/SunnyDayDev/xkeen-ui-server/issues/54).
 
 **Результат C06.1:** [подготовка каталога одного роутера](configuration-model.md#реализованный-шаг-c061) из полных снимков и известного основания порядка. Проверены пустые и смешанные группы, отключения, пересчёт и безопасные ошибки. [Отчёт о проверке](../openspec/changes/archive/2026-11-24-prepare-router-publication-candidate/verification.md).
 
 **Результат C06.2.** [Изолированная проверка каталога](catalog-validator.md) поддерживает локальный Unix socket и явно настроенный доверенный исполнитель с mTLS. Положительный и отрицательный каталоги проверены реальным Xray, а клиент Entware aarch64 прошёл проверку с синтетической парой удостоверений.
+
+**Результат C06.** [Публикация одного роутера](configuration-model.md#реализованный-шаг-c064) подготавливает каталог, проверяет его изолированным Xray и атомарно фиксирует принятые настройки с желаемой ревизией. Реальный Xray и два SQLite-соединения проверены в одном сценарии. [Отчёт о проверке](../openspec/changes/archive/2026-11-24-publish-single-router-revision/verification.md).
 
 ## 4. Идентификация и синхронизация агента
 
