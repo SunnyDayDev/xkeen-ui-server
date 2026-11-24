@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"os"
 	"os/signal"
@@ -81,10 +82,12 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 	}
 	handler := server.NewHandler()
 	publications := sqlite.NewPublications(db)
+	var notifyCredentialChange func(string)
 	if tlsConfig != nil {
 		listener = tls.NewListener(listener, tlsConfig)
 		watch := revisionwatch.New(ctx, publications, 25*time.Second, 128)
 		publications = sqlite.NewPublications(db, watch.Notify)
+		notifyCredentialChange = watch.Notify
 		credentials := agentcredentials.NewService(sqlite.NewAgentCredentials(db, watch.Notify), time.Now)
 		handler = server.NewAgentHandler(credentials, publications, sqlite.NewContacts(db, time.Now), watch)
 	}
@@ -94,8 +97,13 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 		handler = server.NewWebShellHandler(cfg.webOrigin, handler)
 		preparation := webadmin.NewRouterPreparation(sqlite.NewWebRouterPreparation(publications), validator, time.Now)
 		handler = server.NewWebRouterPreparationHandler(ctx, cfg.webOrigin, preparation, sessions, handler)
-		enrollment := webadmin.NewRouterEnrollment(sqlite.NewWebRouterEnrollment(db), time.Now)
+		enrollmentStore := sqlite.NewWebRouterEnrollment(db, notifyCredentialChange)
+		enrollment := webadmin.NewRouterEnrollment(enrollmentStore, time.Now)
 		handler = server.NewWebRouterEnrollmentHandler(cfg.webOrigin, cfg.agentOrigin, enrollment, sessions, handler)
+		keyAudit := slog.New(slog.NewJSONHandler(stderr, nil))
+		handler = server.NewWebAgentKeysHandler(cfg.webOrigin, cfg.agentOrigin, webadmin.NewAgentKeys(enrollmentStore, time.Now), sessions, func(action webadmin.AgentKeyAction, id string) {
+			keyAudit.Info("agent credential action", "action", string(action), "routerId", id, "outcome", "committed")
+		}, handler)
 		overview := webadmin.NewRouterOverview(sqlite.NewWebRouterStatus(db), time.Now)
 		handler = server.NewWebRouterStatusHandler(cfg.webOrigin, overview, handler)
 		routerDrafts := sqlite.NewWebRouterDrafts(db)

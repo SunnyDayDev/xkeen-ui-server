@@ -7,9 +7,10 @@
   };
   type Props = {
     selectedId: string; openRouter: (event: MouseEvent, path: string) => void;
+    openEnrollment: (event: MouseEvent, path: string) => void;
     closeRouter: () => void; openVariables: (event: MouseEvent, path: string) => void; signedOut: () => void;
   };
-  let {selectedId, openRouter, closeRouter, openVariables, signedOut}: Props = $props();
+  let {selectedId, openRouter, openEnrollment, closeRouter, openVariables, signedOut}: Props = $props();
 
   let rows = $state<Router[]>();
   let failed = $state(false);
@@ -123,10 +124,12 @@
       <button type="button" class="secondary" onclick={close}>Закрыть панель</button>
       {#if detail}
         {@const path = '/ui/routers/variables?' + new URLSearchParams({routerId:detail.routerId})}
+        {@const keys = '/ui/routers/enroll?' + new URLSearchParams({routerId: detail.routerId})}
         <p>ID: <bdi>{detail.routerId}</bdi></p>
         <p>Шаблон: <bdi>{detail.templateId}</bdi></p>
         {@render status(detail)}
         <a href={path} onclick={(event) => openVariables(event,path)}>Переменные</a>
+        <a href={keys} onclick={event => openEnrollment(event,keys)}>Рабочий ключ</a>
       {/if}
     </aside>
   {/if}

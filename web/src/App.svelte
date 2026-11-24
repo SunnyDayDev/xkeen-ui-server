@@ -268,6 +268,7 @@
             <RouterOverview selectedId={routerID}
               openRouter={(event,path) => navigate(event,path,'overview')} closeRouter={closeRouterDetail}
               openVariables={(event,path) => navigate(event,path,'router-variables')}
+              openEnrollment={(event,path) => navigate(event,path,'router-enroll')}
               signedOut={() => { void endAccess('signed_out'); }} />
           {/key}
         {/if}

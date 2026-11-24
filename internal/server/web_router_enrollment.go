@@ -87,19 +87,21 @@ func NewWebRouterEnrollmentHandler(origin, agentOrigin WebOrigin, service webRou
 func writeWebEnrollmentState(w http.ResponseWriter, origin WebOrigin, state webadmin.EnrollmentState) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(struct {
-		RouterID string    `json:"routerId"`
-		Name     string    `json:"name"`
-		Origin   WebOrigin `json:"origin"`
-		Phase    string    `json:"phase"`
-		Epoch    string    `json:"epoch"`
-		Desired  string    `json:"desiredRevision"`
-		Expires  time.Time `json:"expires,omitzero"`
-		Contact  string    `json:"contact"`
-		Applied  string    `json:"appliedRevision,omitempty"`
-		Runtime  string    `json:"runtime,omitempty"`
+		RouterID           string    `json:"routerId"`
+		Name               string    `json:"name"`
+		Origin             WebOrigin `json:"origin"`
+		Phase              string    `json:"phase"`
+		Epoch              string    `json:"epoch"`
+		Desired            string    `json:"desiredRevision"`
+		Expires            time.Time `json:"expires,omitzero"`
+		ReplacementExpires time.Time `json:"replacementExpires,omitzero"`
+		ReplacementPending bool      `json:"replacementPending,omitempty"`
+		Contact            string    `json:"contact"`
+		Applied            string    `json:"appliedRevision,omitempty"`
+		Runtime            string    `json:"runtime,omitempty"`
 	}{
 		RouterID: state.RouterID, Name: state.Name, Origin: origin, Phase: state.Phase,
-		Epoch: strconv.FormatInt(state.Epoch, 10), Desired: strconv.FormatInt(state.Desired, 10), Expires: state.Expires,
+		Epoch: strconv.FormatInt(state.Epoch, 10), Desired: strconv.FormatInt(state.Desired, 10), Expires: state.Expires, ReplacementExpires: state.ReplacementExpires, ReplacementPending: state.ReplacementPending,
 		Contact: state.Contact, Applied: optionalWebRevision(state.Applied), Runtime: state.Runtime,
 	})
 }
