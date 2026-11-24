@@ -154,12 +154,16 @@ func (w *RestartWorking) StartCommitted(ctx context.Context, journal restart.Jou
 	case err != nil:
 		return err
 	case record.Pending != nil:
+		if record.Pending.Rollback != nil && record.Pending.Rollback.State == restart.RollbackFailed {
+			return restart.ErrRollbackFailed
+		}
 		return restart.ErrPending
-	case record.Current == nil:
+	}
+	current := record.Working()
+	if current == nil {
 		_, err := w.Observe(ctx, nil)
 		return err
 	}
-	current := record.Current
 	if observed, err := w.Observe(ctx, current); err == nil && reflect.DeepEqual(observed, current.Baseline) {
 		return nil
 	}
@@ -176,7 +180,11 @@ func (w *RestartWorking) StartCommitted(ctx context.Context, journal restart.Jou
 	if err != nil {
 		return err
 	}
-	current.Baseline = observed
+	if record.Current != nil {
+		current.Baseline = observed
+	} else {
+		record.LocalBaseline = &observed
+	}
 	return journal.Save(record)
 }
 
@@ -252,10 +260,16 @@ func (w *RestartWorking) matchesReceiptDirectory(rt preparation.Runtime) bool {
 }
 
 func (w *RestartWorking) scopeHasLiveProcess() bool {
+	ids, err := w.scopedProcessIDs()
+	return err != nil || len(ids) != 0
+}
+
+func (w *RestartWorking) scopedProcessIDs() ([]int, error) {
 	entries, err := os.ReadDir("/proc")
 	if err != nil {
-		return true
+		return nil, err
 	}
+	var ids []int
 	for _, entry := range entries {
 		pid, err := strconv.Atoi(entry.Name())
 		if err != nil || pid < 1 {
@@ -266,17 +280,19 @@ func (w *RestartWorking) scopeHasLiveProcess() bool {
 			continue
 		}
 		args := strings.Split(strings.TrimSuffix(string(raw), "\x00"), "\x00")
+		claimed := false
 		for _, arg := range args[1:] {
 			if arg == w.initial.Directory || arg == "-confdir="+w.initial.Directory || arg == "--confdir="+w.initial.Directory {
-				return true
+				claimed = true
+				break
 			}
 		}
 		env, err := readStaged(procPath(pid, "environ"), 64<<10)
-		if err == nil && workingArguments(args[1:], env, w.initial.Directory) {
-			return true
+		if claimed || (err == nil && workingArguments(args[1:], env, w.initial.Directory)) {
+			ids = append(ids, pid)
 		}
 	}
-	return false
+	return ids, nil
 }
 
 func (w *RestartWorking) workingBinary() (*os.File, error) {

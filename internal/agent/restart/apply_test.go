@@ -24,7 +24,7 @@ func TestApplyGuardsIntentAndPromotesExactlyOnce(t *testing.T) {
 		{name: "forged initial tag", configure: func(f *applyFixture) { f.proposed += "forged" }, want: ErrDesired},
 		{name: "invalid working set", configure: func(f *applyFixture) { f.observeErr = ErrBaseline }, want: ErrBaseline},
 		{name: "failed intent", configure: func(f *applyFixture) { f.failIntent = true }, want: ErrJournal, effects: []string{"intent"}},
-		{name: "failed install", configure: func(f *applyFixture) { f.installErr = errors.New("fixture") }, want: ErrEffects, effects: []string{"intent", "install"}},
+		{name: "failed install", configure: func(f *applyFixture) { f.installErr = errors.New("fixture") }, want: ErrRollbackFailed, effects: []string{"intent", "install"}},
 		{name: "failed commit", configure: func(f *applyFixture) { f.failCommit = true }, want: ErrJournal, effects: []string{"intent", "install", "commit"}},
 		{name: "pending", configure: func(f *applyFixture) { f.record.Pending = &Intent{} }, want: ErrPending},
 		{name: "replay", configure: func(f *applyFixture) {
@@ -97,7 +97,7 @@ func (f *applyFixture) Load() (Record, error) { return f.record, nil }
 
 func (f *applyFixture) Save(record Record) error {
 	if record.Pending != nil {
-		if record.Pending.Phase == Planned {
+		if record.Pending.Phase == Planned && record.Pending.Rollback == nil {
 			f.effects = append(f.effects, "intent")
 		}
 		if f.failIntent {
@@ -163,7 +163,7 @@ func TestCancellationBeforeAndAfterIntent(t *testing.T) {
 		f.installErr = context.Canceled
 		svc := New(f.scope, f, f, f, f)
 		_, err := svc.Apply(ctx, "synthetic", f.proposed)
-		if err != ErrEffects || !slices.Equal(f.effects, []string{"intent", "install"}) ||
+		if err != ErrRollbackFailed || !slices.Equal(f.effects, []string{"intent", "install"}) ||
 			f.record.Pending == nil || f.record.Current != nil {
 			t.Fatal("cancellation after intent did not retain the evidence", err)
 		}
@@ -181,4 +181,8 @@ func TestVerifiedIdenticalNewRevisionPreservesProcess(t *testing.T) {
 	if err != nil || got.Number != f.first.Snapshot.Number || got.AttemptID == "previous" || got.Baseline.Runtime != f.old.Runtime || !slices.Equal(f.effects, []string{"commit"}) {
 		t.Fatalf("result %v effects %v error %v", got.Number, f.effects, err)
 	}
+}
+
+func (f *applyFixture) Restore(context.Context, Intent, func(preparation.Runtime) error) (preparation.Baseline, error) {
+	return preparation.Baseline{}, ErrEffects
 }
