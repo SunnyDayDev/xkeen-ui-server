@@ -3,8 +3,10 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -50,7 +52,7 @@ func TestOpenAndReopen(t *testing.T) {
 	if got := readText(t, db, "SELECT value FROM sample"); got != "demo.example" {
 		t.Fatalf("stored value = %q", got)
 	}
-	if got := readText(t, db, "SELECT group_concat(version) FROM schema_migrations"); got != "1" {
+	if got := readText(t, db, "SELECT count(*) FROM schema_migrations"); got != fmt.Sprint(len(migrations)) {
 		t.Fatalf("migration history = %q", got)
 	}
 	t.Logf("SQLite %s", readText(t, db, "SELECT sqlite_version()"))
@@ -92,7 +94,7 @@ func TestRejectIncompatibleHistory(t *testing.T) {
 		statements []string
 	}{
 		{"unmanaged objects", []string{"CREATE TABLE legacy (name TEXT)"}},
-		{"newer version", []string{"CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY)", "INSERT INTO schema_migrations VALUES (1), (2)"}},
+		{"newer version", []string{"CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY)", fmt.Sprintf("WITH RECURSIVE versions(v) AS (SELECT 1 UNION ALL SELECT v+1 FROM versions WHERE v < %d) INSERT INTO schema_migrations SELECT v FROM versions", len(migrations)+1)}},
 		{"missing version", []string{"CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY)", "INSERT INTO schema_migrations VALUES (2)"}},
 		{"empty history", []string{"CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY)"}},
 		{"wrong table shape", []string{"CREATE TABLE schema_migrations (version INTEGER)", "INSERT INTO schema_migrations VALUES (1)"}},
@@ -133,12 +135,9 @@ func TestFailedMigrationRollsBack(t *testing.T) {
 	execSQL(t, db, "CREATE TABLE sample (value TEXT NOT NULL)")
 	execSQL(t, db, "INSERT INTO sample VALUES ('demo.example')")
 	started := time.Now()
-	err = migrate(ctx, db, []string{
-		createMigrationHistory,
-		"CREATE TABLE pending (id INTEGER); UPDATE sample SET value = 'discarded.example'; INSERT INTO missing VALUES (1)",
-	})
+	err = migrate(ctx, db, append(slices.Clone(migrations), "CREATE TABLE pending (id INTEGER); UPDATE sample SET value = 'discarded.example'; INSERT INTO missing VALUES (1)"))
 	t.Logf("failed migration with rollback: %s", time.Since(started))
-	if err == nil || !strings.Contains(err.Error(), "version 2") {
+	if err == nil || !strings.Contains(err.Error(), fmt.Sprintf("version %d", len(migrations)+1)) {
 		t.Fatalf("migration error = %v", err)
 	}
 	if err := db.Close(); err != nil {
@@ -152,7 +151,7 @@ func TestFailedMigrationRollsBack(t *testing.T) {
 	if got := readText(t, db, "SELECT value FROM sample"); got != "demo.example" {
 		t.Errorf("stored value = %q", got)
 	}
-	if got := readText(t, db, "SELECT group_concat(version) FROM schema_migrations"); got != "1" {
+	if got := readText(t, db, "SELECT count(*) FROM schema_migrations"); got != fmt.Sprint(len(migrations)) {
 		t.Errorf("migration history = %q", got)
 	}
 	if got := readText(t, db, "SELECT count(*) FROM sqlite_schema WHERE name = 'pending'"); got != "0" {
@@ -185,7 +184,7 @@ func TestConcurrentFirstOpen(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	if got := readText(t, db, "SELECT group_concat(version) FROM schema_migrations"); got != "1" {
+	if got := readText(t, db, "SELECT count(*) FROM schema_migrations"); got != fmt.Sprint(len(migrations)) {
 		t.Errorf("migration history = %q", got)
 	}
 }
@@ -198,12 +197,12 @@ func TestVisibleWriteFailure(t *testing.T) {
 	}
 	defer db.Close()
 	execSQL(t, db, "PRAGMA query_only=ON")
-	err = migrate(ctx, db, []string{createMigrationHistory, "CREATE TABLE pending (id INTEGER)"})
+	err = migrate(ctx, db, append(slices.Clone(migrations), "CREATE TABLE pending (id INTEGER)"))
 	if err == nil || !strings.Contains(err.Error(), "readonly") {
 		t.Fatalf("migration write failure = %v", err)
 	}
 	t.Logf("expected write error: %v", err)
-	if got := readText(t, db, "SELECT group_concat(version) FROM schema_migrations"); got != "1" {
+	if got := readText(t, db, "SELECT count(*) FROM schema_migrations"); got != fmt.Sprint(len(migrations)) {
 		t.Errorf("migration history = %q", got)
 	}
 }

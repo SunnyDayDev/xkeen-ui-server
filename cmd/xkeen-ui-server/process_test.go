@@ -18,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	_ "modernc.org/sqlite"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/storage/sqlite"
 )
 
 var testBinary string
@@ -313,12 +313,13 @@ func TestProcessStorageRestart(t *testing.T) {
 	if _, err := db.Exec("CREATE TABLE probe (value TEXT NOT NULL); INSERT INTO probe VALUES ('demo.example')"); err != nil {
 		t.Fatal(err)
 	}
+	history := storageText(t, db, "SELECT group_concat(version) FROM (SELECT version FROM schema_migrations ORDER BY version)")
 	stop(p)
 	p = launch()
 	if got := storageText(t, db, "SELECT value FROM probe"); got != "demo.example" {
 		t.Errorf("stored value = %q", got)
 	}
-	if got := storageText(t, db, "SELECT group_concat(version) FROM schema_migrations"); got != "1" {
+	if got := storageText(t, db, "SELECT group_concat(version) FROM (SELECT version FROM schema_migrations ORDER BY version)"); got != history {
 		t.Errorf("migration history = %q", got)
 	}
 	stop(p)
@@ -327,15 +328,17 @@ func TestProcessStorageRestart(t *testing.T) {
 func TestProcessStorageFailures(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "newer.sqlite")
-	db, err := sql.Open("sqlite", path)
+	db, err := sqlite.Open(t.Context(), path)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	if _, err := db.Exec("CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY); INSERT INTO schema_migrations VALUES (1), (2)"); err != nil {
+	if _, err := db.Exec("INSERT INTO schema_migrations SELECT max(version) + 1 FROM schema_migrations"); err != nil {
 		t.Fatal(err)
 	}
 
+	version := storageText(t, db, "SELECT max(version) FROM schema_migrations")
+	history := storageText(t, db, "SELECT group_concat(version) FROM (SELECT version FROM schema_migrations ORDER BY version)")
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
@@ -347,14 +350,14 @@ func TestProcessStorageFailures(t *testing.T) {
 		want string
 	}{
 		{dir, "open SQLite"},
-		{path, "migrate SQLite: schema version 2"},
+		{path, "migrate SQLite: schema version " + version},
 	} {
 		_, stderr, code := runBinary(t, "--db-path", test.path, "--listen", listener.Addr().String())
 		if code != 1 || !strings.Contains(stderr, test.want) || strings.Contains(stderr, "listening") {
 			t.Errorf("exit=%d stderr=%q, want storage failure %q before bind", code, stderr, test.want)
 		}
 	}
-	if got := storageText(t, db, "SELECT group_concat(version) FROM schema_migrations"); got != "1,2" {
+	if got := storageText(t, db, "SELECT group_concat(version) FROM (SELECT version FROM schema_migrations ORDER BY version)"); got != history {
 		t.Errorf("migration history changed: %q", got)
 	}
 }
