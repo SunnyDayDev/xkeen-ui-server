@@ -198,3 +198,9 @@ func (p Package) Valid() bool {
 	_, id, err := bindBaseline(p.Scope, p.Baseline)
 	return err == nil && id == p.BaselineID
 }
+
+// BaselineIdentity validates the working evidence and returns its scoped file identity.
+func BaselineIdentity(scope Scope, baseline Baseline) (string, error) {
+	_, id, err := bindBaseline(scope, baseline)
+	return id, err
+}
