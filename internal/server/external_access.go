@@ -9,6 +9,7 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -132,27 +133,36 @@ func ownerExternalSettings(w http.ResponseWriter, r *http.Request, origin WebOri
 			webFailure(w, err)
 			return
 		}
+		var versionText string
 		if rotate {
 			var in struct {
-				Version int64 `json:"version"`
+				Version string `json:"version"`
 			}
-			if !readExternalJSON(w, r, 4096, &in) || in.Version < 1 {
+			if !readExternalJSON(w, r, 4096, &in) {
 				webResult(w, 400, "invalid_request", "")
 				return
 			}
-			change = &externalaccess.Change{Version: in.Version, Rotate: true}
+			versionText = in.Version
+			change = &externalaccess.Change{Rotate: true}
 		} else {
 			var in struct {
-				Version   int64 `json:"version"`
-				Enabled   *bool `json:"enabled"`
-				Protected *bool `json:"protected"`
+				Version   string `json:"version"`
+				Enabled   *bool  `json:"enabled"`
+				Protected *bool  `json:"protected"`
 			}
-			if !readExternalJSON(w, r, 4096, &in) || in.Version < 1 || in.Enabled == nil || in.Protected == nil {
+			if !readExternalJSON(w, r, 4096, &in) || in.Enabled == nil || in.Protected == nil {
 				webResult(w, 400, "invalid_request", "")
 				return
 			}
-			change = &externalaccess.Change{Version: in.Version, Enabled: *in.Enabled, Protected: *in.Protected}
+			versionText = in.Version
+			change = &externalaccess.Change{Enabled: *in.Enabled, Protected: *in.Protected}
 		}
+		version, ok := parseAccessVersion(versionText)
+		if !ok {
+			webResult(w, 400, "invalid_request", "")
+			return
+		}
+		change.Version = version
 	}
 	state, secret, err := store.Owner(r.Context(), digest, change)
 	if err != nil {
@@ -163,9 +173,19 @@ func ownerExternalSettings(w http.ResponseWriter, r *http.Request, origin WebOri
 		}
 		return
 	}
+	writeOwnerSettings(w, state, secret)
+}
+func parseAccessVersion(s string) (int64, bool) {
+	v, err := strconv.ParseInt(s, 10, 64)
+	return v, err == nil && v > 0 && strconv.FormatInt(v, 10) == s
+}
+func writeOwnerSettings(w http.ResponseWriter, state externalaccess.Settings, secret string) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(struct {
-		externalaccess.Settings
-		Token string `json:"token,omitempty"`
-	}{state, secret})
+		Enabled   bool   `json:"enabled"`
+		Protected bool   `json:"protected"`
+		HasToken  bool   `json:"hasToken"`
+		Version   string `json:"version"`
+		Token     string `json:"token,omitempty"`
+	}{state.Enabled, state.Protected, state.HasToken, strconv.FormatInt(state.Version, 10), secret})
 }

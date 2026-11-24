@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
 
   let { csrf, refreshSession }: {csrf: string; refreshSession: () => Promise<void>} = $props();
-  type Settings = {enabled: boolean; protected: boolean; hasToken: boolean; version: number};
+  type Settings = {enabled: boolean; protected: boolean; hasToken: boolean; version: string};
   let state = $state<Settings>();
   let enabled = $state(false);
   let protectedMode = $state(true);
@@ -16,7 +16,7 @@
 
   function valid(v: Settings) {
     return v && typeof v.enabled === 'boolean' && typeof v.protected === 'boolean'
-      && typeof v.hasToken === 'boolean' && Number.isSafeInteger(v.version) && v.version > 0;
+      && typeof v.hasToken === 'boolean' && typeof v.version === 'string' && /^[1-9][0-9]{0,18}$/.test(v.version);
   }
 
   async function request(action: 'read' | 'save' | 'issue') {

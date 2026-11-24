@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -63,5 +64,24 @@ func TestExternalFailureUsesDocumentedErrorEnvelope(t *testing.T) {
 	externalFailure(w, externalaccess.ErrUnauthorized)
 	if !strings.Contains(w.Body.String(), `"code":"unauthorized"`) || w.Header().Get("WWW-Authenticate") != "Bearer" {
 		t.Fatal("management error envelope")
+	}
+}
+
+func TestExternalSettingsVersionHasExactDecimalWireFormat(t *testing.T) {
+	for _, v := range []int64{1, 9007199254740993, 9223372036854775807} {
+		w := httptest.NewRecorder()
+		writeOwnerSettings(w, externalaccess.Settings{Version: v}, "")
+		expected := strconv.FormatInt(v, 10)
+		if !strings.Contains(w.Body.String(), `"version":"`+expected+`"`) {
+			t.Fatal("rounded version")
+		}
+		if got, ok := parseAccessVersion(expected); !ok || got != v {
+			t.Fatal("version roundtrip")
+		}
+	}
+	for _, v := range []string{"", "0", "01", "+1", "-1", "9223372036854775808"} {
+		if _, ok := parseAccessVersion(v); ok {
+			t.Fatal("noncanonical version")
+		}
 	}
 }
