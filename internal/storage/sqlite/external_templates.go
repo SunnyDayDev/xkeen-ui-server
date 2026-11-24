@@ -60,3 +60,15 @@ func (s *ExternalAccess) ReplaceExternalTemplate(ctx context.Context, permit ext
 	}
 	return version, nil
 }
+
+func (s *ExternalAccess) ListExternalTemplates(ctx context.Context, permit externalaccess.Permit) ([]templates.Summary, error) {
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+	if err := requireExternalPermit(ctx, tx, permit); err != nil {
+		return nil, err
+	}
+	return listTemplateSummaries(ctx, tx)
+}

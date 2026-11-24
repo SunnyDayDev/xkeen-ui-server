@@ -25,14 +25,18 @@ func (w WebTemplates) List(ctx context.Context, digest [32]byte, clock func() ti
 	if err := requireActiveWebSession(ctx, tx, activeWebSessionArgs(digest, clock())); err != nil {
 		return nil, err
 	}
+	return listTemplateSummaries(ctx, tx)
+}
+
+func listTemplateSummaries(ctx context.Context, tx *sql.Tx) ([]templates.Summary, error) {
 	rows, err := tx.QueryContext(ctx, "SELECT id, version FROM templates ORDER BY id COLLATE BINARY")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	result := make([]webadmin.TemplateSummary, 0)
+	result := make([]templates.Summary, 0)
 	for rows.Next() {
-		var row webadmin.TemplateSummary
+		var row templates.Summary
 		if err := rows.Scan(&row.ID, &row.Version); err != nil {
 			return nil, err
 		}

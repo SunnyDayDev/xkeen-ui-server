@@ -1,0 +1,21 @@
+{
+  "openapi": "3.1.0",
+  "info": {"title": "XKeen template collection", "version": "1"},
+  "paths": {
+    "/api/v1/templates": {
+      "get": {
+        "operationId": "listTemplates",
+        "security": [{"externalBearer":[]},{}],
+        "responses": {
+          "200":{"description":"Ordered template summaries","content":{"application/json":{"schema":{"type":"object","required":["templates"],"properties":{"templates":{"type":"array","items":{"type":"object","required":["id","version"],"properties":{"id":{"type":"string"},"version":{"type":"string","pattern":"^[1-9][0-9]*$"}},"additionalProperties":false}}},"additionalProperties":false}}}},
+          "400":{"description":"Invalid query"},
+          "401":{"description":"Bearer required"},
+          "404":{"description":"External access disabled"},
+          "405":{"description":"Unsupported method"},
+          "503":{"description":"Unavailable"}
+        }
+      }
+    }
+  },
+  "components":{"securitySchemes":{"externalBearer":{"type":"http","scheme":"bearer"}}}
+}
