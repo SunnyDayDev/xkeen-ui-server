@@ -27,7 +27,11 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	if err := run(ctx, os.Args[1:], os.Stdout); err != nil {
-		fmt.Fprintln(os.Stderr, "local validation is unavailable")
+		if errors.Is(err, restart.ErrRollbackFailed) {
+			fmt.Fprintln(os.Stderr, "local rollback failed; current runtime unknown")
+		} else {
+			fmt.Fprintln(os.Stderr, "local validation is unavailable")
+		}
 		os.Exit(1)
 	}
 }
@@ -39,10 +43,12 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 	applicationConfig := flags.String("application-config", "", "root-owned dedicated application profile")
 	manifestDir := flags.String("working-manifest", "", "record a trusted working directory manifest")
 	process := flags.Int("working-process", 0, "record start tick of a trusted launch")
+	retryRollback := flags.String("retry-rollback", "", "authorize one retry of a known restored attempt")
 	if err := flags.Parse(args); err != nil || flags.NArg() != 0 || os.Geteuid() != 0 {
 		return preparation.ErrUnavailable
 	}
-	if *applicationConfig != "" && (*configPath == "" || *manifestDir != "" || *process != 0) {
+	if (*retryRollback != "" && *applicationConfig == "") ||
+		(*applicationConfig != "" && (*configPath == "" || *manifestDir != "" || *process != 0)) {
 		return preparation.ErrUnavailable
 	}
 	switch {
@@ -79,16 +85,23 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 		if err != nil {
 			return err
 		}
-		central, err := app.OpenCentral(cfg.Scope)
-		if err != nil {
-			return err
-		}
-		defer central.CloseIdleConnections()
 		journal, err := restart.OpenJournal(app.JournalDirectory, cfg.Scope)
 		if err != nil {
 			return err
 		}
 		defer journal.Close()
+		if *retryRollback != "" {
+			if err := restart.AllowRollbackRetry(journal, *retryRollback); err != nil {
+				return err
+			}
+			_, err := fmt.Fprintln(out, "one local retry authorized")
+			return err
+		}
+		central, err := app.OpenCentral(cfg.Scope)
+		if err != nil {
+			return err
+		}
+		defer central.CloseIdleConnections()
 		working, err := localvalidation.NewRestartWorking(cfg, app.RuntimeUID, app.RuntimeGID)
 		if err != nil {
 			return err

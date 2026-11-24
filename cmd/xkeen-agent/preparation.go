@@ -44,6 +44,10 @@ func (p *candidatePreparation) check(ctx context.Context, snapshot *agentrevisio
 		if err := localvalidation.ApplyCurrent(ctx, p.application, scope, p.binding.Key, tag); err != nil {
 			if ctx.Err() == nil {
 				switch {
+				case errors.Is(err, restart.ErrRolledBack):
+					fmt.Fprintln(p.diagnostics, "agent application failed; previous runtime restored")
+				case errors.Is(err, restart.ErrRollbackFailed):
+					fmt.Fprintln(p.diagnostics, "agent rollback failed; current runtime unknown")
 				case errors.Is(err, restart.ErrPending), errors.Is(err, restart.ErrDesired), errors.Is(err, restart.ErrBaseline),
 					errors.Is(err, preparation.ErrRejected), errors.Is(err, restart.ErrJournal), errors.Is(err, restart.ErrEffects):
 					fmt.Fprintln(p.diagnostics, err)

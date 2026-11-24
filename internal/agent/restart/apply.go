@@ -67,8 +67,9 @@ type Record struct {
 	Pending       *Intent
 }
 
-// Working returns the latest verified local baseline, including an initial
-// generation restored by rollback that has never been applied from the server.
+// Working returns the recorded baseline authority, including a restored local
+// initial generation. A pending attempt may make this history diverge from the
+// actual runtime. Callers must honor the pending barrier and reverify.
 func (r Record) Working() *Confirmed {
 	if r.Current != nil {
 		return r.Current

@@ -31,6 +31,7 @@ type RollbackResult struct {
 	TargetNumber  int64
 	FailedPhase   Phase
 	RetryApproved bool
+	Replayed      bool `json:"-"`
 }
 
 type Restorer interface {
@@ -48,8 +49,10 @@ func RestorePending(ctx context.Context, journal Journal, working Restorer, expe
 	if err != nil {
 		return RollbackResult{}, ErrJournal
 	}
-	if record.LastRollback != nil && record.LastRollback.AttemptID == expectedID {
-		return *record.LastRollback, nil
+	if record.Pending == nil && record.LastRollback != nil && record.LastRollback.AttemptID == expectedID {
+		history := *record.LastRollback
+		history.Replayed = true
+		return history, nil
 	}
 	if record.Pending == nil || !validAttemptID(expectedID) || record.Pending.AttemptID != expectedID {
 		return RollbackResult{}, ErrPending
@@ -80,6 +83,9 @@ func RestorePending(ctx context.Context, journal Journal, working Restorer, expe
 		pending = next
 		return nil
 	})
+	if errors.Is(ctx.Err(), context.Canceled) {
+		return RollbackResult{}, context.Canceled
+	}
 	if errors.Is(err, ErrJournal) {
 		// In particular, do not overwrite state that became visible after a
 		// failed sync. Recovery must reopen and resolve that evidence.

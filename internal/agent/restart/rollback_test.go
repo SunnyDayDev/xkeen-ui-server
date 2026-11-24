@@ -53,6 +53,7 @@ func TestRestoreUsesDurableIntentAndPreservesLocalBaseline(t *testing.T) {
 		f.record.Current != nil || f.record.LocalBaseline == nil || f.record.LocalBaseline.Runtime.PID != 33 {
 		t.Fatalf("initial rollback = %v, %v", got, err)
 	}
+	got.Replayed = true
 	if again, err := RestorePending(t.Context(), f, f, id); err != nil || again != got || f.calls != 1 {
 		t.Fatalf("rollback replay = %v, %v, effects=%d", again, err, f.calls)
 	}
@@ -139,5 +140,48 @@ func TestRollbackRecordsReopenWithWholeProtectedAuthority(t *testing.T) {
 	if saved, err := reopened.Load(); err != nil || saved.Pending != nil || saved.Current != nil ||
 		saved.Working() == nil || saved.Working().Baseline.Runtime.PID != 33 || saved.LastRollback.AttemptID != id {
 		t.Fatalf("reopened terminal local proof = %v", err)
+	}
+}
+
+func TestRestoreDoesNotConfuseHistoricalOutcomeWithNewPending(t *testing.T) {
+	f := pendingFixture(t)
+	id := f.record.Pending.AttemptID
+	got, err := RestorePending(t.Context(), f, f, id)
+	if err != nil || got.AttemptID != id {
+		t.Fatal(err)
+	}
+	f.record.Pending = &Intent{AttemptID: "02020202020202020202020202020202"}
+	if result, err := RestorePending(t.Context(), f, f, id); result != (RollbackResult{}) || !errors.Is(err, ErrPending) || f.calls != 1 {
+		t.Fatal("historical success was returned for a different pending attempt", err)
+	}
+}
+
+func TestExplicitCancellationLeavesInProgressRollbackResumable(t *testing.T) {
+	f := pendingFixture(t)
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	f.restoreErr = context.Canceled
+	f.restoreHook = func(context.Context, Intent) { cancel() }
+	id := f.record.Pending.AttemptID
+	if _, err := RestorePending(ctx, f, f, id); !errors.Is(err, context.Canceled) ||
+		f.record.Pending.Rollback.State != RollbackActive {
+		t.Fatalf("interrupted rollback became terminal: %v", err)
+	}
+	f.restoreErr = nil
+	f.restoreHook = nil
+	if _, err := RestorePending(t.Context(), f, f, id); err != nil {
+		t.Fatalf("startup could not resume the same attempt: %v", err)
+	}
+}
+
+func TestRollbackFinalJournalFailureDoesNotClaimRestoredRuntime(t *testing.T) {
+	f := pendingFixture(t)
+	id := f.record.Pending.AttemptID
+	f.failCommit = true
+	result, err := RestorePending(t.Context(), f, f, id)
+	if result != (RollbackResult{}) || !errors.Is(err, ErrJournal) ||
+		f.record.LastRollback != nil || f.record.LocalBaseline != nil || f.record.Pending == nil ||
+		f.record.Pending.Rollback.State != RollbackActive || f.record.Pending.Rollback.Started == nil {
+		t.Fatalf("ambiguous terminal write claimed a restored result: %v, %v", result, err)
 	}
 }
