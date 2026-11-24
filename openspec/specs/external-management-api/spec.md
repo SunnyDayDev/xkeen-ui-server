@@ -184,3 +184,17 @@ The service SHALL accept a conditional PATCH of one existing element's ordered d
 #### Scenario: Refused mutation
 - **WHEN** the permit is revoked or its generation changes before commit, the ETag is stale, the element is absent, or the ordered names differ
 - **THEN** the operation preserves the existing draft and reports the corresponding access, precondition, missing-resource or invalid-definition error
+
+### Requirement: An external client reads evidence for one router revision
+
+HTTPS GET SHALL возвращать только сохранённое безопасное свидетельство для точной пары роутер и ревизия.
+
+#### Scenario: An exact allowed request succeeds
+
+- **WHEN** запрошенная ревизия существует и имеет доказательство D06/E08
+- **THEN** ответ отделяет контакт, историю applied, результат и состояние runtime
+
+#### Scenario: Evidence or authority is unavailable
+
+- **WHEN** свидетельство отсутствует или текущий runtime неопределён
+- **THEN** ответ сообщает unknown для недоказанного результата и не выводит success из номера desired
