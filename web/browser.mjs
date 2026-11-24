@@ -1,3 +1,4 @@
+import { checkTemplateEditor } from './template-editor-browser.mjs';
 import { checkExternalAccess } from './external-access-browser.mjs';
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
@@ -238,6 +239,18 @@ try {
   });
   assert.equal(await templateID.inputValue(), 'before-session-rotation');
   assert.equal(await page.getByText('Шаблон создан:',{exact:false}).count(),0);
+  await checkTemplateEditor(page, exactID, first, () => admin("reset", first), (id, sibling) => {
+    const db = new DatabaseSync(database);
+    try {
+      const row = db.prepare('SELECT draft FROM templates WHERE id = ?').get(id);
+      const draft = JSON.parse(new TextDecoder().decode(row.draft));
+      draft[0].elements.push({disabled:false,record:{id:sibling,content:'{"tag":"sibling.example"}',variables:[]}});
+      db.prepare('UPDATE templates SET draft = ?, version = version + 1 WHERE id = ?').run(
+        new TextEncoder().encode(JSON.stringify(draft)), id);
+    } finally {
+      db.close();
+    }
+  }, process.env.XKEEN_BROWSER_SCREENSHOT);
   await page.getByRole('link',{name:'Обзор'}).click();
 
   await page.evaluate(() => {
@@ -279,7 +292,7 @@ try {
     await page.locator('form[aria-busy="false"]').waitFor();
   }
   await page.getByText('Слишком много попыток входа. Повторите позже.').waitFor();
-  console.log('F04–F06 real HTTPS browser scenarios passed');
+  console.log('F04–F07 real HTTPS browser scenarios passed');
 } finally {
   if (browser) await browser.close();
   if (server && server.exitCode === null) {

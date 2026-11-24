@@ -75,6 +75,16 @@ func (s *Service) Session(ctx context.Context, token, proof string, action Sessi
 	return csrf, nil
 }
 
+// CheckMutation rejects invalid authorization before reading a request body.
+// Callers still check the session again in the transaction that makes the change.
+func (s *Service) CheckMutation(ctx context.Context, token, proof string) error {
+	digest, _, err := SessionProof(token, proof, true)
+	if err != nil {
+		return err
+	}
+	return s.store.Session(ctx, digest, s.now, SessionRead)
+}
+
 // SessionProof derives the session digest and verifies the CSRF proof for a
 // mutation. The store checks liveness and expiry inside the operation transaction.
 func SessionProof(token, proof string, mutation bool) ([32]byte, string, error) {

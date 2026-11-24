@@ -5,15 +5,18 @@
 
   import TemplateList from './TemplateList.svelte';
   import TemplateCreate from './TemplateCreate.svelte';
+  import TemplateEditor from './TemplateEditor.svelte';
 
-  type Section = 'overview' | 'templates' | 'settings';
+  type Section = 'overview' | 'templates' | 'settings' | 'template-editor';
 
   function sectionForPath(): Section {
+    if (location.pathname === '/ui/templates/item') return 'template-editor';
     if (location.pathname === '/ui/settings') return 'settings';
     return location.pathname === '/ui/templates' ? 'templates' : 'overview';
   }
 
   let section = $state<Section>(sectionForPath());
+  let editorID = $state(new URLSearchParams(location.search).get('templateId') ?? '');
 
   let view = $state<'initial' | 'setup_required' | 'signed_out' | 'active' | 'unavailable'>('initial');
   let message = $state('');
@@ -46,7 +49,8 @@
   function navigate(event: MouseEvent, path: string, destination: Section) {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
-    if (location.pathname !== path) history.pushState({}, '', path);
+    if (location.pathname + location.search !== path) history.pushState({}, '', path);
+    editorID = new URLSearchParams(location.search).get('templateId') ?? '';
     section = destination;
     void focusWorkspace();
   }
@@ -154,6 +158,7 @@
     const check = () => { void refresh(); };
     const locationChanged = () => {
       section = sectionForPath();
+      editorID = new URLSearchParams(location.search).get('templateId') ?? '';
       if (view === 'active') void focusWorkspace();
     };
     window.addEventListener('popstate', locationChanged);
@@ -177,7 +182,7 @@
       <nav aria-label="Основная навигация">
         <a href="/ui/" aria-current={section === 'overview' ? 'page' : undefined}
           onclick={(event) => navigate(event, '/ui/', 'overview')}>Обзор</a>
-        <a href="/ui/templates" aria-current={section === 'templates' ? 'page' : undefined}
+        <a href="/ui/templates" aria-current={section === 'templates' || section === 'template-editor' ? 'page' : undefined}
           onclick={(event) => navigate(event, '/ui/templates', 'templates')}>Шаблоны</a>
         <a href="/ui/settings" aria-current={section === 'settings' ? 'page' : undefined}
           onclick={(event) => navigate(event, '/ui/settings', 'settings')}>Настройки</a>
@@ -190,7 +195,12 @@
           changed={() => { templateRevision++; }} signedOut={() => { void endAccess('signed_out'); }}
           refreshSession={() => { void refresh(); }} />
         <TemplateList active={view === 'active'} refreshKey={templateRevision}
-          signedOut={() => { void endAccess('signed_out'); }} />
+          signedOut={() => { void endAccess('signed_out'); }}
+          openTemplate={(event, path) => navigate(event, path, 'template-editor')} />
+      {:else if section === 'template-editor'}
+        {#key editorID}<TemplateEditor id={editorID} active={view === 'active'} sessionEpoch={mutation} {csrf}
+          changed={() => { templateRevision++; }} signedOut={() => { void endAccess('signed_out'); }}
+          refreshSession={() => { void refresh(); }} />{/key}
       {:else if section === 'settings'}
         {#if view === 'active'}{#key csrf}<ExternalSettings {csrf} refreshSession={refresh} />{/key}{/if}
       {:else}
