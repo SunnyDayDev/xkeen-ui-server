@@ -180,6 +180,8 @@
     } else if (reply?.status === 422 && state === 'invalid_input') {
       fieldError = reply.body;
       message = reply.body.code === 'missing_value' ? 'Заполните обязательное значение.' : 'Проверьте значение и его тип.';
+    } else if (reply?.status === 422 && state === 'bypass_unavailable') {
+      message = 'Обход для указанных адресов обеспечить нельзя.';
     } else if (reply?.status === 422 && state === 'catalog_rejected') {
       message = 'Xray отклонил конфигурацию. Проверьте значения шаблона.';
     } else if (reply?.status === 422 && state === 'configuration_invalid') {

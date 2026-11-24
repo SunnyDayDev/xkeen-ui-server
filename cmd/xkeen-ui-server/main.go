@@ -114,6 +114,7 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 		handler = server.NewWebTemplatesHandler(cfg.webOrigin, webadmin.NewTemplates(webStore, time.Now), handler)
 		handler = server.NewWebTemplateCopyHandler(cfg.webOrigin, webadmin.NewTemplateCopy(webStore, time.Now), sessions, handler)
 		handler = server.NewWebTemplateEditorHandler(cfg.webOrigin, webadmin.NewTemplateEditor(webStore, time.Now), sessions, handler)
+		handler = server.NewWebExclusionsHandler(cfg.webOrigin, webStore, sessions, handler)
 		handler = server.NewWebAdminHandler(cfg.webOrigin, sessions, handler)
 	}
 	external := sqlite.NewExternalAccess(db, time.Now)

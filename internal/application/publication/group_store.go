@@ -14,6 +14,7 @@ type TemplateGroupStore interface {
 }
 
 type TemplateGroupInputs struct {
+	Exclusions    *configuration.ExclusionSource
 	TemplateDraft *templates.Snapshot
 	Accepted      *templates.Snapshot
 	Members       []TemplateGroupMember

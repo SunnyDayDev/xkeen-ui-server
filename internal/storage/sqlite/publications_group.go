@@ -54,6 +54,10 @@ func (p *Publications) ReadTemplateGroup(ctx context.Context, id string) (*publi
 		Accepted:      accepted,
 		Members:       make([]publication.TemplateGroupMember, 0, len(ids)),
 	}
+	inputs.Exclusions, err = publicationExclusions(ctx, tx, id, nil)
+	if err != nil {
+		return nil, err
+	}
 	for _, routerID := range ids {
 		active, err := readActivePublication(ctx, tx, routerID)
 		if err != nil {

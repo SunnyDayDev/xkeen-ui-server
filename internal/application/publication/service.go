@@ -98,6 +98,9 @@ func (s *Service) Publish(ctx context.Context, request PublishRequest) (*Publish
 	if request.Mode == ConfirmInitial {
 		shared = inputs.TemplateDraft
 	}
+	if err := checkXrayOnlyExclusions(inputs.Exclusions); err != nil {
+		return nil, err
+	}
 	settings, basis, err := selectPersonalSource(request, inputs)
 	if err != nil {
 		return nil, err
@@ -276,4 +279,16 @@ func safeStoreError(err, fallback error) error {
 		}
 	}
 	return fallback
+}
+
+// The installed revision protocol currently attests Xray only.
+func checkXrayOnlyExclusions(source *configuration.ExclusionSource) error {
+	file, issue := configuration.AssembleXKeenExclusions(source, nil, nil)
+	if issue != nil {
+		return ErrInvalidCandidate
+	}
+	if file != nil && len(file.Content) > 0 {
+		return ErrBypassUnavailable
+	}
+	return nil
 }

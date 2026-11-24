@@ -325,6 +325,7 @@
   <button onclick={() => load()}>Повторить</button>
 {:else if current}
   {#if !appending}<button type="button" class="secondary copy-template" disabled={!active || busy} onclick={beginCopy}>Копировать шаблон</button>{/if}
+  <a href={'/ui/templates/exclusions?'+new URLSearchParams({templateId:id})}>Исключения XKeen</a>
   <form onsubmit={save} aria-busy={busy}>
     <div class="editor-coordinates">
       <label>Секция Xray

@@ -88,6 +88,16 @@ func (p *Publications) read(ctx context.Context, request publication.ReadRequest
 				return nil, err
 			}
 		}
+		if request.IncludeTemplateDraft || inputs.Accepted != nil {
+			var version *int64
+			if !request.IncludeTemplateDraft {
+				version = &inputs.Accepted.Version
+			}
+			inputs.Exclusions, err = publicationExclusions(ctx, tx, templateID, version)
+			if err != nil {
+				return nil, err
+			}
+		}
 	} else if request.IncludeTemplateDraft {
 		return nil, publication.ErrInvalidState
 	}
