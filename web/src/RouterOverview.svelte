@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
   import RouterHide from './RouterHide.svelte';
+  import RouterName from './RouterName.svelte';
 
   type Router = {
     routerId: string; name: string; templateId: string; contact: 'online' | 'offline';
@@ -8,13 +9,15 @@
   };
   type Props = {
     selectedId: string; csrf: string; unconfirmedHide: Set<string>; setUnconfirmedHide: (id: string, pending: boolean) => void;
+    nameDrafts: Map<string,{text: string; unknown: boolean}>;
+    retainName: (id: string, value?: {text: string; unknown: boolean}) => void;
     refreshSession: () => void; openRouter: (event: MouseEvent, path: string) => void;
     openInbounds: (event: MouseEvent, path: string) => void;
     openCatalog: (event: MouseEvent, path: string) => void;
     openEnrollment: (event: MouseEvent, path: string) => void;
     closeRouter: () => void; openVariables: (event: MouseEvent, path: string) => void; openRules: (event: MouseEvent, path: string) => void; signedOut: () => void;
   };
-  let {selectedId, csrf, unconfirmedHide, setUnconfirmedHide, refreshSession, openRouter, openEnrollment, closeRouter, openVariables, openRules, openInbounds, openCatalog, signedOut}: Props = $props();
+  let {selectedId, csrf, unconfirmedHide, setUnconfirmedHide, nameDrafts, retainName, refreshSession, openRouter, openEnrollment, closeRouter, openVariables, openRules, openInbounds, openCatalog, signedOut}: Props = $props();
 
   let rows = $state<Router[]>();
   let failed = $state(false);
@@ -66,6 +69,13 @@
     closeRouter();
     await tick();
     focusTarget?.focus();
+    void load(true);
+  }
+
+  function applyName(id: string, name: string) {
+    rows = rows?.map(item => item.routerId === id ? {...item,name} : item);
+    pending?.abort();
+    pending = undefined;
     void load(true);
   }
 
@@ -164,6 +174,14 @@
           unconfirmed={unconfirmedHide.has(actionID)} setUnconfirmed={pending => setUnconfirmedHide(actionID,pending)}
           onHidden={closeHidden} refreshList={() => {void load(true);}} {signedOut} {refreshSession} />
       {/key}
+      {#if detail}
+        {#key detail.routerId}
+          {@const nameID = detail.routerId}
+          <RouterName id={nameID} {csrf} retained={nameDrafts.get(nameID)}
+            retain={value => retainName(nameID,value)} onSaved={name => applyName(nameID,name)}
+            {signedOut} {refreshSession} />
+        {/key}
+      {/if}
     </aside>
   {/if}
 </div>

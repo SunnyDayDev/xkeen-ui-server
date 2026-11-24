@@ -450,6 +450,60 @@ func TestProcessWebRouterEnrollment(t *testing.T) {
 	if raw := agentRequest(http.MethodGet, contact, recovered, "", 200); !bytes.Contains(raw, []byte(`"sequence":"7"`)) {
 		t.Fatal("recovered key lost report cursor")
 	}
+	const namePath = "/ui/v1/routers/name?routerId=router-example"
+	nameRequest := func(name string, snapshot []byte) []byte {
+		t.Helper()
+		var basis struct{ ActiveGeneration, Version string }
+		if json.Unmarshal(snapshot, &basis) != nil || basis.ActiveGeneration == "" || basis.Version == "" {
+			t.Fatal("missing name scope")
+		}
+		raw, err := json.Marshal(map[string]string{"activeGeneration": basis.ActiveGeneration, "version": basis.Version, "name": name})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return raw
+	}
+	configuration := func() []byte {
+		t.Helper()
+		var raw []byte
+		if err := db.QueryRowContext(t.Context(), "SELECT settings FROM active_router_publications WHERE router_id='router-example'").Scan(&raw); err != nil {
+			t.Fatal(err)
+		}
+		return raw
+	}
+	activeBefore := configuration()
+	originalName, _ := request(http.MethodGet, namePath, nil, 200)
+	request(http.MethodPost, namePath, nameRequest(" ", originalName), 400)
+	const renamed = "  Лабораторный роутер  "
+	renamedWire, _ := request(http.MethodPost, namePath, nameRequest(renamed, originalName), 200)
+	request(http.MethodPost, namePath, nameRequest("Устаревшее имя", originalName), 409)
+	if err := sqlite.NewRouterVisibility(db).Hide(t.Context(), "router-example"); err != nil {
+		t.Fatal(err)
+	}
+	request(http.MethodGet, namePath, nil, 404)
+	request(http.MethodPost, namePath, nameRequest("Скрытый роутер", renamedWire), 404)
+	agentRequest(http.MethodPost, contact, recovered, "", 204)
+	returned, _ := request(http.MethodGet, namePath, nil, 200)
+	if !bytes.Equal(renamedWire, returned) || !bytes.Equal(activeBefore, configuration()) {
+		t.Fatal("name changed across visibility cycle or modified configuration")
+	}
+	unchanged, _ := request(http.MethodPost, namePath, nameRequest(renamed, renamedWire), 200)
+	if !bytes.Equal(unchanged, returned) {
+		t.Fatal("unchanged name advanced metadata version after return")
+	}
+	var nameData struct{ Name string }
+	if json.Unmarshal(returned, &nameData) != nil || nameData.Name != renamed {
+		t.Fatal("display name lost exact whitespace")
+	}
+	overviewAfter, _ := request(http.MethodGet, overview, nil, 200)
+	if !bytes.Contains(overviewAfter, []byte(renamed)) || !bytes.Contains(overviewAfter, []byte(`"appliedRevision":"1"`)) {
+		t.Fatal("overview lost name or confirmed revision")
+	}
+	if _, _, code := runBinaryInDir(t, dir, "admin", "reset", "--db-path", database, "--password-file", passwordPath); code != 0 {
+		t.Fatal("admin reset failed")
+	}
+	request(http.MethodPost, namePath, nameRequest("Без полномочий", returned), 401)
+	agentRequest(http.MethodGet, "/agent/v1/identity", recovered, "", 200)
 	log := server.output()
 	for _, token := range []string{oldKey, newKey, recovered, rotation, pending, recovery} {
 		if strings.Contains(log, token) {

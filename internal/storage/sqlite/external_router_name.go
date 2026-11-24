@@ -61,22 +61,36 @@ func (s *ExternalAccess) WriteExternalRouterName(ctx context.Context, permit ext
 	if current != expected {
 		return routersettings.DisplayNameSnapshot{}, externalaccess.ErrConflict
 	}
+	result, err := updateRouterName(ctx, tx, current, name)
+	if errors.Is(err, routersettings.ErrDisplayNameConflict) {
+		return routersettings.DisplayNameSnapshot{}, externalaccess.ErrConflict
+	}
+	if err != nil {
+		return routersettings.DisplayNameSnapshot{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return routersettings.DisplayNameSnapshot{}, err
+	}
+	return result, nil
+}
+
+func updateRouterName(ctx context.Context, tx *sql.Tx, current routersettings.DisplayNameSnapshot, name string) (routersettings.DisplayNameSnapshot, error) {
+	if !routersettings.ValidDisplayName(name) {
+		return routersettings.DisplayNameSnapshot{}, routersettings.ErrInvalidDraft
+	}
 	if current.Name == name {
 		return current, nil
 	}
 	if current.Version == math.MaxInt64 {
-		return routersettings.DisplayNameSnapshot{}, externalaccess.ErrConflict
+		return routersettings.DisplayNameSnapshot{}, routersettings.ErrDisplayNameConflict
 	}
 	result, err := tx.ExecContext(ctx, `INSERT INTO router_display_names(router_id,name,version)
-		VALUES (?,?,1) ON CONFLICT(router_id) DO UPDATE SET name=excluded.name,version=version+1`, current.RouterID, name)
+  VALUES (?,?,1) ON CONFLICT(router_id) DO UPDATE SET name=excluded.name,version=version+1`, current.RouterID, name)
 	if err != nil {
 		return routersettings.DisplayNameSnapshot{}, err
 	}
 	if changed, err := result.RowsAffected(); err != nil || changed != 1 {
 		return routersettings.DisplayNameSnapshot{}, publication.ErrStoredState
-	}
-	if err := tx.Commit(); err != nil {
-		return routersettings.DisplayNameSnapshot{}, err
 	}
 	current.Name = name
 	current.Version++
