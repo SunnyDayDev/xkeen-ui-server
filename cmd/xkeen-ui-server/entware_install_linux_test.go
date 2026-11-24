@@ -186,8 +186,25 @@ func TestEntwareInstallRegistersAgentAndRestartsSameIdentity(t *testing.T) {
 			t.Fatalf("init.d %s: %v, %s", action, err, output)
 		}
 	}
-	invoke("status")
+	// The authenticated process may already be durable when registration of
+	// the init script was interrupted. Recover the exact attempt without restart.
 	const processReceipt = "/opt/var/lib/xkeen-ui/install/agent-transport.process.json"
+	beforeRetry, err := os.ReadFile(processReceipt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(initPath); err != nil {
+		t.Fatal(err)
+	}
+	if output, err := install("agent-transport", origin, "/nonexistent", cert); err != nil {
+		t.Fatalf("confirmed process did not recover its init registration: %v, %s", err, output)
+	}
+	afterRetry, err := os.ReadFile(processReceipt)
+	if err != nil || string(afterRetry) != string(beforeRetry) {
+		t.Fatal("registration retry replaced the live agent")
+	}
+
+	invoke("status")
 	savedReceipt, err := os.ReadFile(processReceipt)
 	if err != nil {
 		t.Fatal(err)
@@ -243,6 +260,23 @@ func TestEntwareInstallRegistersAgentAndRestartsSameIdentity(t *testing.T) {
 	if err != nil || info.Mode().Perm() != 0700 || info.Sys().(*syscall.Stat_t).Uid != 65532 {
 		t.Fatal("persistent state is not private to the configured agent user")
 	}
+	const installedCA = "/opt/etc/xkeen-ui/agent-transport/ca.pem"
+	ca, err := os.ReadFile(installedCA)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(installedCA, append(append([]byte(nil), ca...), '\n'), 0644); err != nil {
+		t.Fatal(err)
+	}
+	changed := exec.CommandContext(t.Context(), initPath, "start")
+	changedOutput, err := changed.CombinedOutput()
+	if restoreErr := os.WriteFile(installedCA, ca, 0644); restoreErr != nil {
+		t.Fatal(restoreErr)
+	}
+	if err == nil || !strings.Contains(string(changedOutput), "agent CA binding") {
+		t.Fatalf("init accepted changed CA contents: %v, %s", err, changedOutput)
+	}
+
 	invoke("start")
 	invoke("status")
 	invoke("stop")

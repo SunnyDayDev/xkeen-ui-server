@@ -29,12 +29,15 @@ func checkedFile(path string, uid uint32, mode os.FileMode) (*os.File, error) {
 	return file, nil
 }
 
-func ensureRootDirs(paths ...string) error {
+func rootDirs(create bool, paths ...string) error {
 	for _, path := range paths {
 		dir := "/"
 		for _, name := range strings.Split(strings.TrimPrefix(path, "/"), "/") {
 			dir = filepath.Join(dir, name)
-			err := os.Mkdir(dir, 0755)
+			err := os.ErrExist
+			if create {
+				err = os.Mkdir(dir, 0755)
+			}
 			if err != nil && !errors.Is(err, os.ErrExist) {
 				return errSafety
 			}
@@ -53,7 +56,7 @@ func ensureRootDirs(paths ...string) error {
 }
 
 func lockService() (*os.File, error) {
-	if err := ensureRootDirs(control); err != nil {
+	if err := rootDirs(true, control); err != nil {
 		return nil, err
 	}
 	path := control + "/agent-transport.lock"

@@ -40,11 +40,19 @@ func probePIDFD() error {
 }
 
 func lifecycle(action string, p profile) error {
+	if action != "stop" {
+		if err := verifyProfileCA(p); err != nil {
+			return err
+		}
+	}
 	target, err := os.Readlink(current)
 	if err != nil || target != "generations/"+p.Version {
 		return errSafety
 	}
 	binary := filepath.Join(executableBase, target, agentAsset)
+	if err := rootDirs(false, filepath.Dir(binary)); err != nil {
+		return err
+	}
 	file, err := checkedFile(binary, 0, 0755)
 	if err != nil {
 		return errSafety

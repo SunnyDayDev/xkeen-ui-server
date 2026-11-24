@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/json"
+	jsonv2 "encoding/json/v2"
 	"errors"
 	"fmt"
 	"io"
@@ -62,7 +63,7 @@ func run(args []string) error {
 			return err
 		}
 		defer lock.Close()
-		if err := ensureRootDirs(profileDir, executableBase, executableBase+"/generations"); err != nil {
+		if err := rootDirs(false, profileDir, executableBase, executableBase+"/generations"); err != nil {
 			return err
 		}
 		p, err := readProfile()
@@ -109,10 +110,7 @@ func install(args []string) error {
 	if _, err := os.Lstat(initPath); !errors.Is(err, os.ErrNotExist) {
 		return errInstalled
 	}
-	if _, err := os.Lstat(current); !errors.Is(err, os.ErrNotExist) {
-		return errInstalled
-	}
-	if err := ensureRootDirs(profileDir, executableBase, executableBase+"/generations", filepath.Dir(initPath)); err != nil {
+	if err := rootDirs(true, profileDir, executableBase, executableBase+"/generations", filepath.Dir(initPath)); err != nil {
 		return err
 	}
 	prior, err := readProfile()
@@ -133,25 +131,49 @@ func install(args []string) error {
 	if err := prepareState(p, invite); err != nil {
 		return err
 	}
-	if err := prepareGeneration(stage, p); err != nil {
+	published, err := existingGeneration(p, hasPrior)
+	if err != nil {
 		return err
 	}
-	if err := os.Symlink("generations/"+p.Version, current); err != nil || syncDir(executableBase) != nil {
-		return errSafety
-	}
-	if err := writeFile(initPath, []byte(initScript), 0755, 0, 0); err != nil {
-		_ = removePublished(current)
-		return err
+	if !published {
+		if err := prepareGeneration(stage, p); err != nil {
+			return err
+		}
+		if os.Symlink("generations/"+p.Version, current) != nil || syncDir(executableBase) != nil {
+			return errSafety
+		}
 	}
 	if err := lifecycle("start", p); err != nil {
-		cleanup := errors.Join(removePublished(initPath), removePublished(current))
-		if cleanup != nil {
+		if lifecycle("stop", p) != nil || removePublished(current) != nil {
 			return errors.New("agent start failed and its installation needs local recovery")
 		}
 		return err
 	}
+	// Automatic startup is registered only once the owned agent has confirmed
+	// readiness and the corresponding process receipt is durable.
+	if err := writeFile(initPath, []byte(initScript), 0755, 0, 0); err != nil {
+		if lifecycle("stop", p) == nil {
+			_ = errors.Join(removePublished(initPath), removePublished(current))
+		}
+		return errors.New("cannot publish agent init registration")
+	}
+
 	fmt.Println("Entware agent installation ready")
 	return nil
+}
+
+func existingGeneration(p profile, hasPrior bool) (bool, error) {
+	target, err := os.Readlink(current)
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	if err != nil || !hasPrior || target != "generations/"+p.Version {
+		return false, errInstalled
+	}
+	if err := syncDir(executableBase); err != nil {
+		return false, errSafety
+	}
+	return true, nil
 }
 
 func parsePrincipal(s string) (uint32, uint32, bool) {
@@ -228,14 +250,7 @@ func readCA(path string) ([]byte, error) {
 
 func persistProfile(p profile, ca []byte, hasPrior bool) error {
 	if hasPrior {
-		if p.CADigest == "" {
-			return nil
-		}
-		stored, err := readCA(profileDir + "/ca.pem")
-		if err != nil || fmt.Sprintf("%x", sha256.Sum256(stored)) != p.CADigest {
-			return errSafety
-		}
-		return nil
+		return verifyProfileCA(p)
 	}
 	if len(ca) != 0 {
 		if err := writeFile(profileDir+"/ca.pem", ca, 0644, 0, 0); err != nil {
@@ -249,6 +264,17 @@ func persistProfile(p profile, ca []byte, hasPrior bool) error {
 	return writeFile(profilePath, raw, 0600, 0, 0)
 }
 
+func verifyProfileCA(p profile) error {
+	if p.CADigest == "" {
+		return nil
+	}
+	ca, err := readCA(profileDir + "/ca.pem")
+	if err != nil || fmt.Sprintf("%x", sha256.Sum256(ca)) != p.CADigest {
+		return errors.New("installed agent CA binding does not match the retained profile")
+	}
+	return nil
+}
+
 func readProfile() (profile, error) {
 	file, err := checkedFile(profilePath, 0, 0600)
 	if err != nil {
@@ -256,7 +282,8 @@ func readProfile() (profile, error) {
 	}
 	defer file.Close()
 	var p profile
-	if err = json.NewDecoder(io.LimitReader(file, 8192)).Decode(&p); err != nil ||
+	raw, err := io.ReadAll(io.LimitReader(file, 8193))
+	if err != nil || len(raw) > 8192 || jsonv2.Unmarshal(raw, &p, jsonv2.RejectUnknownMembers(true)) != nil ||
 		!tagPattern.MatchString(p.Version) || len(p.Version) > 40 || !shaPattern.MatchString(p.Manifest) ||
 		p.UID == 0 || p.GID == 0 || p.Origin == "" || (p.CADigest != "" && !shaPattern.MatchString(p.CADigest)) {
 		return profile{}, errSafety
@@ -266,7 +293,7 @@ func readProfile() (profile, error) {
 
 func prepareGeneration(stage string, p profile) error {
 	dir := executableBase + "/generations/" + p.Version
-	if err := ensureRootDirs(dir); err != nil {
+	if err := rootDirs(true, dir); err != nil {
 		return err
 	}
 	for _, name := range []string{agentAsset, installerAsset} {
