@@ -130,6 +130,7 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 	externalOperations := server.NewExternalRouterVariables(external, server.NewExternalTemplates(external))
 	externalOperations = server.NewExternalAccessStatus(external, externalOperations)
 	externalOperations = server.NewExternalRouterReplacement(external, externalOperations)
+	externalOperations = server.NewExternalRouterStatuses(external, externalOperations)
 	handler = server.NewExternalAccessHandler(cfg.webOrigin, external, externalOperations, handler)
 	if err := json.NewEncoder(stderr).Encode(struct {
 		Event   string `json:"event"`
