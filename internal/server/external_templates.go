@@ -4,10 +4,15 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
+	jsonv2 "encoding/json/v2"
 	"errors"
 	"fmt"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
+	"io"
+	"mime"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"unicode/utf8"
 
@@ -15,7 +20,8 @@ import (
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/templates"
 )
 
-type ExternalTemplateReader interface {
+type ExternalTemplateStore interface {
+	ReplaceExternalTemplate(context.Context, externalaccess.Permit, configuration.TemplateDraft, int64) (int64, error)
 	ReadExternalTemplate(context.Context, externalaccess.Permit, string) (*templates.Snapshot, error)
 }
 
@@ -65,15 +71,15 @@ func draftRepresentation(s *templates.Snapshot) ([]byte, string, error) {
 	return data, fmt.Sprintf("\"%x\"", sha256.Sum256(data)), nil
 }
 
-func NewExternalTemplates(store ExternalTemplateReader) ExternalOperation {
+func NewExternalTemplates(store ExternalTemplateStore) ExternalOperation {
 	return func(w http.ResponseWriter, r *http.Request, permit externalaccess.Permit) {
 		w.Header().Set("Cache-Control", "no-store, no-transform")
 		if r.URL.Path != "/api/v1/templates/item" {
 			externalError(w, 404, "not_found")
 			return
 		}
-		if r.Method != http.MethodGet {
-			w.Header().Set("Allow", http.MethodGet)
+		if r.Method != http.MethodGet && r.Method != http.MethodPatch {
+			w.Header().Set("Allow", "GET, PATCH")
 			externalError(w, 405, "method_not_allowed")
 			return
 		}
@@ -82,6 +88,15 @@ func NewExternalTemplates(store ExternalTemplateReader) ExternalOperation {
 		if err != nil || len(params) != 1 || len(ids) != 1 || ids[0] == "" || !utf8.ValidString(ids[0]) {
 			externalError(w, 400, "invalid_request")
 			return
+		}
+		var edit externalEdit
+		var condition string
+		if r.Method == http.MethodPatch {
+			var ok bool
+			edit, condition, ok = readExternalEdit(w, r)
+			if !ok {
+				return
+			}
 		}
 		s, err := store.ReadExternalTemplate(r.Context(), permit, ids[0])
 		if err != nil {
@@ -97,8 +112,79 @@ func NewExternalTemplates(store ExternalTemplateReader) ExternalOperation {
 			externalFailure(w, err)
 			return
 		}
+		if r.Method == http.MethodPatch {
+			if condition != tag {
+				externalError(w, 412, "precondition_failed")
+				return
+			}
+			candidate, err := templates.EditElementContent(s, edit.ElementID, *edit.Source)
+			if err != nil {
+				var invalid *templates.InvalidDraftError
+				switch {
+				case errors.Is(err, templates.ErrElementNotFound):
+					externalError(w, 404, "not_found")
+				case errors.As(err, &invalid):
+					externalError(w, 422, "invalid_content")
+				default:
+					externalFailure(w, err)
+				}
+				return
+			}
+			version, err := store.ReplaceExternalTemplate(r.Context(), permit, candidate, s.Version)
+			if err != nil {
+				if errors.Is(err, templates.ErrVersionConflict) {
+					externalError(w, 412, "precondition_failed")
+				} else if errors.Is(err, templates.ErrNotFound) {
+					externalError(w, 404, "not_found")
+				} else {
+					externalFailure(w, err)
+				}
+				return
+			}
+			data, tag, err = draftRepresentation(&templates.Snapshot{TemplateDraft: candidate, Version: version})
+			if err != nil {
+				externalFailure(w, err)
+				return
+			}
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("ETag", tag)
 		_, _ = w.Write(data)
 	}
+}
+
+type externalEdit struct {
+	ElementID string  `json:"elementId"`
+	Source    *string `json:"source"`
+}
+
+var externalDraftTag = regexp.MustCompile(`^"[0-9a-f]{64}"$`)
+
+func readExternalEdit(w http.ResponseWriter, r *http.Request) (externalEdit, string, bool) {
+	var edit externalEdit
+	tags := r.Header.Values("If-Match")
+	if len(tags) == 0 {
+		externalError(w, 428, "precondition_required")
+		return edit, "", false
+	}
+	if len(tags) != 1 || !externalDraftTag.MatchString(tags[0]) {
+		externalError(w, 400, "invalid_request")
+		return edit, "", false
+	}
+	mt, params, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	if len(r.Header.Values("Content-Type")) != 1 || err != nil || mt != "application/json" || len(params) != 0 {
+		externalError(w, 415, "unsupported_media_type")
+		return edit, "", false
+	}
+	raw, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxWebEditorBody))
+	var size *http.MaxBytesError
+	if errors.As(err, &size) {
+		externalError(w, 413, "too_large")
+		return edit, "", false
+	}
+	if err != nil || jsonv2.Unmarshal(raw, &edit, jsonv2.RejectUnknownMembers(true)) != nil || !configuration.ValidElementID(edit.ElementID) || edit.Source == nil {
+		externalError(w, 400, "invalid_request")
+		return edit, "", false
+	}
+	return edit, tags[0], true
 }
