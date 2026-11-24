@@ -42,7 +42,7 @@ func TestAgentHandlerEnrollmentAndIdentity(t *testing.T) {
 		t: t, invite: agentcredential.Generate(agentcredential.Invitation).Encode(),
 		key: agentcredential.Generate(agentcredential.Working).Encode(),
 	}
-	handler := NewAgentHandler(stub, nil)
+	handler := NewAgentHandler(stub, nil, nil)
 	tests := []struct {
 		method, path, token, body string
 	}{
@@ -70,7 +70,7 @@ func TestAgentHandlerFailsClosedOnMalformedInput(t *testing.T) {
 		t: t, invite: agentcredential.Generate(agentcredential.Invitation).Encode(),
 		key: agentcredential.Generate(agentcredential.Working).Encode(),
 	}
-	handler := NewAgentHandler(stub, nil)
+	handler := NewAgentHandler(stub, nil, nil)
 	validBody := `{"credential":"` + stub.key + `"}`
 	tests := []struct {
 		name, method, path, token, body string
@@ -120,7 +120,7 @@ func TestAgentHandlerNormalizesApplicationErrors(t *testing.T) {
 	stub := &stubAgentAuthenticator{
 		t: t, key: agentcredential.Generate(agentcredential.Working).Encode(),
 	}
-	handler := NewAgentHandler(stub, nil)
+	handler := NewAgentHandler(stub, nil, nil)
 	for _, test := range []struct {
 		err  error
 		code int
@@ -162,7 +162,7 @@ func (w *deadlineRecorder) SetReadDeadline(deadline time.Time) error {
 }
 
 func TestAgentHandlerBoundsReadsBeforeCredentialCheck(t *testing.T) {
-	handler := NewAgentHandler(&stubAgentAuthenticator{t: t}, nil)
+	handler := NewAgentHandler(&stubAgentAuthenticator{t: t}, nil, nil)
 	request := agentRequest(http.MethodPost, "/agent/v1/enroll", "", "{}")
 	response := &deadlineRecorder{ResponseRecorder: httptest.NewRecorder()}
 	handler.ServeHTTP(response, request)

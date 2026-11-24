@@ -79,6 +79,7 @@ var migrations = []string{
 		CHECK (typeof(version) = 'integer' AND version >= 1)`,
 	createPublicationStorage,
 	createAgentCredentialStorage,
+	createContactStorage,
 }
 
 func Open(ctx context.Context, path string) (*sql.DB, error) {
