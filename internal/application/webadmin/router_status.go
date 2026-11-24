@@ -7,12 +7,7 @@ import (
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/reporting"
 )
 
-type RouterStatus struct {
-	RouterID, Name, TemplateID string
-	Contact                    reporting.Presence
-	Desired, Applied           int64
-	Runtime                    string
-}
+type RouterStatus = reporting.RouterStatus
 
 type RouterStatusStore interface {
 	List(context.Context, [32]byte, func() time.Time) ([]RouterStatus, error)

@@ -8,6 +8,7 @@ import (
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agentcredential"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/agentcredentials"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/externalaccess"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/webadmin"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/reporting"
 )
@@ -101,6 +102,14 @@ func TestWebRouterStatusFollowsAcceptedContactAndVisibility(t *testing.T) {
 	}
 	if rows, err := status.List(ctx, digest, clock); rows != nil || err == nil {
 		t.Fatalf("invalid source metadata returned: %+v %v", rows, err)
+	}
+	external := NewExternalAccess(db, clock)
+	if _, err := db.ExecContext(ctx, "UPDATE external_access SET enabled=1,protected=0,version=2"); err != nil {
+		t.Fatal(err)
+	}
+	stale := externalaccess.Permit{Version: 1}
+	if rows, err := external.ReadExternalRouterStatuses(ctx, stale); rows != nil || !errors.Is(err, externalaccess.ErrUnauthorized) {
+		t.Fatal("late F20 check did not refuse the stale permit")
 	}
 	now = issued.Add(webadmin.IdleLifetime)
 	if rows, err := status.List(ctx, digest, clock); rows != nil || !errors.Is(err, webadmin.ErrSignedOut) {

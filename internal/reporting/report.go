@@ -62,6 +62,14 @@ type Status struct {
 	Runtime          string
 }
 
+// RouterStatus is the control-plane summary shared by the two management views.
+type RouterStatus struct {
+	RouterID, Name, TemplateID string
+	Contact                    Presence
+	Desired, Applied           int64
+	Runtime, Recovery          string
+}
+
 const MaxBody = 1024
 
 type Cursor struct {
