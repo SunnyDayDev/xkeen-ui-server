@@ -242,13 +242,8 @@ var externalDraftTag = regexp.MustCompile(`^"[0-9a-f]{64}"$`)
 
 func readExternalEdit(w http.ResponseWriter, r *http.Request, adding bool) (externalEdit, string, string, bool) {
 	var edit externalEdit
-	tags := r.Header.Values("If-Match")
-	if len(tags) == 0 {
-		externalError(w, 428, "precondition_required")
-		return edit, "", "", false
-	}
-	if len(tags) != 1 || !externalDraftTag.MatchString(tags[0]) {
-		externalError(w, 400, "invalid_request")
+	condition, ok := externalCondition(w, r)
+	if !ok {
 		return edit, "", "", false
 	}
 	if !readExternalTemplateJSON(w, r, maxWebEditorBody, &edit) {
@@ -263,7 +258,7 @@ func readExternalEdit(w http.ResponseWriter, r *http.Request, adding bool) (exte
 		externalError(w, http.StatusBadRequest, "invalid_request")
 		return edit, "", "", false
 	}
-	return edit, tags[0], section, true
+	return edit, condition, section, true
 }
 
 func readExternalTemplateJSON(w http.ResponseWriter, r *http.Request, limit int64, out any) bool {

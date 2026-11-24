@@ -123,7 +123,8 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 		handler = server.NewWebAdminHandler(cfg.webOrigin, sessions, handler)
 	}
 	external := sqlite.NewExternalAccess(db, time.Now)
-	handler = server.NewExternalAccessHandler(cfg.webOrigin, external, server.NewExternalTemplates(external), handler)
+	externalOperations := server.NewExternalRouterVariables(external, server.NewExternalTemplates(external))
+	handler = server.NewExternalAccessHandler(cfg.webOrigin, external, externalOperations, handler)
 	if err := json.NewEncoder(stderr).Encode(struct {
 		Event   string `json:"event"`
 		Address string `json:"address"`

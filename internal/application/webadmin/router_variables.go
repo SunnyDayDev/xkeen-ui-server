@@ -2,9 +2,9 @@ package webadmin
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routerdraft"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/jsonvalue"
@@ -36,21 +36,8 @@ type RouterVariableMember struct {
 	Label string `json:"label"`
 }
 
-type RouterVariableSelection struct {
-	ID          string                    `json:"id"`
-	Section     string                    `json:"section"`
-	Mode        configuration.ContentMode `json:"mode"`
-	Definitions []RouterVariableValue     `json:"definitions"`
-}
-
-type RouterVariableValue struct {
-	Name           string  `json:"name"`
-	Type           string  `json:"type"`
-	DefaultSource  *string `json:"defaultSource,omitempty"`
-	PersonalSource *string `json:"personalSource,omitempty"`
-	Required       bool    `json:"required"`
-	Issue          string  `json:"issue,omitempty"`
-}
+type RouterVariableSelection = routerdraft.VariableSelection
+type RouterVariableValue = routerdraft.VariableValue
 
 func (e RouterVariableEditor) Read(ctx context.Context, token, routerID, elementID string) (RouterVariables, error) {
 	digest, _, err := SessionProof(token, "", false)
@@ -76,15 +63,7 @@ func (e RouterVariableEditor) Save(ctx context.Context, token, csrf string, basi
 	if snapshot.Basis != basis {
 		return RouterVariables{}, ErrRouterDraftConflict
 	}
-	if snapshot.Editable.TemplateID != basis.TemplateID {
-		return RouterVariables{}, ErrRouterDraftForeign
-	}
-	element, section, err := sharedRouterElement(snapshot, elementID)
-	if err != nil {
-		return RouterVariables{}, err
-	}
-	source := configuration.ElementSource{TemplateID: basis.TemplateID, ElementID: elementID}
-	snapshot.Editable, err = routersettings.EditVariableValues(snapshot.Editable, section, source, element.Variables, changes)
+	snapshot.Editable, err = routerdraft.EditVariables(snapshot, elementID, changes)
 	if err != nil {
 		return RouterVariables{}, err
 	}
@@ -101,16 +80,7 @@ func (e RouterVariableEditor) Save(ctx context.Context, token, csrf string, basi
 }
 
 func sharedRouterElement(snapshot RouterDraftSnapshot, elementID string) (configuration.Element, string, error) {
-	if snapshot.Accepted != nil && configuration.ValidElementID(elementID) {
-		for _, section := range snapshot.Accepted.Sections {
-			for _, item := range section.Elements {
-				if item.Element.ID == elementID {
-					return item.Element, section.Name, nil
-				}
-			}
-		}
-	}
-	return configuration.Element{}, "", ErrRouterDraftMissing
+	return routerdraft.SharedElement(snapshot, elementID)
 }
 
 func readRouterVariables(snapshot RouterDraftSnapshot, elementID string) (RouterVariables, error) {
@@ -140,44 +110,10 @@ func readRouterVariables(snapshot RouterDraftSnapshot, elementID string) (Router
 	if elementID == "" {
 		return result, nil
 	}
-	element, section, err := sharedRouterElement(snapshot, elementID)
+	selection, err := routerdraft.InspectVariables(snapshot, elementID)
 	if err != nil {
 		return RouterVariables{}, err
 	}
-	source := configuration.ElementSource{TemplateID: snapshot.Basis.TemplateID, ElementID: elementID}
-	override, err := routersettings.SharedOverride(snapshot.Editable, section, source)
-	if err != nil {
-		return RouterVariables{}, err
-	}
-	mode := configuration.ContentModeVariables
-	var personal map[string]json.RawMessage
-	if override != nil {
-		mode = override.Mode
-		personal = override.Values
-	}
-	result.Selection = &RouterVariableSelection{ID: elementID, Section: section, Mode: mode, Definitions: []RouterVariableValue{}}
-	if mode != configuration.ContentModeVariables {
-		return result, nil
-	}
-	inspection := configuration.InspectVariableDefinitions(element.ID, element.Variables)
-	for i, definition := range element.Variables {
-		row := RouterVariableValue{Name: definition.Name, Type: definition.Type, Required: inspection[i].Required}
-		if definition.Default != nil {
-			value := string(definition.Default)
-			row.DefaultSource = &value
-		}
-		var local map[string]json.RawMessage
-		if value, ok := personal[definition.Name]; ok {
-			raw := string(value)
-			row.PersonalSource = &raw
-			local = map[string]json.RawMessage{definition.Name: value}
-		}
-		if issue := inspection[i].Issue; issue != nil {
-			row.Issue = issue.Code
-		} else if _, issues := configuration.PrepareValues(element.ID, []configuration.VariableDefinition{definition}, local); len(issues) != 0 {
-			row.Issue = issues[0].Code
-		}
-		result.Selection.Definitions = append(result.Selection.Definitions, row)
-	}
+	result.Selection = &selection
 	return result, nil
 }
