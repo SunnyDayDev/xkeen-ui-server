@@ -106,11 +106,14 @@ try {
     }}]}, {name:'inbounds',elements:[{disabled:true,record:{
       id:'550e8400-e29b-41d4-a716-446655440004', content:'{"tag":"${inactiveLabel}"}',
       variables:[{name:'inactiveLabel',type:'string'}]
-    }}]}, {name:'rules',elements:[
+    }},{disabled:false,record:{id:'550e8400-e29b-41d4-a716-446655440011',
+      content:'{"tag":"used-inbound","listen":"127.0.0.1","port":29811,"protocol":"socks"}',variables:[]}},
+      {disabled:false,record:{id:'550e8400-e29b-41d4-a716-446655440012',
+      content:'{"tag":"free-inbound","listen":"127.0.0.1","port":29812,"protocol":"socks"}',variables:[]}}]}, {name:'rules',elements:[
       {disabled:false,record:{id:'550e8400-e29b-41d4-a716-446655440030',
-        content:'{"type":"field","ruleTag":"common-rule","ip":["192.0.2.0/24"],"outboundTag":"example-direct"}',variables:[]}},
+        content:'{"type":"field","ruleTag":"common-rule","inboundTag":["used-inbound"],"ip":["192.0.2.0/24"],"outboundTag":"example-direct"}',variables:[]}},
       {disabled:true,record:{id:'550e8400-e29b-41d4-a716-446655440031',
-        content:'{"type":"field","ruleTag":"disabled-rule","ip":["198.51.100.0/24"],"outboundTag":"example-direct"}',variables:[]}},
+        content:'{"type":"field","ruleTag":"disabled-rule","inboundTag":["free-inbound"],"ip":["198.51.100.0/24"],"outboundTag":"example-direct"}',variables:[]}},
     ]}];
     sql.prepare('INSERT INTO templates(id, draft) VALUES (?,?)').run(routerTemplate,JSON.stringify(preparationFixture));
   } finally { sql.close(); }
@@ -421,7 +424,8 @@ try {
   await page.getByText('Вы вышли из консоли.').waitFor();
   assert.equal(await page.locator('main[data-tab-buffer]').count(),0);
   if (process.env.XKEEN_BROWSER_SCREENSHOT) await page.screenshot({path:process.env.XKEEN_BROWSER_SCREENSHOT + '-login.png'});
-  for (let attempt = 0; attempt < 5; attempt++) {
+  // The earlier sign-in exercises may span a full limiter window.
+  for (let attempt = 0; attempt < 6; attempt++) {
     await password.fill('wrong browser password');
     await password.press('Enter');
     await page.locator('form[aria-busy="false"]').waitFor();
