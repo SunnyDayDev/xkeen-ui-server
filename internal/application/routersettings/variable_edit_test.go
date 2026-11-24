@@ -54,7 +54,7 @@ func TestEditRouterVariablesPreservesExactSourcesAndOtherSettings(t *testing.T) 
 	if _, err := EditVariableValues(base, "outbounds", source, definitions, []VariableChange{{Name: "options", Value: json.RawMessage(`{"a":1,"a":2}`)}}); !errors.As(err, &invalid) || invalid.Name != "options" {
 		t.Fatalf("invalid JSON missing safe diagnosis: %v", err)
 	}
-	if _, err := EditVariableValues(base, "rules", source, definitions, changes); !errors.Is(err, ErrVariableScope) {
+	if _, err := EditVariableValues(base, "rules", source, definitions, changes); !errors.Is(err, ErrSharedScope) {
 		t.Fatalf("scope mismatch not rejected: %v", err)
 	}
 	base.Groups[0].Overrides[0].Mode = configuration.ContentModeReplacement

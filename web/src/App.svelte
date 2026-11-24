@@ -11,12 +11,14 @@
   import RouterEnrollment from './RouterEnrollment.svelte';
   import RouterOverview from './RouterOverview.svelte';
   import RouterVariables from './RouterVariables.svelte';
+  import RouterReplacement from './RouterReplacement.svelte';
 
-  type Section = 'overview' | 'templates' | 'settings' | 'template-editor' | 'template-copy' | 'router-connect' | 'router-enroll' | 'router-variables';
+  type Section = 'overview' | 'templates' | 'settings' | 'template-editor' | 'template-copy' | 'router-connect' | 'router-enroll' | 'router-variables' | 'router-replacement';
 
   function sectionForPath(): Section {
     if (location.pathname === '/ui/templates/copy') return 'template-copy';
     if (location.pathname === '/ui/templates/item') return 'template-editor';
+    if (location.pathname === '/ui/routers/replacement') return 'router-replacement';
     if (location.pathname === '/ui/routers/variables') return 'router-variables';
     if (location.pathname === '/ui/routers/enroll') return 'router-enroll';
     if (location.pathname === '/ui/routers/connect') return 'router-connect';
@@ -27,6 +29,7 @@
   let section = $state<Section>(sectionForPath());
   let editorID = $state(new URLSearchParams(location.search).get('templateId') ?? '');
   let routerID = $state(new URLSearchParams(location.search).get('routerId') ?? '');
+  let routerElementID = $state(new URLSearchParams(location.search).get('elementId') ?? '');
 
   let view = $state<'initial' | 'setup_required' | 'signed_out' | 'active' | 'unavailable'>('initial');
   let message = $state('');
@@ -66,6 +69,7 @@
     if (location.pathname + location.search !== path) history.pushState({}, '', path);
     editorID = new URLSearchParams(location.search).get('templateId') ?? '';
     routerID = new URLSearchParams(location.search).get('routerId') ?? '';
+    routerElementID = new URLSearchParams(location.search).get('elementId') ?? '';
     section = destination;
     void focusWorkspace();
   }
@@ -181,6 +185,7 @@
       section = sectionForPath();
       editorID = new URLSearchParams(location.search).get('templateId') ?? '';
       routerID = new URLSearchParams(location.search).get('routerId') ?? '';
+      routerElementID = new URLSearchParams(location.search).get('elementId') ?? '';
       if (view === 'active') void focusWorkspace();
     };
     window.addEventListener('popstate', locationChanged);
@@ -202,7 +207,7 @@
     <header class="console-header">
       <strong>XKeen Console</strong>
       <nav aria-label="Основная навигация">
-        <a href="/ui/" aria-current={section === 'overview' || section === 'router-variables' ? 'page' : undefined}
+        <a href="/ui/" aria-current={section === 'overview' || section === 'router-variables' || section === 'router-replacement' ? 'page' : undefined}
           onclick={(event) => navigate(event, '/ui/', 'overview')}>Обзор</a>
         <a href="/ui/templates" aria-current={section === 'templates' || section === 'template-editor' || section === 'template-copy' ? 'page' : undefined}
           onclick={(event) => navigate(event, '/ui/templates', 'templates')}>Шаблоны</a>
@@ -234,11 +239,18 @@
         <RouterPreparation canSubmit={view === 'active' && !busy} sessionEpoch={mutation} {csrf}
           signedOut={() => { void endAccess('signed_out'); }} refreshSession={() => { void refresh(); }}
           openEnrollment={(event,path) => navigate(event,path,'router-enroll')} />
-      {:else if section === 'router-variables'}
-        {#key routerID}
-          <RouterVariables id={routerID} active={view === 'active' && !busy} sessionEpoch={mutation} {csrf}
+      {:else if section === 'router-replacement'}
+        {#key JSON.stringify([routerID,routerElementID])}
+          <RouterReplacement id={routerID} elementId={routerElementID} active={view === 'active' && !busy} sessionEpoch={mutation} {csrf}
             signedOut={() => { void endAccess('signed_out'); }} refreshSession={() => { void refresh(); }}
-            back={(event,path) => navigate(event,path,'overview')} />
+            back={(event,path) => navigate(event,path,'router-variables')} />
+        {/key}
+      {:else if section === 'router-variables'}
+        {#key JSON.stringify([routerID,routerElementID])}
+          <RouterVariables id={routerID} initialElementId={routerElementID} active={view === 'active' && !busy} sessionEpoch={mutation} {csrf}
+            signedOut={() => { void endAccess('signed_out'); }} refreshSession={() => { void refresh(); }}
+            back={(event,path) => navigate(event,path,'overview')}
+            openReplacement={(event,path) => navigate(event,path,'router-replacement')} />
         {/key}
       {:else if section === 'router-enroll'}
         {#if view === 'active' && !busy}

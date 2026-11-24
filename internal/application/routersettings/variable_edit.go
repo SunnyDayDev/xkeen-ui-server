@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	ErrVariableScope = errors.New("shared variable scope changed")
-	ErrVariableMode  = errors.New("shared element uses literal replacement")
+	ErrSharedScope  = errors.New("shared variable scope changed")
+	ErrVariableMode = errors.New("shared element uses literal replacement")
 )
 
 type VariableChange struct {
@@ -27,9 +27,9 @@ type VariableSourceError struct {
 
 func (e *VariableSourceError) Error() string { return "invalid personal JSON" }
 
-func VariableOverride(base Draft, section string, source configuration.ElementSource) (*configuration.ContentOverride, error) {
+func SharedOverride(base Draft, section string, source configuration.ElementSource) (*configuration.ContentOverride, error) {
 	if base.TemplateID != source.TemplateID || section == "" || !configuration.ValidElementID(source.ElementID) {
-		return nil, ErrVariableScope
+		return nil, ErrSharedScope
 	}
 	for i := range base.Groups {
 		group := &base.Groups[i]
@@ -39,7 +39,7 @@ func VariableOverride(base Draft, section string, source configuration.ElementSo
 				continue
 			}
 			if group.Name != section {
-				return nil, ErrVariableScope
+				return nil, ErrSharedScope
 			}
 			return override, nil
 		}
@@ -50,7 +50,7 @@ func VariableOverride(base Draft, section string, source configuration.ElementSo
 // EditVariableValues copies the affected group and changes only the named values
 // of one shared element. Other draft settings and legacy values are retained.
 func EditVariableValues(base Draft, section string, source configuration.ElementSource, definitions []configuration.VariableDefinition, changes []VariableChange) (Draft, error) {
-	previous, err := VariableOverride(base, section, source)
+	previous, err := SharedOverride(base, section, source)
 	if err != nil {
 		return Draft{}, err
 	}
@@ -92,21 +92,35 @@ func EditVariableValues(base Draft, section string, source configuration.Element
 	if previous == nil && len(next.Values) == 0 {
 		return base, nil
 	}
+	return withSharedOverride(base, section, source, &next), nil
+}
+
+func withSharedOverride(base Draft, section string, source configuration.ElementSource, next *configuration.ContentOverride) Draft {
 	base.Groups = slices.Clone(base.Groups)
 	for i, group := range base.Groups {
 		if group.Name != section {
 			continue
 		}
-		base.Groups[i].Overrides = slices.Clone(group.Overrides)
-		for j, override := range group.Overrides {
-			if override.Source == source {
-				base.Groups[i].Overrides[j] = next
-				return base, nil
+		overrides := slices.Clone(group.Overrides)
+		for j, override := range overrides {
+			if override.Source != source {
+				continue
 			}
+			if next == nil {
+				overrides = slices.Delete(overrides, j, j+1)
+			} else {
+				overrides[j] = *next
+			}
+			base.Groups[i].Overrides = overrides
+			return base
 		}
-		base.Groups[i].Overrides = append(base.Groups[i].Overrides, next)
-		return base, nil
+		if next != nil {
+			base.Groups[i].Overrides = append(overrides, *next)
+		}
+		return base
 	}
-	base.Groups = append(base.Groups, Group{Name: section, Overrides: []configuration.ContentOverride{next}})
-	return base, nil
+	if next != nil {
+		base.Groups = append(base.Groups, Group{Name: section, Overrides: []configuration.ContentOverride{*next}})
+	}
+	return base
 }

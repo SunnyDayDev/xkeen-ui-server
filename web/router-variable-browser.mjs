@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { checkRouterReplacement } from './router-replacement-browser.mjs';
 
 export async function checkRouterVariables(page, routerId, resetSession, password) {
   const panel = page.getByRole('complementary',{name:'Сведения о роутере'});
@@ -84,6 +85,7 @@ export async function checkRouterVariables(page, routerId, resetSession, passwor
   await save.click();
   await page.getByText('Черновик сохранён. Действующая конфигурация не изменилась.',{exact:true}).waitFor();
   assert.equal((await snapshot()).data.selection.definitions.find(row=>row.name==='timeoutSeconds').personalSource,undefined);
+  await checkRouterReplacement(page,routerId,element,resetSession,password);
   await page.getByRole('link',{name:'К роутеру'}).click();
   await panel.getByText(routerId,{exact:true}).waitFor();
 }

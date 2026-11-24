@@ -79,7 +79,7 @@ func (e RouterVariableEditor) Save(ctx context.Context, token, csrf string, basi
 	if snapshot.Editable.TemplateID != basis.TemplateID {
 		return RouterVariables{}, ErrRouterDraftForeign
 	}
-	element, section, err := sharedVariableElement(snapshot, elementID)
+	element, section, err := sharedRouterElement(snapshot, elementID)
 	if err != nil {
 		return RouterVariables{}, err
 	}
@@ -100,7 +100,7 @@ func (e RouterVariableEditor) Save(ctx context.Context, token, csrf string, basi
 	return result, nil
 }
 
-func sharedVariableElement(snapshot RouterDraftSnapshot, elementID string) (configuration.Element, string, error) {
+func sharedRouterElement(snapshot RouterDraftSnapshot, elementID string) (configuration.Element, string, error) {
 	if snapshot.Accepted != nil && configuration.ValidElementID(elementID) {
 		for _, section := range snapshot.Accepted.Sections {
 			for _, item := range section.Elements {
@@ -140,12 +140,12 @@ func readRouterVariables(snapshot RouterDraftSnapshot, elementID string) (Router
 	if elementID == "" {
 		return result, nil
 	}
-	element, section, err := sharedVariableElement(snapshot, elementID)
+	element, section, err := sharedRouterElement(snapshot, elementID)
 	if err != nil {
 		return RouterVariables{}, err
 	}
 	source := configuration.ElementSource{TemplateID: snapshot.Basis.TemplateID, ElementID: elementID}
-	override, err := routersettings.VariableOverride(snapshot.Editable, section, source)
+	override, err := routersettings.SharedOverride(snapshot.Editable, section, source)
 	if err != nil {
 		return RouterVariables{}, err
 	}

@@ -29,7 +29,7 @@ func NewWebRouterVariableHandler(origin WebOrigin, service webRouterVariableServ
 		if !allowWebEndpoint(w, r, origin, true, http.MethodGet, http.MethodPost) {
 			return
 		}
-		routerID, elementID, ok := variableQuery(r.URL.RawQuery)
+		routerID, elementID, ok := routerElementQuery(r.URL.RawQuery)
 		if !ok || (r.Method == http.MethodPost && elementID == "") {
 			webResult(w, http.StatusBadRequest, "invalid_request", "")
 			return
@@ -75,7 +75,7 @@ func NewWebRouterVariableHandler(origin WebOrigin, service webRouterVariableServ
 	})
 }
 
-func variableQuery(raw string) (routerID, elementID string, ok bool) {
+func routerElementQuery(raw string) (routerID, elementID string, ok bool) {
 	values, err := url.ParseQuery(raw)
 	id := values.Get("routerId")
 	if err != nil || len(values["routerId"]) != 1 || id == "" || !utf8.ValidString(id) {
@@ -93,11 +93,8 @@ func variableQuery(raw string) (routerID, elementID string, ok bool) {
 
 func readVariableChanges(w http.ResponseWriter, r *http.Request, id string) (webadmin.RouterDraftBasis, []routersettings.VariableChange, bool) {
 	var payload struct {
-		TemplateID       string `json:"templateId"`
-		AcceptedVersion  string `json:"acceptedVersion"`
-		ActiveGeneration string `json:"activeGeneration"`
-		DraftGeneration  string `json:"draftGeneration"`
-		Values           []struct {
+		webRouterDraftInput
+		Values []struct {
 			Name   string          `json:"name"`
 			Source json.RawMessage `json:"source"`
 		} `json:"values"`
@@ -106,12 +103,8 @@ func readVariableChanges(w http.ResponseWriter, r *http.Request, id string) (web
 	if !readWebJSON(w, r, maxWebEditorBody, &payload) {
 		return empty, nil, false
 	}
-	basis := webadmin.RouterDraftBasis{RouterID: id, TemplateID: payload.TemplateID}
-	var ok1, ok2, ok3 bool
-	basis.AcceptedVersion, ok1 = variableGeneration(payload.AcceptedVersion, 1)
-	basis.ActiveGeneration, ok2 = variableGeneration(payload.ActiveGeneration, 1)
-	basis.DraftGeneration, ok3 = variableGeneration(payload.DraftGeneration, 0)
-	if !ok1 || !ok2 || !ok3 || basis.TemplateID == "" || len(payload.Values) == 0 {
+	basis, ok := payload.basis(id)
+	if !ok || len(payload.Values) == 0 {
 		webResult(w, http.StatusBadRequest, "invalid_request", "")
 		return empty, nil, false
 	}
@@ -130,6 +123,22 @@ func readVariableChanges(w http.ResponseWriter, r *http.Request, id string) (web
 	return basis, changes, true
 }
 
+type webRouterDraftInput struct {
+	TemplateID       string `json:"templateId"`
+	AcceptedVersion  string `json:"acceptedVersion"`
+	ActiveGeneration string `json:"activeGeneration"`
+	DraftGeneration  string `json:"draftGeneration"`
+}
+
+func (input webRouterDraftInput) basis(routerID string) (webadmin.RouterDraftBasis, bool) {
+	basis := webadmin.RouterDraftBasis{RouterID: routerID, TemplateID: input.TemplateID}
+	var ok1, ok2, ok3 bool
+	basis.AcceptedVersion, ok1 = variableGeneration(input.AcceptedVersion, 1)
+	basis.ActiveGeneration, ok2 = variableGeneration(input.ActiveGeneration, 1)
+	basis.DraftGeneration, ok3 = variableGeneration(input.DraftGeneration, 0)
+	return basis, ok1 && ok2 && ok3 && input.TemplateID != ""
+}
+
 func variableGeneration(raw string, minimum int64) (int64, bool) {
 	n, err := strconv.ParseInt(raw, 10, 64)
 	return n, err == nil && n >= minimum && strconv.FormatInt(n, 10) == raw
@@ -144,7 +153,7 @@ func webRouterVariableFailure(w http.ResponseWriter, err error) {
 		webResult(w, http.StatusConflict, "different_template", "")
 	case errors.Is(err, routersettings.ErrVariableMode):
 		webResult(w, http.StatusConflict, "replacement_mode", "")
-	case errors.Is(err, webadmin.ErrRouterDraftConflict), errors.Is(err, routersettings.ErrVariableScope):
+	case errors.Is(err, webadmin.ErrRouterDraftConflict), errors.Is(err, routersettings.ErrSharedScope):
 		webResult(w, http.StatusConflict, "draft_conflict", "")
 	case errors.As(err, &invalid):
 		w.Header().Set("Content-Type", "application/json")
