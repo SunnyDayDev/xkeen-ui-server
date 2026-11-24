@@ -21,6 +21,29 @@ func FirstElementSections() []string {
 // EditElementContent builds the independent candidate shared by browser and
 // external writers. Only the selected element undergoes A08 discovery.
 func EditElementContent(base *Snapshot, elementID, source string) (configuration.TemplateDraft, error) {
+	return editElement(base, elementID, func(item *configuration.Element) error {
+		item.Content = source
+		return nil
+	})
+}
+
+// EditElementDefinitions preserves identity, content and the ordered definition names.
+func EditElementDefinitions(base *Snapshot, elementID string, definitions []configuration.VariableDefinition) (configuration.TemplateDraft, error) {
+	return editElement(base, elementID, func(item *configuration.Element) error {
+		if len(item.Variables) != len(definitions) {
+			return ErrInvalid
+		}
+		for i, definition := range definitions {
+			if item.Variables[i].Name != definition.Name {
+				return ErrInvalid
+			}
+		}
+		item.Variables = definitions
+		return nil
+	})
+}
+
+func editElement(base *Snapshot, elementID string, change func(*configuration.Element) error) (configuration.TemplateDraft, error) {
 	if base == nil || !configuration.ValidElementID(elementID) {
 		return configuration.TemplateDraft{}, ErrInvalid
 	}
@@ -33,7 +56,9 @@ func EditElementContent(base *Snapshot, elementID, source string) (configuration
 			if item.Element.ID != elementID {
 				continue
 			}
-			item.Element.Content = source
+			if err := change(&item.Element); err != nil {
+				return configuration.TemplateDraft{}, err
+			}
 			element, issues := configuration.PrepareElement(item.Element, candidate.ElementLocation(i, j), &elementID)
 			if len(issues) != 0 {
 				return configuration.TemplateDraft{}, &InvalidDraftError{Issues: issues}

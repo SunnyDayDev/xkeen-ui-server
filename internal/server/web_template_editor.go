@@ -22,10 +22,15 @@ const maxWebEditorBody = 8 << 20
 type webTemplateEditor interface {
 	Read(context.Context, string, string) (*templates.Snapshot, error)
 	Save(context.Context, string, string, string, webadmin.TemplateElementEdit) (*templates.Snapshot, string, error)
+	SaveDefinitions(context.Context, string, string, string, string, int64, []configuration.VariableDefinition) (*templates.Snapshot, error)
 }
 
 func NewWebTemplateEditorHandler(origin WebOrigin, editor webTemplateEditor, sessions *webadmin.Service, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/ui/v1/templates/variables" {
+			serveWebTemplateVariables(w, r, origin, editor, sessions)
+			return
+		}
 		if r.URL.Path != "/ui/v1/templates/item" {
 			next.ServeHTTP(w, r)
 			return
@@ -54,14 +59,7 @@ func NewWebTemplateEditorHandler(origin WebOrigin, editor webTemplateEditor, ses
 			}
 			input, status := readWebTemplateEdit(w, r)
 			if status != 0 {
-				switch status {
-				case http.StatusUnsupportedMediaType:
-					webResult(w, status, "unsupported_media_type", "")
-				case http.StatusRequestEntityTooLarge:
-					webResult(w, status, "request_too_large", "")
-				default:
-					webResult(w, status, "invalid_request", "")
-				}
+				webEditorBodyFailure(w, status)
 				return
 			}
 			snapshot, selected, err = editor.Save(r.Context(), token, proof, id, input)
@@ -96,16 +94,38 @@ func templateEditorQuery(raw string, read bool) (id, selected string, ok bool) {
 	return "", "", false
 }
 
-func readWebTemplateEdit(w http.ResponseWriter, r *http.Request) (webadmin.TemplateElementEdit, int) {
-	invalid := webadmin.TemplateElementEdit{}
+func readWebEditorBody(w http.ResponseWriter, r *http.Request) ([]byte, int) {
 	media, params, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if len(r.Header.Values("Content-Type")) != 1 || err != nil || media != "application/json" || len(params) != 0 {
-		return invalid, http.StatusUnsupportedMediaType
+		return nil, http.StatusUnsupportedMediaType
 	}
 	raw, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxWebEditorBody))
 	var sizeErr *http.MaxBytesError
 	if errors.As(err, &sizeErr) {
-		return invalid, http.StatusRequestEntityTooLarge
+		return nil, http.StatusRequestEntityTooLarge
+	}
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+	return raw, 0
+}
+
+func webEditorBodyFailure(w http.ResponseWriter, status int) {
+	switch status {
+	case http.StatusUnsupportedMediaType:
+		webResult(w, status, "unsupported_media_type", "")
+	case http.StatusRequestEntityTooLarge:
+		webResult(w, status, "request_too_large", "")
+	default:
+		webResult(w, status, "invalid_request", "")
+	}
+}
+
+func readWebTemplateEdit(w http.ResponseWriter, r *http.Request) (webadmin.TemplateElementEdit, int) {
+	invalid := webadmin.TemplateElementEdit{}
+	raw, status := readWebEditorBody(w, r)
+	if status != 0 {
+		return invalid, status
 	}
 	var input struct {
 		Version   string          `json:"version"`
@@ -113,7 +133,7 @@ func readWebTemplateEdit(w http.ResponseWriter, r *http.Request) (webadmin.Templ
 		ElementID json.RawMessage `json:"elementId"`
 		Source    *string         `json:"source"`
 	}
-	if err != nil || jsonv2.Unmarshal(raw, &input, jsonv2.RejectUnknownMembers(true)) != nil || input.Source == nil {
+	if jsonv2.Unmarshal(raw, &input, jsonv2.RejectUnknownMembers(true)) != nil || input.Source == nil {
 		return invalid, http.StatusBadRequest
 	}
 	version, err := strconv.ParseInt(input.Version, 10, 64)
@@ -201,11 +221,12 @@ func webTemplateEditorFailure(w http.ResponseWriter, err error) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		_ = json.NewEncoder(w).Encode(struct {
-			State  string  `json:"state"`
-			Code   string  `json:"code"`
-			Offset *int64  `json:"offset,omitempty"`
-			Path   *string `json:"path,omitempty"`
-		}{State: "invalid_source", Code: issue.Code, Offset: issue.Offset, Path: issue.Path})
+			State           string  `json:"state"`
+			Code            string  `json:"code"`
+			Offset          *int64  `json:"offset,omitempty"`
+			Path            *string `json:"path,omitempty"`
+			DefinitionIndex *int    `json:"definitionIndex,omitempty"`
+		}{State: "invalid_source", Code: issue.Code, Offset: issue.Offset, Path: issue.Path, DefinitionIndex: issue.DefinitionIndex})
 	case errors.Is(err, templates.ErrInvalid):
 		webResult(w, http.StatusBadRequest, "invalid_request", "")
 	default:
