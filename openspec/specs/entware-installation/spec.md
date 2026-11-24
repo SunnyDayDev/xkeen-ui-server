@@ -1,8 +1,10 @@
+# entware-installation Specification
+
 ## Purpose
 
 Определить безопасную установку, обслуживание и удаление компонентов проекта на Entware ARM64 из конкретного выпуска или из проверочного зеркала.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Installation is bound to an explicitly trusted release
 
@@ -34,7 +36,7 @@
 #### Scenario: An unsuccessful candidate restores a compatible previous generation
 
 - **WHEN** новое поколение не стало готово и прежняя версия доказуемо совместима с фактическим состоянием
-- **THEN** возвращаются прежний исполняемый набор и пригодная служба; постоянные данные сохраняются
+- **THEN** возвращаются прежний исполняемый набор, эффективный профиль, регистрация и пригодная служба; постоянные данные сохраняются
 
 #### Scenario: Database compatibility is unproved
 
