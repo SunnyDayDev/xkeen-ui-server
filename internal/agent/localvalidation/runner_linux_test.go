@@ -54,6 +54,11 @@ func TestRunnerChecksRealXrayInTheJob(t *testing.T) {
 	if err := runner.Run(t.Context(), "one.example", candidate); !errors.Is(err, preparation.ErrRejected) {
 		t.Fatalf("negative catalog = %v", err)
 	}
+	candidate = validatorFixture(t, os.Getenv("XKEEN_TEST_CATALOG"))
+	candidate.Files[4].Content = []byte(`{"routing":{"rules":[{"type":"field","ip":["geoip:fixture-away"],"outboundTag":"direct"}]}}`)
+	if err := runner.Run(t.Context(), "one.example", candidate); !errors.Is(err, preparation.ErrUnavailable) {
+		t.Fatalf("missing trusted local asset = %v", err)
+	}
 }
 
 func TestMain(m *testing.M) {

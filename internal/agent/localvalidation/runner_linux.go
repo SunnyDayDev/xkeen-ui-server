@@ -3,6 +3,7 @@
 package localvalidation
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -84,15 +85,24 @@ func (r Runner) Run(ctx context.Context, id string, snapshot agentrevision.Snaps
 }
 
 func privateDirectory(path string) bool {
-	if !filepath.IsAbs(path) {
+	if !filepath.IsAbs(path) || filepath.Clean(path) != path {
 		return false
 	}
-	info, err := os.Lstat(path)
-	if err != nil || !info.IsDir() || info.Mode().Perm()&0022 != 0 {
-		return false
+	for first := true; ; first = false {
+		info, err := os.Lstat(path)
+		if err != nil || !info.IsDir() {
+			return false
+		}
+		stat, ok := info.Sys().(*syscall.Stat_t)
+		if !ok || stat.Uid != 0 || (info.Mode().Perm()&0022 != 0 && (first || info.Mode()&os.ModeSticky == 0)) {
+			return false
+		}
+		parent := filepath.Dir(path)
+		if parent == path {
+			return true
+		}
+		path = parent
 	}
-	stat, ok := info.Sys().(*syscall.Stat_t)
-	return ok && stat.Uid == 0
 }
 
 func writeControl(group, name, value string) error {
@@ -155,13 +165,11 @@ func (r Runner) runIsolated(ctx context.Context, group string, kill *os.File, ja
 		return preparation.ErrUnavailable
 	}
 	defer groupFD.Close()
-	self, err := os.Executable()
-	if err != nil {
-		return preparation.ErrUnavailable
-	}
-	cmd := exec.Command(self, WorkerFlag, jail, id, strconv.FormatInt(snapshot.Number, 10), snapshot.Profile, tag,
+	cmd := exec.Command("/proc/self/exe", WorkerFlag, jail, id, strconv.FormatInt(snapshot.Number, 10), snapshot.Profile, tag,
 		strconv.FormatUint(uint64(r.UID), 10), strconv.FormatUint(uint64(r.GID), 10), hex.EncodeToString(r.Digest[:]))
 	cmd.Env = []string{}
+	var diagnostic boundedDiagnostic
+	cmd.Stdout, cmd.Stderr = &diagnostic, &diagnostic
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Cloneflags: syscall.CLONE_NEWNS | syscall.CLONE_NEWPID | syscall.CLONE_NEWNET | syscall.CLONE_NEWIPC,
 		Pdeathsig:  syscall.SIGKILL, UseCgroupFD: true, CgroupFD: int(groupFD.Fd()),
@@ -192,7 +200,7 @@ func (r Runner) runIsolated(ctx context.Context, group string, kill *os.File, ja
 		return nil
 	}
 	var exit *exec.ExitError
-	if errors.As(result, &exit) && exit.ExitCode() == 23 {
+	if errors.As(result, &exit) && exit.ExitCode() == 23 && diagnostic.configurationRejection() {
 		return preparation.ErrRejected
 	}
 	return preparation.ErrUnavailable
@@ -231,4 +239,38 @@ func cleanEvents(group, name string, keys ...string) bool {
 		}
 	}
 	return true
+}
+
+// Keep diagnostics only in memory. An indeterminate or resource-related
+// rejection is unavailable rather than an actionable configuration verdict.
+type boundedDiagnostic struct {
+	data      bytes.Buffer
+	truncated bool
+}
+
+func (d *boundedDiagnostic) Write(p []byte) (int, error) {
+	const limit = 16 << 10
+	room := limit - d.data.Len()
+	if room < len(p) {
+		d.truncated = true
+	}
+	_, _ = d.data.Write(p[:min(len(p), room)])
+	return len(p), nil
+}
+
+func (d *boundedDiagnostic) configurationRejection() bool {
+	if d.truncated || d.data.Len() == 0 {
+		return false
+	}
+	s := strings.ToLower(d.data.String())
+	for _, unavailable := range []string{
+		"no such file or directory", "permission denied", "operation not permitted",
+		"no space left on device", "too many open files", "cannot allocate memory",
+		"file size limit exceeded", "input/output error", "read-only file system",
+	} {
+		if strings.Contains(s, unavailable) {
+			return false
+		}
+	}
+	return strings.Contains(s, "failed to load config")
 }
