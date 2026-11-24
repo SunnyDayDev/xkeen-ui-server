@@ -35,7 +35,7 @@ func TestParseArgs(t *testing.T) {
 
 func TestParseInvalidArgs(t *testing.T) {
 	for _, args := range [][]string{
-		{"--unknown"}, {"positional"}, {"--listen"}, {"--listen", ""},
+		{"--db-path", ""}, {"--db-path", "  "}, {"--unknown"}, {"positional"}, {"--listen"}, {"--listen", ""},
 		{"--listen", "127.0.0.1"}, {"--listen", "localhost:8080"},
 		{"--listen", ":8080"}, {"--listen", "127.0.0.1:65536"},
 		{"--listen", "127.0.0.1:-1"}, {"--listen", "127.0.0.1:http"},
@@ -57,9 +57,26 @@ func TestParseHelp(t *testing.T) {
 	if !errors.Is(err, flag.ErrHelp) {
 		t.Errorf("error = %v, want flag.ErrHelp", err)
 	}
-	for _, want := range []string{"listen", "127.0.0.1:8080"} {
+	for _, want := range []string{"listen", "127.0.0.1:8080", "db-path", "state/xkeen-ui-server.sqlite"} {
 		if !strings.Contains(output.String(), want) {
 			t.Errorf("help %q missing %q", output.String(), want)
+		}
+	}
+}
+
+func TestParseDBPath(t *testing.T) {
+	for _, test := range []struct {
+		args      []string
+		path      string
+		createDir bool
+	}{
+		{nil, "state/xkeen-ui-server.sqlite", true},
+		{[]string{"--db-path", "state/xkeen-ui-server.sqlite"}, "state/xkeen-ui-server.sqlite", false},
+		{[]string{"--db-path", "path with spaces?#.sqlite"}, "path with spaces?#.sqlite", false},
+	} {
+		got, err := parseArgs(test.args, &bytes.Buffer{})
+		if err != nil || got.dbPath != test.path || got.createDefaultDBDir != test.createDir {
+			t.Errorf("parseArgs(%q) = %#v, %v", test.args, got, err)
 		}
 	}
 }
