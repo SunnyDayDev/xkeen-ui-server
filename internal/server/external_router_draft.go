@@ -148,6 +148,8 @@ func externalRouterFailure(w http.ResponseWriter, err error) {
 		externalError(w, 422, "invalid_source")
 	case errors.As(err, &order), errors.Is(err, publication.ErrConflict), errors.Is(err, publication.ErrInvalidCandidate):
 		externalError(w, 409, "order_unavailable")
+	case errors.Is(err, errRuleAnalysis):
+		externalError(w, 409, "analysis_unavailable")
 	case errors.Is(err, routerdraft.ErrMissing):
 		externalError(w, http.StatusNotFound, "not_found")
 	case errors.Is(err, routerdraft.ErrConflict):
