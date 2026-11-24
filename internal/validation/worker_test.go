@@ -412,3 +412,18 @@ func TestRuntimeSeesExactlyStagedBytes(t *testing.T) {
 		t.Fatal("additional runtime file accepted")
 	}
 }
+
+func TestOutputQuotaCancelsAndDiscards(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	b := &cappedOutput{cancel: cancel}
+	if _, err := b.Write([]byte("safe prefix")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := b.Write(bytes.Repeat([]byte("synthetic-test-marker"), 8192)); err != nil {
+		t.Fatal(err)
+	}
+	if !b.over || ctx.Err() == nil || b.data.String() != "safe prefix" {
+		t.Fatal("unbounded process output")
+	}
+}
