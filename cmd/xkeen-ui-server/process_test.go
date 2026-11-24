@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -16,6 +17,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	_ "modernc.org/sqlite"
 )
 
 var testBinary string
@@ -23,6 +26,10 @@ var projectRoot string
 
 func TestMain(m *testing.M) {
 	code := func() int {
+		if binary := os.Getenv("XKEEN_TEST_SERVER_BINARY"); binary != "" {
+			testBinary = binary
+			return m.Run()
+		}
 		dir, err := os.MkdirTemp("", "xkeen-server-test-")
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -36,7 +43,9 @@ func TestMain(m *testing.M) {
 		}
 		projectRoot = filepath.Clean(filepath.Join(cwd, "../.."))
 		testBinary = filepath.Join(dir, "xkeen-ui-server")
-		build := exec.Command(filepath.Join(runtime.GOROOT(), "bin/go"), "build", "-o", testBinary, ".")
+		// Match the launcher build so its readiness check starts with a warm Go cache.
+		build := exec.Command(filepath.Join(runtime.GOROOT(), "bin/go"), "build", "-trimpath", "-o", testBinary, ".")
+		build.Env = append(os.Environ(), "CGO_ENABLED=0")
 		if output, err := build.CombinedOutput(); err != nil {
 			fmt.Fprintf(os.Stderr, "build test binary: %v\n%s", err, output)
 			return 1
@@ -136,9 +145,15 @@ func TestProcessHelp(t *testing.T) {
 
 func runBinary(t *testing.T, args ...string) (string, string, int) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	return runBinaryInDir(t, t.TempDir(), args...)
+}
+
+func runBinaryInDir(t *testing.T, dir string, args ...string) (string, string, int) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, testBinary, args...)
+	cmd.Dir = dir
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	err := cmd.Run()
@@ -163,13 +178,22 @@ type process struct {
 
 func startProcess(t *testing.T, command string, args ...string) *process {
 	t.Helper()
+	dir := projectRoot
+	if command == testBinary {
+		dir = t.TempDir()
+	}
+	return startProcessInDir(t, dir, command, args...)
+}
+
+func startProcessInDir(t *testing.T, dir, command string, args ...string) *process {
+	t.Helper()
 	logPath := filepath.Join(t.TempDir(), "process.log")
 	log, err := os.Create(logPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 	cmd := exec.Command(command, args...)
-	cmd.Dir = projectRoot
+	cmd.Dir = dir
 	cmd.Env = append(os.Environ(), "PATH="+filepath.Join(runtime.GOROOT(), "bin")+string(os.PathListSeparator)+os.Getenv("PATH"))
 	cmd.Stdout, cmd.Stderr = log, log
 	if err := cmd.Start(); err != nil {
@@ -244,4 +268,112 @@ func (p *process) ready(t *testing.T) string {
 	}
 	t.Fatalf("health did not become available; %s", p.output())
 	return ""
+}
+
+func TestProcessStorageRestart(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "state", "xkeen-ui-server.sqlite")
+	launch := func() *process {
+		started := time.Now()
+		p := startProcessInDir(t, dir, testBinary, "--listen", "127.0.0.1:0")
+		p.ready(t)
+		t.Logf("startup through /healthz: %s", time.Since(started))
+		return p
+	}
+	stop := func(p *process) {
+		t.Helper()
+		if runtime.GOOS == "linux" {
+			statusPath := fmt.Sprintf("/proc/%d/status", p.cmd.Process.Pid)
+			status, err := os.ReadFile(statusPath)
+			if err != nil {
+				t.Logf("peak resident memory unavailable: %v", err)
+			}
+			for line := range strings.SplitSeq(string(status), "\n") {
+				if strings.HasPrefix(line, "VmHWM:") {
+					t.Log(line)
+				}
+			}
+		}
+		if err := p.cmd.Process.Signal(syscall.SIGTERM); err != nil {
+			t.Fatal(err)
+		}
+		if err := p.wait(t); err != nil {
+			t.Fatalf("exit: %v; %s", err, p.output())
+		}
+	}
+	p := launch()
+	if _, err := os.Stat(path); err != nil {
+		t.Fatal(err)
+	}
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	if _, err := db.Exec("CREATE TABLE probe (value TEXT NOT NULL); INSERT INTO probe VALUES ('demo.example')"); err != nil {
+		t.Fatal(err)
+	}
+	stop(p)
+	p = launch()
+	if got := storageText(t, db, "SELECT value FROM probe"); got != "demo.example" {
+		t.Errorf("stored value = %q", got)
+	}
+	if got := storageText(t, db, "SELECT group_concat(version) FROM schema_migrations"); got != "1" {
+		t.Errorf("migration history = %q", got)
+	}
+	stop(p)
+}
+
+func TestProcessStorageFailures(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "newer.sqlite")
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	if _, err := db.Exec("CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY); INSERT INTO schema_migrations VALUES (1), (2)"); err != nil {
+		t.Fatal(err)
+	}
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer listener.Close()
+
+	for _, test := range []struct {
+		path string
+		want string
+	}{
+		{dir, "open SQLite"},
+		{path, "migrate SQLite: schema version 2"},
+	} {
+		_, stderr, code := runBinary(t, "--db-path", test.path, "--listen", listener.Addr().String())
+		if code != 1 || !strings.Contains(stderr, test.want) || strings.Contains(stderr, "listening") {
+			t.Errorf("exit=%d stderr=%q, want storage failure %q before bind", code, stderr, test.want)
+		}
+	}
+	if got := storageText(t, db, "SELECT group_concat(version) FROM schema_migrations"); got != "1,2" {
+		t.Errorf("migration history changed: %q", got)
+	}
+}
+
+func TestProcessStorageHelpAndInvalidArgs(t *testing.T) {
+	dir := t.TempDir()
+	for _, args := range [][]string{{"--help"}, {"--listen", "invalid"}, {"--db-path", ""}} {
+		runBinaryInDir(t, dir, args...)
+		if _, err := os.Stat(filepath.Join(dir, "state")); !os.IsNotExist(err) {
+			t.Fatalf("%q touched default storage: %v", args, err)
+		}
+	}
+}
+
+func storageText(t *testing.T, db *sql.DB, statement string) string {
+	t.Helper()
+	var value string
+	if err := db.QueryRow(statement).Scan(&value); err != nil {
+		t.Fatal(err)
+	}
+	return value
 }

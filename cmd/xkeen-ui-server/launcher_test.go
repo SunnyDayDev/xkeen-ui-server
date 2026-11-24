@@ -12,7 +12,7 @@ import (
 )
 
 func TestLauncher(t *testing.T) {
-	p := startProcess(t, "sh", "scripts/run-server.sh", "--listen", "127.0.0.1:0")
+	p := startProcess(t, "sh", "scripts/run-server.sh", "--listen", "127.0.0.1:0", "--db-path", filepath.Join(t.TempDir(), "launcher.sqlite"))
 	address := p.ready(t)
 	if err := p.cmd.Process.Signal(syscall.SIGTERM); err != nil {
 		t.Fatal(err)
