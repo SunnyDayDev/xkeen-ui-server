@@ -183,25 +183,34 @@ func (w *RestartWorking) StartCommitted(ctx context.Context, journal restart.Jou
 			return restart.ErrBaseline
 		}
 	}
-	observed, err := w.launch(ctx, current.Baseline.Files, func(preparation.Runtime) error { return nil })
-	if err != nil {
-		return err
+	if current.Hot != nil && current.Hot.Rebound(w.policy(ctx)) == nil {
+		return restart.ErrBaseline
 	}
-	if record.Current != nil {
-		current.Baseline = observed
-		current.Guard = w.LaunchGuard(observed.Runtime)
-		if current.Hot != nil {
-			if current.Guard != current.Hot.Guard || !current.Hot.Matches(w.RuleEvidence(ctx, current)) {
-				return restart.ErrBaseline
+	_, err = w.launchChecked(ctx, current.Baseline.Files, func(preparation.Runtime) error { return nil }, func(observed preparation.Baseline) error {
+		if record.Current != nil {
+			next := *current
+			next.Baseline = observed
+			next.Guard = w.LaunchGuard(observed.Runtime)
+			if current.Hot != nil {
+				next.Hot = current.Hot.Rebound(next.Guard)
+				if next.Hot == nil || !next.Hot.Matches(w.RuleEvidence(ctx, &next)) {
+					return restart.ErrBaseline
+				}
 			}
+			record.Current = &next
+		} else {
+			record.LocalBaseline = &observed
 		}
-	} else {
-		record.LocalBaseline = &observed
-	}
-	return journal.Save(record)
+		return journal.Save(record)
+	})
+	return err
 }
 
 func (w *RestartWorking) launch(ctx context.Context, files []preparation.BaselineFile, started func(preparation.Runtime) error) (preparation.Baseline, error) {
+	return w.launchChecked(ctx, files, started, nil)
+}
+
+func (w *RestartWorking) launchChecked(ctx context.Context, files []preparation.BaselineFile, started func(preparation.Runtime) error, finish func(preparation.Baseline) error) (preparation.Baseline, error) {
 	if ctx.Err() != nil || !w.exactFiles(files) {
 		return preparation.Baseline{}, restart.ErrEffects
 	}
@@ -249,6 +258,12 @@ func (w *RestartWorking) launch(ctx context.Context, files []preparation.Baselin
 	defer cancel()
 	for {
 		if confirmed, err := w.observe(deadline, probe); err == nil && reflect.DeepEqual(confirmed.Files, files) {
+			if finish != nil {
+				if err := finish(confirmed); err != nil {
+					abort()
+					return preparation.Baseline{}, err
+				}
+			}
 			return confirmed, nil
 		}
 		select {

@@ -188,7 +188,7 @@ func validRecord(scope preparation.Scope, record Record) bool {
 		return false
 	}
 	if current := record.Current; current != nil {
-		if !current.Hot.agrees(current.Baseline.Files) || current.Hot != nil && current.Hot.Guard != current.Guard || !validAttemptID(current.AttemptID) || !validBaseline(scope, current.Baseline) {
+		if current.Guard != "" && !validGuard(current.Guard) || !current.Hot.agrees(current.Baseline.Files) || current.Hot != nil && current.Hot.Guard != current.Guard || !validAttemptID(current.AttemptID) || !validBaseline(scope, current.Baseline) {
 			return false
 		}
 		snapshot := agentrevision.Snapshot{Number: current.Number, Profile: scope.Profile}

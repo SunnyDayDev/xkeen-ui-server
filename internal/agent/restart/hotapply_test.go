@@ -39,7 +39,7 @@ func TestHotAuthorityReopensAndRestoresEveryPhase(t *testing.T) {
 				p.Target.Snapshot.Files[i].Content = file.Content
 			}
 			p.Target.Tag, _ = agentrevision.Tag(f.scope.RouterID, p.Target.Snapshot)
-			p.Hot = &HotReceipt{Guard: strings.Repeat("a", 64), Expected: []RuleRoute{{"deny", "block"}, {"switch", "block"}}, Outcome: "block", AllowPort: e.AllowPort, DenyPort: e.DenyPort, ProbePort: e.ProbePort}
+			p.Hot = &HotReceipt{Guard: strings.Repeat("a", 64) + ":" + strings.Repeat("b", 64), Expected: []RuleRoute{{"deny", "block"}, {"switch", "block"}}, Outcome: "block", AllowPort: e.AllowPort, DenyPort: e.DenyPort, ProbePort: e.ProbePort}
 			if phase == HotFiles {
 				p.Started = &f.old.Runtime
 			}

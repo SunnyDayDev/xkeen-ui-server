@@ -105,8 +105,11 @@ func checkControlledApplication(t *testing.T, mode string) {
 	var unavailable atomic.Bool
 	allow := faultableApplicationProbe(t, "allowed-fixture", unavailable.Load)
 	deny := localProbeEndpoint(t, "denied-fixture")
-	var failAfterReplacement atomic.Bool
+	var failAfterReplacement, failHotProbe atomic.Bool
 	target := faultableApplicationProbe(t, "target-fixture", func() bool {
+		if failHotProbe.Load() {
+			return true
+		}
 		if !failAfterReplacement.Load() {
 			return false
 		}
@@ -346,6 +349,34 @@ func checkControlledApplication(t *testing.T, mode string) {
 			t.Fatal(err)
 		}
 		waitRecovery(t, 6*time.Second, "hot process did not terminate", func() bool { _, err := localvalidation.ProcessStartTick(next.Baseline.Runtime.PID); return err != nil })
+		// Model a protected receipt from an earlier boot/network namespace while
+		// retaining the same stable profile and exact committed bytes.
+		data, err := os.ReadFile(path("journal/application.json"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var oldEpoch restart.Record
+		if json.Unmarshal(data, &oldEpoch) != nil || oldEpoch.Current == nil || oldEpoch.Current.Hot == nil {
+			t.Fatal("missing old epoch")
+		}
+		stable, _, ok := strings.Cut(oldEpoch.Current.Guard, ":")
+		if !ok {
+			t.Fatal("receipt mixes stable profile and network incarnation")
+		}
+		oldEpoch.Current.Guard = stable + ":" + strings.Repeat("0", 64)
+		oldEpoch.Current.Hot.Guard = oldEpoch.Current.Guard
+		oldEpoch.Current.Baseline.Runtime.BootID = "11111111-1111-4111-8111-111111111111"
+		writeConfig("journal/application.json", oldEpoch)
+		failHotProbe.Store(true)
+		bad := startProcess(t, binary, "--config", path("profile.json"), "--application-config", path("application.json"))
+		if err := bad.wait(t); err == nil {
+			t.Fatal("cold launcher accepted missing third probe")
+		}
+		if conn, err := net.DialTimeout("tcp", proxy, time.Second); err == nil {
+			conn.Close()
+			t.Fatal("unrecorded working process survived failed proof")
+		}
+		failHotProbe.Store(false)
 		supervisor = startSupervisor()
 		revived, _ := committed()
 		if revived.Hot == nil || revived.AttemptID != next.AttemptID || revived.Baseline.Runtime == next.Baseline.Runtime {

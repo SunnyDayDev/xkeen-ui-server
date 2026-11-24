@@ -97,7 +97,8 @@ func RestorePending(ctx context.Context, journal Journal, working Restorer, expe
 		prior.Baseline = restored
 		prior.Guard = guard
 		hot, ok := working.(hotWorking)
-		if !ok || guard != prior.Hot.Guard || !prior.Hot.Matches(hot.RuleEvidence(ctx, &prior)) {
+		prior.Hot = prior.Hot.Rebound(guard)
+		if !ok || prior.Hot == nil || !prior.Hot.Matches(hot.RuleEvidence(ctx, &prior)) {
 			err = ErrRollbackFailed
 		}
 	}
@@ -120,6 +121,7 @@ func RestorePending(ctx context.Context, journal Journal, working Restorer, expe
 		current := *record.Current
 		current.Baseline = restored
 		current.Guard = guard
+		current.Hot = current.Hot.Rebound(guard)
 		record.Current = &current
 	}
 	record.Pending, record.LastRollback = nil, &result

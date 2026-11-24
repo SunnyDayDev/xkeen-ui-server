@@ -90,8 +90,8 @@ func (w *RestartWorking) policy(ctx context.Context) string {
 	if len(lines) < 2 || !strings.HasPrefix(lines[0], "-P OUTPUT ") || lines[1] != first {
 		return ""
 	}
-	identity, _ := json.Marshal([]string{ns, c.API, w.initial.SOCKS, w.initial.AllowURL, w.initial.AllowMarker, w.initial.DenyURL, w.initial.DenyMarker, c.ProbeURL, c.ProbeMarker, c.FirewallSHA256, w.bootID})
-	return fmt.Sprintf("%x", sha256.Sum256(identity))
+	identity, _ := json.Marshal([]string{c.API, w.initial.SOCKS, w.initial.AllowURL, w.initial.AllowMarker, w.initial.DenyURL, w.initial.DenyMarker, c.ProbeURL, c.ProbeMarker, c.FirewallSHA256, hex.EncodeToString(w.initial.BinaryDigest[:]), strconv.FormatUint(uint64(w.uid), 10), strconv.FormatUint(uint64(w.gid), 10)})
+	return fmt.Sprintf("%x:%x", sha256.Sum256(identity), sha256.Sum256([]byte(w.bootID+" "+ns)))
 }
 
 func hotCommand(ctx context.Context, binary *os.File, name string, extra *os.File, args ...string) ([]byte, error) {

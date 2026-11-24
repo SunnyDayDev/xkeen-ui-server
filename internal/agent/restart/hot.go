@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"slices"
+	"strings"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/preparation"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/jsonvalue"
@@ -45,8 +46,7 @@ func (h *HotReceipt) valid() bool {
 	if h == nil {
 		return true
 	}
-	digest, err := hex.DecodeString(h.Guard)
-	if err != nil || len(digest) != 32 || hex.EncodeToString(digest) != h.Guard || h.AllowPort == 0 || h.DenyPort == 0 || h.ProbePort == 0 || h.AllowPort == h.DenyPort || h.AllowPort == h.ProbePort || h.DenyPort == h.ProbePort || len(h.Expected) == 0 || h.Outcome != "direct" && h.Outcome != "block" {
+	if !validGuard(h.Guard) || h.AllowPort == 0 || h.DenyPort == 0 || h.ProbePort == 0 || h.AllowPort == h.DenyPort || h.AllowPort == h.ProbePort || h.DenyPort == h.ProbePort || len(h.Expected) == 0 || h.Outcome != "direct" && h.Outcome != "block" {
 		return false
 	}
 	tags := make(map[string]bool)
@@ -82,4 +82,34 @@ func (h *HotReceipt) agrees(files []preparation.BaselineFile) bool {
 	}
 	set := ruleProjection(files[4].Content, tag)
 	return slices.Equal(set.routes, h.Expected) && set.outcome(h.AllowPort) == "direct" && set.outcome(h.DenyPort) == "block" && set.outcome(h.ProbePort) == h.Outcome
+}
+
+// Rebound authorizes the same witness policy on a newly launched, independently
+// verified runtime. Existing processes must still match the entire guard.
+func (h *HotReceipt) Rebound(next string) *HotReceipt {
+	if h == nil || !validGuard(h.Guard) || !validGuard(next) {
+		return nil
+	}
+	oldProfile, _, _ := strings.Cut(h.Guard, ":")
+	newProfile, _, _ := strings.Cut(next, ":")
+	if oldProfile != newProfile {
+		return nil
+	}
+	copy := *h
+	copy.Guard = next
+	return &copy
+}
+
+func validGuard(value string) bool {
+	profile, epoch, ok := strings.Cut(value, ":")
+	if !ok {
+		return false
+	}
+	for _, part := range []string{profile, epoch} {
+		digest, err := hex.DecodeString(part)
+		if err != nil || len(digest) != 32 || hex.EncodeToString(digest) != part {
+			return false
+		}
+	}
+	return true
 }
