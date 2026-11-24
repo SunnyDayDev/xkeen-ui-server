@@ -38,6 +38,16 @@ func TestWebExclusionDraftCAS(t *testing.T) {
 	if _, err := store.SaveExclusions(ctx, session, fixedWebTime(now), "example", edit); !errors.Is(err, templates.ErrVersionConflict) {
 		t.Fatal("stale", err)
 	}
+	path := readText(t, db, "SELECT file FROM pragma_database_list WHERE name='main'")
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	reopened, err := Open(ctx, path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reopened.Close()
+	store = NewWebTemplates(reopened)
 	actual := read()
 	if actual.Text != edit.Text || actual.ID != saved.ID || *actual.Variables[0].Default != v {
 		t.Fatal("source lost")
