@@ -4,6 +4,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -60,7 +61,14 @@ func checkControlledApplication(t *testing.T, mode string) {
 	if binary == "" || xray == "" || cgroup == "" || os.Geteuid() != 0 {
 		t.Skip("requires disposable delegated Entware application profile")
 	}
-	f := newRecoveryFixture(t, func(http.ResponseWriter, *http.Request) bool { return false })
+	reports := mode == "report"
+	var deliveryFault reportDeliveryFault
+	wrappers := []func(http.Handler) http.Handler{}
+	if reports {
+		mode = "hot"
+		wrappers = append(wrappers, deliveryFault.wrap)
+	}
+	f := newRecoveryFixture(t, func(http.ResponseWriter, *http.Request) bool { return false }, wrappers...)
 	const agentUID, runtimeUID, workerUID = 65532, 65533, 65534
 	base, err := os.MkdirTemp("", "e03-process-")
 	if err != nil {
@@ -215,6 +223,7 @@ func checkControlledApplication(t *testing.T, mode string) {
 	}
 	writeConfig("profile.json", cfg)
 	writeConfig("application.json", app)
+	expectReportOnly := false
 	startSupervisor := func() *process {
 		t.Helper()
 		p := startProcess(t, binary, "--config", path("profile.json"), "--application-config", path("application.json"))
@@ -223,6 +232,9 @@ func checkControlledApplication(t *testing.T, mode string) {
 			case <-p.done:
 				t.Fatalf("controlled supervisor failed: %s", p.output())
 			default:
+				if expectReportOnly {
+					return strings.Contains(p.output(), "local reporting ready; startup blocked by terminal rollback")
+				}
 				return strings.Contains(p.output(), "local application ready")
 			}
 			return false
@@ -236,6 +248,20 @@ func checkControlledApplication(t *testing.T, mode string) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		if reports {
+			draft := publicationDraft(t, scope.RouterID, before.TemplateID, files.Files)
+			service := publication.NewService(f.store, processPublicationValidator{xray: xray, dir: base})
+			result, err := service.Publish(t.Context(), publication.PublishRequest{
+				Mode: publication.PublishOrdinary, Source: publication.SourceCandidate, Candidate: &draft,
+				Expected: publication.Expectations{RouterID: scope.RouterID, TemplateID: before.TemplateID,
+					AcceptedVersion: before.Accepted.Version, ActiveGeneration: before.Active.Generation, DesiredNumber: before.Desired.Number},
+				OrderBasis: &publication.OrderBasis{TemplateID: before.TemplateID, TemplateVersion: before.Accepted.Version, SharedRuleIDs: []string{}},
+			})
+			if err != nil || result.Revision != number {
+				t.Fatalf("publish and verify revision %d: %v", number, err)
+			}
+			return
+		}
 		got, err := f.store.Commit(t.Context(), publication.CommitPlan{
 			Expected: publication.Expectations{RouterID: scope.RouterID, TemplateID: before.TemplateID,
 				AcceptedVersion: before.Accepted.Version, ActiveGeneration: before.Active.Generation, DesiredNumber: before.Desired.Number},
@@ -245,11 +271,23 @@ func checkControlledApplication(t *testing.T, mode string) {
 			t.Fatalf("publish revision %d: %v", got, err)
 		}
 	}
+	agentBinary := f.agent
+	agentReports := false
+	if reports {
+		agentBinary = os.Getenv("XKEEN_TEST_LEGACY_AGENT_BINARY")
+		if agentBinary == "" {
+			t.Fatal("the upgrade test requires the previous E07 agent")
+		}
+	}
 	launchAgent := func() (func(), *safeBuffer) {
 		t.Helper()
 		output := new(safeBuffer)
-		cmd := exec.CommandContext(t.Context(), f.agent, "--server", f.origin, "--state-dir", path("agent"),
-			"--ca-file", path("agent-ca.pem"), "--local-application-socket", app.Socket, "--local-verifier", scope.VerifierID)
+		args := []string{"--server", f.origin, "--state-dir", path("agent"), "--ca-file", path("agent-ca.pem"),
+			"--local-application-socket", app.Socket, "--local-verifier", scope.VerifierID}
+		if agentReports {
+			args = append(args, "--local-application-reports")
+		}
+		cmd := exec.CommandContext(t.Context(), agentBinary, args...)
 		cmd.SysProcAttr = &syscall.SysProcAttr{Credential: &syscall.Credential{Uid: agentUID, Gid: agentUID}}
 		cmd.Stdout, cmd.Stderr = output, output
 		if err := cmd.Start(); err != nil {
@@ -318,6 +356,166 @@ func checkControlledApplication(t *testing.T, mode string) {
 	first, _ := committed()
 	if first.Number != 2 || first.Baseline.Runtime.PID == oldPID || first.Baseline.Runtime.BootID == "" {
 		t.Fatal("first restart did not commit a new runtime")
+	}
+	if reports {
+		stop()
+		if status := f.status(t); status.Applied != 0 || status.Last != nil || len(deliveryFault.bodies()) != 0 {
+			t.Fatal("legacy application profile reported success")
+		}
+		oldBinding := readAgentStateWhileRunning(t, path("agent"))
+		agentBinary = f.agent
+		compat, compatOutput := launchAgent()
+		compat()
+		if same, _ := committed(); same.AttemptID != first.AttemptID || !strings.Contains(compatOutput.String(), "agent revision verified locally") ||
+			f.status(t).Applied != 0 {
+			t.Fatal("new agent with previous profile changed application or server status")
+		}
+		stopRouterAgent(t, supervisor)
+		app.ReportVersion = 1
+		writeConfig("application.json", app)
+		supervisor = startSupervisor()
+		agentBinary = os.Getenv("XKEEN_TEST_LEGACY_AGENT_BINARY")
+		rejected, rejectedOutput := launchAgent()
+		rejected()
+		if strings.Contains(rejectedOutput.String(), "agent revision verified locally") || f.status(t).Applied != 0 {
+			t.Fatal("legacy agent was accepted by the v1 report-enabled profile")
+		}
+		agentBinary, agentReports = f.agent, true
+		readDelivery := func() *restart.ReportDelivery {
+			t.Helper()
+			raw, err := os.ReadFile(path("journal/application.json"))
+			var view struct{ Delivery *restart.ReportDelivery }
+			if err != nil || json.Unmarshal(raw, &view) != nil {
+				t.Fatal("protected delivery record unavailable", err)
+			}
+			return view.Delivery
+		}
+		deliveryFault.drop.Store(true)
+		interrupted, _ := launchAgent()
+		waitRecovery(t, 12*time.Second, "no real report accepted before the lost reply", func() bool {
+			return len(deliveryFault.bodies()) > 0 && f.status(t).Applied == 2
+		})
+		interrupted()
+		pending := readDelivery()
+		if pending == nil || pending.Body == nil || pending.Body.Sequence != 1 || pending.Done {
+			t.Fatal("lost response was not retained as pending")
+		}
+		stopRouterAgent(t, supervisor)
+		deliveryFault.drop.Store(false)
+		supervisor = startSupervisor()
+		active, activeOutput := launchAgent()
+		t.Cleanup(func() {
+			if t.Failed() {
+				status, _ := f.contacts.Status(context.Background(), scope.RouterID)
+				t.Logf("report transition desired=%d applied=%d runtime=%s last=%+v agent=%s",
+					status.Desired, status.Applied, status.Runtime, status.Last, activeOutput.String())
+			}
+		})
+		waitRecovery(t, 12*time.Second, "reopened process never acknowledged the original report", func() bool {
+			return readDelivery().Done
+		})
+		bodies := deliveryFault.bodies()
+		if len(bodies) < 2 {
+			t.Fatal("expected a retransmission")
+		}
+		for _, raw := range bodies[1:] {
+			if !bytes.Equal(bodies[0], raw) {
+				t.Fatal("lost acknowledgement changed the original D06 report")
+			}
+		}
+		again, _ := committed()
+		if again.AttemptID != first.AttemptID || again.Baseline.Runtime != first.Baseline.Runtime ||
+			oldBinding != readAgentStateWhileRunning(t, path("agent")) {
+			t.Fatal("retry changed binding or reapplied the revision")
+		}
+		checkTraffic(target, "target-fixture", false)
+		deliveryFault.conflict.Store(true)
+		publish(catalog(false, false), 3)
+		waitRecovery(t, 12*time.Second, "protected report did not remain pending on conflict", func() bool {
+			rec := readDelivery()
+			return deliveryFault.conflicts.Load() >= 2 && rec.Body != nil && rec.Body.Sequence == 2 && !rec.Done
+		})
+		held := readDelivery()
+		if f.status(t).Applied != 2 {
+			t.Fatal("conflicting delivery advanced server state")
+		}
+		active()
+		heartbeats, watches := deliveryFault.heartbeats.Load(), deliveryFault.watches.Load()
+		active, activeOutput = launchAgent()
+		waitRecovery(t, 8*time.Second, "conflict stalled independent heartbeat or watch", func() bool {
+			return deliveryFault.heartbeats.Load() > heartbeats && deliveryFault.watches.Load() > watches
+		})
+		if !reflect.DeepEqual(held, readDelivery()) {
+			t.Fatal("retry after conflict changed pending report")
+		}
+		deliveryFault.conflict.Store(false)
+		waitRecovery(t, 20*time.Second, "hot publication never produced a durable server confirmation", func() bool {
+			status := f.status(t)
+			return status.Applied == 3 && status.Last != nil && status.Last.Sequence == 2 && readDelivery().Done
+		})
+		third, _ := committed()
+		if third.Number != 3 || third.Hot == nil || third.Baseline.Runtime != first.Baseline.Runtime || third.AttemptID == first.AttemptID {
+			t.Fatal("the second confirmed revision was not hot-applied")
+		}
+		checkTraffic(target, "target-fixture", true)
+		checkTraffic(allow, "allowed-fixture", true)
+		checkTraffic(deny, "denied-fixture", false)
+		input, err := f.store.Read(t.Context(), publication.ReadRequest{RouterID: scope.RouterID})
+		if err != nil || input.Desired == nil {
+			t.Fatal("cannot read C06 output", err)
+		}
+		for _, file := range input.Desired.Catalog.Files {
+			raw, err := os.ReadFile(path("work/" + file.Name))
+			if err != nil || !bytes.Equal(raw, file.Content) {
+				t.Fatal("reported runtime did not have the exact C06 files")
+			}
+		}
+
+		// Force the real working path into terminal rollback failure while
+		// D06 is unavailable for result delivery.
+		invalid := catalog(false, false)
+		_, allowPort, _ := net.SplitHostPort(allow)
+		invalid.Files[4].Content = bytes.ReplaceAll(invalid.Files[4].Content, []byte(targetPort), []byte(allowPort))
+		invalid.Files[4].Content = bytes.ReplaceAll(invalid.Files[4].Content, []byte(`"outboundTag":"direct"`), []byte(`"outboundTag":"block"`))
+		deliveryFault.unavailable.Store(true)
+		publish(invalid, 4)
+		invalidInput, err := f.store.Read(t.Context(), publication.ReadRequest{RouterID: scope.RouterID})
+		if err != nil || invalidInput.Desired == nil {
+			t.Fatal("cannot read failed target")
+		}
+		waitRecovery(t, 10*time.Second, "failed target did not reach disk", func() bool {
+			raw, err := os.ReadFile(path("work/05_routing.json"))
+			return err == nil && bytes.Equal(raw, invalidInput.Desired.Catalog.Files[4].Content)
+		})
+		unavailable.Store(true)
+		waitRecovery(t, 32*time.Second, "terminal rollback outcome was not queued", func() bool {
+			d := readDelivery()
+			return d != nil && d.Outcome != nil && d.Outcome.Code == "rollback_failed" && d.Body != nil && !d.Done
+		})
+		active()
+		beforeReportOnly := readDelivery()
+		stopRouterAgent(t, supervisor)
+		expectReportOnly = true
+		supervisor = startSupervisor()
+		blockedAgent, blockedOutput := launchAgent()
+		if strings.Contains(blockedOutput.String(), "agent revision verified locally") || f.status(t).Applied != 3 ||
+			!reflect.DeepEqual(beforeReportOnly, readDelivery()) {
+			t.Fatal("report-only reboot changed application or reserved report")
+		}
+		deliveryFault.unavailable.Store(false)
+		waitRecovery(t, 15*time.Second, "terminal report did not recover when delivery became available", func() bool {
+			status := f.status(t)
+			return status.Desired == 4 && status.Applied == 3 && status.Runtime == "unknown" &&
+				status.Last != nil && status.Last.Sequence == 3 && status.Last.Code == "rollback_failed" &&
+				status.Presence == "online" && readDelivery().Done
+		})
+		if conn, err := net.DialTimeout("tcp", proxy, time.Second); err == nil {
+			conn.Close()
+			t.Fatal("report-only path started Xray")
+		}
+		blockedAgent()
+		stopRouterAgent(t, supervisor)
+		return
 	}
 	if mode == "hot" {
 		if first.Guard == "" {

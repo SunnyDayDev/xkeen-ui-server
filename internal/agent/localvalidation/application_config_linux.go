@@ -22,6 +22,7 @@ type ApplicationConfig struct {
 	Mode                         string
 	Socket, JournalDirectory, CA string
 	RuntimeUID, RuntimeGID       uint32
+	ReportVersion                int `json:",omitempty"`
 }
 
 func LoadApplicationConfig(path string, validator Config) (ApplicationConfig, error) {
@@ -31,7 +32,7 @@ func LoadApplicationConfig(path string, validator Config) (ApplicationConfig, er
 	}
 	defer file.Close()
 	var config ApplicationConfig
-	if !readJSON(file, &config) || config.Version != 1 || config.Mode != "direct-xray-lab" ||
+	if !readJSON(file, &config) || config.Version != 1 || config.Mode != "direct-xray-lab" || config.ReportVersion < 0 || config.ReportVersion > 1 ||
 		config.RuntimeUID == 0 || config.RuntimeGID == 0 ||
 		filepath.Clean(config.Socket) != config.Socket || !privateDirectory(filepath.Dir(config.Socket)) ||
 		config.Socket == validator.Socket || !privateDirectory(config.JournalDirectory) ||

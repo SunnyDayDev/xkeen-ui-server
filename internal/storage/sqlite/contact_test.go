@@ -107,6 +107,20 @@ func TestContactPersistsAndDoesNotLowerConfirmation(t *testing.T) {
 	if err != nil || got.Presence != reporting.Offline {
 		t.Fatalf("180 seconds: %#v %v", got, err)
 	}
+	fresh := reporting.Report{Sequence: 5, Revision: 2, State: "applied"}
+	if err := svc.Accept(ctx, id, &fresh); err != nil {
+		t.Fatal(err)
+	}
+	lost := reporting.Report{Sequence: 6, Revision: 2, State: "failed", Stage: "verify", Code: "runtime_unknown"}
+	if err := svc.Accept(ctx, id, &lost); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.Accept(ctx, id, &fresh); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := svc.Status(ctx, id.RouterID); err != nil || got.Applied != 2 || got.Runtime != "unknown" || got.Last == nil || *got.Last != lost {
+		t.Fatalf("runtime uncertainty replaced verified history: %#v %v", got, err)
+	}
 	if err := keys.Revoke(ctx, id.RouterID); err != nil {
 		t.Fatal(err)
 	}

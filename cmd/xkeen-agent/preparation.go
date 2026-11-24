@@ -20,6 +20,9 @@ type candidatePreparation struct {
 	binding                               enrollment.State
 	store                                 *statefile.Store
 	out, diagnostics                      io.Writer
+	applicationReports                    bool
+	reportWake                            chan<- struct{}
+	applicationReady                      func() bool
 }
 
 func (p *candidatePreparation) check(ctx context.Context, snapshot *agentrevision.Snapshot) {
@@ -41,14 +44,28 @@ func (p *candidatePreparation) check(ctx context.Context, snapshot *agentrevisio
 	}
 	scope := preparation.Scope{Origin: p.binding.Origin, RouterID: p.binding.RouterID, Profile: snapshot.Profile, VerifierID: p.profile}
 	if p.application != "" {
-		if err := localvalidation.ApplyCurrent(ctx, p.application, scope, p.binding.Key, tag); err != nil {
+		if p.applicationReports && !p.applicationReady() {
+			return
+		}
+		apply := localvalidation.ApplyCurrent
+		if p.applicationReports {
+			apply = localvalidation.ApplyReportable
+		}
+		err := apply(ctx, p.application, scope, p.binding.Key, tag)
+		if p.reportWake != nil {
+			select {
+			case p.reportWake <- struct{}{}:
+			default:
+			}
+		}
+		if err != nil {
 			if ctx.Err() == nil {
 				switch {
 				case errors.Is(err, restart.ErrRolledBack):
 					fmt.Fprintln(p.diagnostics, "agent application failed; previous runtime restored")
 				case errors.Is(err, restart.ErrRollbackFailed):
 					fmt.Fprintln(p.diagnostics, "agent rollback failed; current runtime unknown")
-				case errors.Is(err, restart.ErrPending), errors.Is(err, restart.ErrDesired), errors.Is(err, restart.ErrBaseline),
+				case errors.Is(err, restart.ErrReportPending), errors.Is(err, restart.ErrPending), errors.Is(err, restart.ErrDesired), errors.Is(err, restart.ErrBaseline),
 					errors.Is(err, preparation.ErrRejected), errors.Is(err, restart.ErrJournal), errors.Is(err, restart.ErrEffects):
 					fmt.Fprintln(p.diagnostics, err)
 				default:

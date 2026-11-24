@@ -38,7 +38,7 @@ type recoveryFixture struct {
 	credentials              *agentcredentials.Service
 }
 
-func newRecoveryFixture(t *testing.T, fault func(http.ResponseWriter, *http.Request) bool) *recoveryFixture {
+func newRecoveryFixture(t *testing.T, fault func(http.ResponseWriter, *http.Request) bool, wrap ...func(http.Handler) http.Handler) *recoveryFixture {
 	t.Helper()
 	ctx, cancel := context.WithCancel(t.Context())
 	t.Cleanup(cancel)
@@ -57,6 +57,9 @@ func newRecoveryFixture(t *testing.T, fault func(http.ResponseWriter, *http.Requ
 	contacts := sqlite.NewContacts(db, now)
 	credentials := agentcredentials.NewService(sqlite.NewAgentCredentials(db, watch.Notify), now)
 	handler := server.NewAgentHandler(credentials, store, contacts, watch)
+	for _, apply := range wrap {
+		handler = apply(handler)
+	}
 	endpoint := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !fault(w, r) {
 			handler.ServeHTTP(w, r)
