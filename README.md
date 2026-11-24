@@ -67,6 +67,7 @@ Templates + router values + overrides
 | [Описание прототипа](docs/prototype.md) | Сценарии, причины решений и открытые вопросы как основа будущих спецификаций |
 | [План разработки](docs/roadmap.md) | Последовательность небольших задач на одну сессию, зависимости и критерии готовности |
 | [Сервер в Docker](docs/docker-server.md) | Локальная сборка, HTTPS, встроенный UI и постоянный том |
+| [Чистая установка в Entware](docs/entware-clean-install.md) | Проверка доверия к выпуску, сервер HTTPS, агент и воспроизводимый стенд |
 | [Docker-стенд](lab/README.md) | Entware/opkg, XKeen/Xray, раздельные конфиги и проверка API на трафике |
 | [AGENTS.md](AGENTS.md) | Правила работы с репозиторием и OpenSpec |
 
