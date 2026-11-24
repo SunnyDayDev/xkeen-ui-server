@@ -77,3 +77,26 @@ func PreviewRouterFiles(inputs *Inputs, mode RouterPreviewMode) (*RouterCatalogP
 	}
 	return &RouterCatalogPreview{Mode: mode, Expected: expected, Files: prepared.Catalog.Files}, nil
 }
+
+// ScopedRouterPreview rechecks the used inputs before bytes or a candidate
+// diagnostic can cross an authenticated channel.
+func ScopedRouterPreview(inputs *Inputs, mode RouterPreviewMode, routerID string, recheck func(Expectations) error) (*RouterCatalogPreview, error) {
+	preview, assemblyErr := PreviewRouterFiles(inputs, mode)
+	var expected Expectations
+	if assemblyErr != nil {
+		scope, err := RouterPreviewExpectations(inputs, mode)
+		if err != nil {
+			return nil, assemblyErr
+		}
+		expected = scope
+	} else {
+		expected = preview.Expected
+	}
+	if expected.RouterID != routerID {
+		return nil, ErrStoredState
+	}
+	if err := recheck(expected); err != nil {
+		return nil, err
+	}
+	return preview, assemblyErr
+}

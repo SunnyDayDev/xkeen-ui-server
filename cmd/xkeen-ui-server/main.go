@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/agentcredentials"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/externalaccess"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/revisionwatch"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/webadmin"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/server"
@@ -132,6 +133,7 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 	externalOperations = server.NewExternalRouterReplacement(external, externalOperations)
 	externalOperations = server.NewExternalRouterStatuses(external, externalOperations)
 	externalOperations = server.NewExternalRouterRules(external, externalOperations)
+	externalOperations = server.NewExternalRouterCatalog(externalaccess.NewRouterCatalog(external), externalOperations)
 	handler = server.NewExternalAccessHandler(cfg.webOrigin, external, externalOperations, handler)
 	if err := json.NewEncoder(stderr).Encode(struct {
 		Event   string `json:"event"`

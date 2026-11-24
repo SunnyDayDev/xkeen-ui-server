@@ -26,56 +26,76 @@ func NewWebRouterCatalogHandler(origin WebOrigin, service webRouterCatalogServic
 		if !allowWebEndpoint(w, r, origin, true, http.MethodGet) {
 			return
 		}
-		query, err := url.ParseQuery(r.URL.RawQuery)
-		ids, modes := query["routerId"], query["source"]
-		if err != nil || len(query) != 2 || len(ids) != 1 || ids[0] == "" || !utf8.ValidString(ids[0]) ||
-			len(modes) != 1 || (modes[0] != string(publication.PreviewDesired) && modes[0] != string(publication.PreviewPersonal)) {
+		id, mode, ok := routerCatalogQuery(r.URL.RawQuery)
+		if !ok {
 			webResult(w, http.StatusBadRequest, "invalid_request", "")
 			return
 		}
-		result, err := service.Read(r.Context(), webSessionToken(r), ids[0], publication.RouterPreviewMode(modes[0]))
+		result, err := service.Read(r.Context(), webSessionToken(r), id, mode)
 		if err != nil {
 			webRouterCatalogFailure(w, err)
 			return
 		}
-		type file struct {
-			Name    string `json:"name"`
-			Content []byte `json:"content"`
-		}
-		files := make([]file, 0, len(result.Files))
-		for _, current := range result.Files {
-			files = append(files, file{Name: current.Name, Content: current.Content})
-		}
+
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(struct {
-			RouterID        string `json:"routerId"`
-			Source          string `json:"source"`
-			AcceptedVersion string `json:"acceptedVersion"`
-			DesiredRevision string `json:"desiredRevision"`
-			Files           []file `json:"files"`
+			RouterID        string              `json:"routerId"`
+			Source          string              `json:"source"`
+			AcceptedVersion string              `json:"acceptedVersion"`
+			DesiredRevision string              `json:"desiredRevision"`
+			Files           []routerCatalogFile `json:"files"`
 		}{result.Expected.RouterID, string(result.Mode), strconv.FormatInt(result.Expected.AcceptedVersion, 10),
-			strconv.FormatInt(result.Expected.DesiredNumber, 10), files})
+			strconv.FormatInt(result.Expected.DesiredNumber, 10), routerCatalogFiles(result)})
 	})
+}
+
+func routerCatalogQuery(raw string) (string, publication.RouterPreviewMode, bool) {
+	query, err := url.ParseQuery(raw)
+	ids, modes := query["routerId"], query["source"]
+	if err != nil || len(query) != 2 || len(ids) != 1 || ids[0] == "" || !utf8.ValidString(ids[0]) || len(modes) != 1 {
+		return "", "", false
+	}
+	mode := publication.RouterPreviewMode(modes[0])
+	return ids[0], mode, mode == publication.PreviewDesired || mode == publication.PreviewPersonal
+}
+
+type routerCatalogFile struct {
+	Name    string `json:"name"`
+	Content []byte `json:"content"`
+}
+
+func routerCatalogFiles(result *publication.RouterCatalogPreview) []routerCatalogFile {
+	files := make([]routerCatalogFile, 0, len(result.Files))
+	for _, current := range result.Files {
+		files = append(files, routerCatalogFile{Name: current.Name, Content: current.Content})
+	}
+	return files
+}
+
+type routerCatalogDiagnostic struct {
+	Code     string `json:"code"`
+	Position string `json:"position"`
+}
+
+func routerCatalogDiagnostics(prepared *publication.PreparationError) []routerCatalogDiagnostic {
+	issues := make([]routerCatalogDiagnostic, 0, len(prepared.Issues))
+	for _, issue := range prepared.Issues {
+		issues = append(issues, routerCatalogDiagnostic{Code: issue.Code, Position: issue.Location.Position})
+	}
+	return issues
 }
 
 func webRouterCatalogFailure(w http.ResponseWriter, err error) {
 	var prepared *publication.PreparationError
 	switch {
 	case errors.As(err, &prepared):
-		type diagnostic struct {
-			Code     string `json:"code"`
-			Position string `json:"position"`
-		}
-		issues := make([]diagnostic, 0, len(prepared.Issues))
-		for _, issue := range prepared.Issues {
-			issues = append(issues, diagnostic{Code: issue.Code, Position: issue.Location.Position})
-		}
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		_ = json.NewEncoder(w).Encode(struct {
-			State  string       `json:"state"`
-			Issues []diagnostic `json:"issues"`
-		}{"catalog_unready", issues})
+			State  string                    `json:"state"`
+			Issues []routerCatalogDiagnostic `json:"issues"`
+		}{"catalog_unready", routerCatalogDiagnostics(prepared)})
 	case errors.Is(err, publication.ErrInvalidCandidate):
 		webResult(w, http.StatusUnprocessableEntity, "catalog_unready", "")
 	case errors.Is(err, publication.ErrConflict):
