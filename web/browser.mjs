@@ -62,10 +62,12 @@ try {
   page.setDefaultTimeout(5000);
   const post = [];
   page.on('request', request => { if (request.method() === 'POST') post.push(new URL(request.url()).pathname); });
+  await page.setViewportSize({width:320,height:640});
   await page.goto(origin + '/ui/');
   await page.getByRole('heading', {name:'Доступ ещё не настроен'}).waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 320);
   admin('setup', first);
-  await page.getByRole('button', {name:'Проверить настройку'}).click();
+  await page.getByRole('button', {name:'Проверить настройку'}).press('Enter');
 
   const password = page.getByLabel('Пароль администратора');
   await page.route('**/ui/v1/login', async route => {
@@ -76,9 +78,17 @@ try {
   await password.press('Enter');
   await page.getByText('Проверяем пароль.').waitFor();
   await page.getByText('Не удалось войти. Проверьте пароль и попробуйте ещё раз.').waitFor();
+  const signIn = page.getByRole('button', {name:'Войти',exact:true});
+  await password.press('Tab');
+  assert.equal(await signIn.evaluate(node => node.matches(':focus-visible')), true);
+  await page.keyboard.press('Shift+Tab');
+  assert.equal(await password.evaluate(node => node === document.activeElement), true);
   await password.fill(first);
-  await password.press('Enter');
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Enter');
   await page.getByRole('heading', {name:'Обзор'}).waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 320);
+  await page.setViewportSize({width:1080,height:660});
   assert.equal(await page.getByRole('link',{name:'Обзор'}).getAttribute('aria-current'),'page');
 
   await page.getByText('Роутеров с подтверждённым контактом пока нет.',{exact:true}).waitFor();
@@ -178,10 +188,14 @@ try {
   await savedID.getByText('Версия 1',{exact:true}).waitFor();
   assert.equal(await savedID.locator('bdi').textContent(), exactID);
 
-  await openCreate.click();
+  await page.setViewportSize({width:320,height:640});
+  await openCreate.press('Enter');
   await templateID.fill(exactID);
-  await submitCreate.click();
+  await templateID.press('Tab');
+  assert.equal(await submitCreate.evaluate(node => node.matches(':focus-visible')), true);
+  await page.keyboard.press('Enter');
   await page.getByText('Шаблон с таким идентификатором уже существует.').waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 320);
   assert.equal(await templateID.inputValue(),exactID);
   if (process.env.XKEEN_BROWSER_SCREENSHOT) await page.screenshot({path:process.env.XKEEN_BROWSER_SCREENSHOT + '-create-wide.png'});
   await page.setViewportSize({width:360,height:640});

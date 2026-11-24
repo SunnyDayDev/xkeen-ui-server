@@ -1,5 +1,5 @@
 <script lang="ts">
- import {onMount} from 'svelte';
+ import {onMount,tick} from 'svelte';
  import {ExactSource} from './exact-source';
  let {id,active,sessionEpoch,csrf,signedOut,refreshSession}: {id:string;active:boolean;sessionEpoch:number;csrf:string;signedOut:()=>void;refreshSession:()=>void}=$props();
  type Variable={name:string;default?:string};
@@ -13,6 +13,9 @@
  let status=$state('');
  let busy=$state(false);
  let stale=$state(false);
+ let saveButton=$state<HTMLButtonElement>();
+ let previewButton=$state<HTMLButtonElement>();
+ let rereadButton=$state<HTMLButtonElement>();
  let alive=true;
  onMount(()=>{void read();return ()=>{alive=false;}});
  async function call(method:string,path:string,body?:unknown){
@@ -33,17 +36,31 @@
   base=data;source=new ExactSource(data.text);display=source.display;
   variables=data.variables.map(v=>({...v}));preview=undefined;stale=false;
  }
+ async function restoreFocus(started:Element|null,epoch:number,target:()=>HTMLButtonElement|undefined){
+  if(!started)return;
+  await tick();
+  if(!alive||!active||sessionEpoch!==epoch)return;
+  if(document.activeElement===started||document.activeElement===document.body)target()?.focus();
+ }
  async function read(){
   if(busy||!active)return;
+  const started=document.activeElement===rereadButton?rereadButton:null;
+  const epoch=sessionEpoch;
   busy=true;
   try{const reply=await call('GET','');if(!reply)return;
    if(!reply.res.ok){status=reply.res.status===404?'Шаблон не найден.':'Не удалось загрузить список.';return;}
    select(reply.data);status=base?.version==='0'?'Настройка ещё не создана.':'';
-  }catch{status='Не удалось загрузить список.';}finally{busy=false;}
+  }catch{status='Не удалось загрузить список.';}finally{
+   busy=false;
+   await restoreFocus(started,epoch,()=>stale?rereadButton:saveButton);
+  }
  }
  function modified(){preview=undefined;status='';}
  async function submit(check:boolean){
   if(!base||!active||stale||busy)return;
+  const button=check?previewButton:saveButton;
+  const started=document.activeElement===button?button:null;
+  const epoch=sessionEpoch;
   busy=true;
   try{
    const reply=await call('POST',check?'/preview':'',{id:base.id,version:base.version,text:source.value,variables});
@@ -51,7 +68,10 @@
    if(reply.res.status===409){stale=true;status='Настройки изменились. Ваш текст сохранён в форме.';return;}
    if(!reply.res.ok){preview=undefined;status=reply.data.line?'Строка '+reply.data.line+': '+(reply.data.code==='missing_value'?'нужно значение':'неверный адрес или переменная')+'.':'Проверьте имена переменных и значения.';return;}
    if(check){preview=reply.data.file;status='';}else{select(reply.data);status='Список сохранён.';}
-  }catch{status='Ответ не получен. Перечитайте настройки перед повтором.';stale=true;}finally{busy=false;}
+  }catch{status='Ответ не получен. Перечитайте настройки перед повтором.';stale=true;}finally{
+   busy=false;
+   await restoreFocus(started,epoch,()=>stale?rereadButton:check?previewButton:saveButton);
+  }
  }
 </script>
 <p class="editor-context"><bdi>{id}</bdi></p>
@@ -74,9 +94,9 @@
  <h2>ip_exclude.lst</h2>
  {#if preview!==undefined}<pre>{preview||'Пустой файл'}</pre>{/if}
  <div class="editor-actions">
-  {#if stale}<button onclick={read}>Перечитать</button>{:else}
-   <button onclick={()=>submit(false)}>{base.version==='0'?'Создать список':'Сохранить'}</button>
-   <button class="secondary" onclick={()=>submit(true)}>Проверить список</button>
+  {#if stale}<button bind:this={rereadButton} onclick={read}>Перечитать</button>{:else}
+   <button bind:this={saveButton} onclick={()=>submit(false)}>{base.version==='0'?'Создать список':'Сохранить'}</button>
+   <button class="secondary" bind:this={previewButton} onclick={()=>submit(true)}>Проверить список</button>
   {/if}
  </div>
 </fieldset>

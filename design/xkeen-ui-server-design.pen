@@ -46068,26 +46068,25 @@
               "gap": 10,
               "children": [
                 {
-                  "id": "JOh1w",
-                  "type": "ref",
-                  "ref": "ARxJx",
-                  "name": "Перечитать",
-                  "descendants": {
-                    "GyrRR": {
-                      "content": "Перечитать"
+                  "type": "frame",
+                  "id": "XLO5x",
+                  "name": "Видимый клавиатурный фокус",
+                  "fill": "#497DE5",
+                  "cornerRadius": 11,
+                  "padding": 2,
+                  "children": [
+                    {
+                      "id": "JOh1w",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Перечитать",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Перечитать"
+                        }
+                      }
                     }
-                  }
-                },
-                {
-                  "id": "dF0Ay",
-                  "type": "ref",
-                  "ref": "ARxJx",
-                  "name": "Проверить список",
-                  "descendants": {
-                    "GyrRR": {
-                      "content": "Проверить список"
-                    }
-                  }
+                  ]
                 },
                 {
                   "id": "Y31YCl",
