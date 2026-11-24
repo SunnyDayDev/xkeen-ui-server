@@ -5,10 +5,12 @@ import { join, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
 export async function checkAgentKeys(page,{origin,dir,cert,database,enrolledRouter}) {
-  await page.getByRole('link',{name:'Обзор'}).click();
-  await page.getByRole('link',{name:'Филиал Восток',exact:true}).click();
-  await page.getByRole('link',{name:'Рабочий ключ'}).click();
-  await page.getByRole('button',{name:'Выдать приглашение для замены'}).click();
+  const viewport=page.viewportSize();
+  await page.setViewportSize({width:320,height:740});
+  await page.getByRole('link',{name:'Обзор'}).press('Enter');
+  await page.getByRole('link',{name:'Филиал Восток',exact:true}).press('Enter');
+  await page.getByRole('link',{name:'Рабочий ключ'}).press('Enter');
+  await page.getByRole('button',{name:'Выдать приглашение для замены'}).press('Enter');
   await page.getByText('Прежний ключ действует до успешной замены.',{exact:true}).waitFor();
   const endpoint='/ui/v1/routers/keys';
   await page.evaluate(endpoint=>{
@@ -22,9 +24,9 @@ export async function checkAgentKeys(page,{origin,dir,cert,database,enrolledRout
       return response;
     };
   },endpoint);
-  await page.getByRole('button',{name:'Выдать приглашение',exact:true}).click();
+  await page.getByRole('button',{name:'Выдать приглашение',exact:true}).press('Enter');
   await page.getByText('Не удалось подтвердить выдачу.',{exact:true}).waitFor();
-  await page.getByRole('button',{name:'Проверить состояние'}).click();
+  await page.getByRole('button',{name:'Проверить состояние'}).press('Enter');
   await page.getByText('Приглашение для рабочего ключа действует.',{exact:true}).waitFor();
   const secret=page.getByRole('textbox',{name:'Одноразовое приглашение'});
   assert.equal(await secret.count(),0);
@@ -34,15 +36,16 @@ export async function checkAgentKeys(page,{origin,dir,cert,database,enrolledRout
       .run((BigInt(Date.now())-181000n)*1000000n,enrolledRouter);
   } finally {db.close();}
   await page.getByText('Связь: нет связи',{exact:true}).waitFor();
-  await page.getByRole('button',{name:'Отозвать ключ',exact:true}).click();
+  await page.getByRole('button',{name:'Отозвать ключ',exact:true}).press('Enter');
   await page.getByText('До локальной настройки нового ключа агент не сможет синхронизироваться.',{exact:true}).waitFor();
-  await page.getByRole('button',{name:'Отозвать доступ',exact:true}).click();
+  await page.getByRole('button',{name:'Отозвать доступ',exact:true}).press('Enter');
   await page.getByText('Рабочий ключ отозван.',{exact:true}).waitFor();
   assert.equal(await secret.count(),0);
   assert.equal(await page.getByText('Приглашение для рабочего ключа действует.',{exact:true}).count(),0);
-  await page.getByRole('button',{name:'Восстановить подключение',exact:true}).click();
-  await page.getByRole('button',{name:'Выдать приглашение',exact:true}).click();
+  await page.getByRole('button',{name:'Восстановить подключение',exact:true}).press('Enter');
+  await page.getByRole('button',{name:'Выдать приглашение',exact:true}).press('Enter');
   await secret.waitFor();
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),320);
   const recovery=await secret.inputValue();
   assert.match(recovery,/^i1\./);
   assert.ok(!page.url().includes(recovery));
@@ -59,6 +62,7 @@ export async function checkAgentKeys(page,{origin,dir,cert,database,enrolledRout
     await secret.waitFor({state:'detached'});
     assert.equal(safe,true);
   } finally {
+    await page.setViewportSize(viewport);
     if (agent.exitCode===null && agent.signalCode===null) {
       const stopped=new Promise(resolve=>agent.once('exit',resolve));
       agent.kill('SIGTERM');
