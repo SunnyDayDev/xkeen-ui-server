@@ -67,7 +67,8 @@ func TestProcessExternalPreparationKeepsAgentAuthoritySeparate(t *testing.T) {
 	client := &http.Client{Timeout: 35 * time.Second, Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: roots}}}
 	defer client.CloseIdleConnections()
 	query := url.Values{"routerId": {routerID}, "templateId": {templateID}}
-	route := "https://" + p.readyWithClient(t, client, "https") + "/api/v1/routers/preparation?" + query.Encode()
+	resource := "https://" + p.readyWithClient(t, client, "https") + "/api/v1/routers/preparation"
+	route := resource + "?" + query.Encode()
 	var bearer string
 	call := func(method, tag, body string, status int) ([]byte, string) {
 		t.Helper()
@@ -143,6 +144,22 @@ func TestProcessExternalPreparationKeepsAgentAuthoritySeparate(t *testing.T) {
 	}
 	call(http.MethodPost, tag, body("freedom"), 412)
 	assertAuthority()
+
+	existingRoute := route
+	const secondID = "550e8400-e29b-41d4-a716-446655440002"
+	query.Set("routerId", secondID)
+	route = resource + "?" + query.Encode()
+	accepted, acceptedTag := call(http.MethodGet, "", "", 200)
+	if !strings.Contains(string(accepted), `"source":"accepted"`) {
+		t.Fatal("a second router did not inspect the accepted template source")
+	}
+	call(http.MethodPost, acceptedTag, body("freedom"), 201)
+	second, err := sqlite.NewPublications(db).ReadDesired(ctx, secondID)
+	if err != nil || second == nil || second.Number != 1 {
+		t.Fatal("a second router could not use the already accepted source")
+	}
+	assertAuthority()
+	route = existingRoute
 	expired, expiredDigest, err := externalaccess.Issue()
 	if err != nil {
 		t.Fatal(err)
