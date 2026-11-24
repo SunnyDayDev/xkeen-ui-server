@@ -189,3 +189,35 @@ func TestRouterEditableBasisMigrationPreservesLegacyDraft(t *testing.T) {
 		t.Fatalf("migration rewrote the legacy record: %v", err)
 	}
 }
+
+func TestWebRouterOrderResetClearsThePersistedBasis(t *testing.T) {
+	ctx := t.Context()
+	db, _, digest, issued := fixtureWebTemplateWriter(t)
+	plan := storeCurrentPublication(t, db)
+	id := plan.Settings.ID
+	if _, err := db.ExecContext(ctx, `INSERT INTO agent_contacts (router_id,contact_ns,report,applied,uncertain) VALUES (?, ?,NULL,0,0)`, id, issued.UnixNano()); err != nil {
+		t.Fatal(err)
+	}
+	writer := NewWebRouterDrafts(db)
+	clock := fixedWebTime(issued.Add(time.Minute))
+	base, err := writer.Read(ctx, digest, clock, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	basis := &publication.OrderBasis{TemplateID: "A", TemplateVersion: 1, SharedRuleIDs: []string{}}
+	draft := base.Editable
+	draft.PersonalOrder = []string{}
+	generation, err := writer.WriteOrder(ctx, digest, clock, base.Basis, draft, basis)
+	if err != nil || generation != 1 {
+		t.Fatalf("explicit draft: %d / %v", generation, err)
+	}
+	base.Basis.DraftGeneration = generation
+	draft.PersonalOrder = nil
+	if _, err := writer.WriteOrder(ctx, digest, clock, base.Basis, draft, basis); err != nil {
+		t.Fatalf("cannot restore inheritance: %v", err)
+	}
+	saved, err := writer.Read(ctx, digest, clock, id)
+	if err != nil || saved.Editable.PersonalOrder != nil || saved.OrderBasis != nil || saved.Basis.DraftGeneration != 2 {
+		t.Fatalf("reset kept explicit order or its proof: %+v / %v", saved, err)
+	}
+}

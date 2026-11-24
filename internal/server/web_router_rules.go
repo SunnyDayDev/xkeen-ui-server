@@ -15,6 +15,7 @@ import (
 type webRouterRulesService interface {
 	Read(context.Context, string, string) (webadmin.RouterRuleView, error)
 	Insert(context.Context, string, string, webadmin.RouterDraftBasis, string, json.RawMessage) (webadmin.RouterRuleView, error)
+	Reorder(context.Context, string, string, webadmin.RouterDraftBasis, string, *int) (webadmin.RouterRuleView, error)
 }
 
 func NewWebRouterRulesHandler(origin WebOrigin, service webRouterRulesService, admission webPreparationAdmission, next http.Handler) http.Handler {
@@ -23,7 +24,7 @@ func NewWebRouterRulesHandler(origin WebOrigin, service webRouterRulesService, a
 			next.ServeHTTP(w, r)
 			return
 		}
-		if !allowWebEndpoint(w, r, origin, true, http.MethodGet, http.MethodPost) {
+		if !allowWebEndpoint(w, r, origin, true, http.MethodGet, http.MethodPost, http.MethodPatch) {
 			return
 		}
 		routerID, elementID, ok := routerElementQuery(r.URL.RawQuery)
@@ -42,20 +43,28 @@ func NewWebRouterRulesHandler(origin WebOrigin, service webRouterRulesService, a
 				webFailure(w, err)
 				return
 			}
-			var input struct {
-				webRouterDraftInput
-				After  *string `json:"afterId"`
-				Source *string `json:"source"`
+			if r.Method == http.MethodPatch {
+				basis, ruleID, position, ok := readWebRuleOrder(w, r, routerID)
+				if !ok {
+					return
+				}
+				result, err = service.Reorder(r.Context(), token, csrf, basis, ruleID, position)
+			} else {
+				var input struct {
+					webRouterDraftInput
+					After  *string `json:"afterId"`
+					Source *string `json:"source"`
+				}
+				if !readWebJSON(w, r, maxWebEditorBody, &input) {
+					return
+				}
+				basis, ok := input.basis(routerID)
+				if !ok || input.After == nil || input.Source == nil || (*input.After != "" && !configuration.ValidElementID(*input.After)) {
+					webResult(w, http.StatusBadRequest, "invalid_request", "")
+					return
+				}
+				result, err = service.Insert(r.Context(), token, csrf, basis, *input.After, json.RawMessage(*input.Source))
 			}
-			if !readWebJSON(w, r, maxWebEditorBody, &input) {
-				return
-			}
-			basis, ok := input.basis(routerID)
-			if !ok || input.After == nil || input.Source == nil || (*input.After != "" && !configuration.ValidElementID(*input.After)) {
-				webResult(w, http.StatusBadRequest, "invalid_request", "")
-				return
-			}
-			result, err = service.Insert(r.Context(), token, csrf, basis, *input.After, json.RawMessage(*input.Source))
 		}
 		if err != nil {
 			webRouterRuleFailure(w, err)
@@ -70,14 +79,44 @@ func NewWebRouterRulesHandler(origin WebOrigin, service webRouterRulesService, a
 			ActiveGeneration string                       `json:"activeGeneration"`
 			DraftGeneration  string                       `json:"draftGeneration"`
 			Rules            []publication.DraftRuleEntry `json:"rules"`
+			PersonalOrder    bool                         `json:"personalOrder"`
 		}{
 			RouterID: result.Basis.RouterID, Name: result.Name, TemplateID: result.Basis.TemplateID,
 			AcceptedVersion:  strconv.FormatInt(result.Basis.AcceptedVersion, 10),
 			ActiveGeneration: strconv.FormatInt(result.Basis.ActiveGeneration, 10),
 			DraftGeneration:  strconv.FormatInt(result.Basis.DraftGeneration, 10),
-			Rules:            result.Rules,
+			Rules:            result.Rules, PersonalOrder: result.PersonalOrder,
 		})
 	})
+}
+
+func readWebRuleOrder(w http.ResponseWriter, r *http.Request, routerID string) (webadmin.RouterDraftBasis, string, *int, bool) {
+	var input struct {
+		webRouterDraftInput
+		Action   string          `json:"action"`
+		RuleID   json.RawMessage `json:"ruleId"`
+		Position json.RawMessage `json:"position"`
+	}
+	if !readWebJSON(w, r, maxWebEditorBody, &input) {
+		return webadmin.RouterDraftBasis{}, "", nil, false
+	}
+	basis, valid := input.basis(routerID)
+	var id string
+	var position *int
+	switch input.Action {
+	case "reset":
+		valid = valid && input.RuleID == nil && input.Position == nil
+	case "move":
+		valid = valid && json.Unmarshal(input.RuleID, &id) == nil && configuration.ValidElementID(id) &&
+			json.Unmarshal(input.Position, &position) == nil && position != nil && *position >= 0
+	default:
+		valid = false
+	}
+	if !valid {
+		webResult(w, http.StatusBadRequest, "invalid_request", "")
+		return webadmin.RouterDraftBasis{}, "", nil, false
+	}
+	return basis, id, position, true
 }
 
 func webRouterRuleFailure(w http.ResponseWriter, err error) {

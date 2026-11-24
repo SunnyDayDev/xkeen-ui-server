@@ -51585,6 +51585,2413 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "g2CG6t",
+      "x": 0,
+      "y": 91910,
+      "name": "35 / Роутер / Персональный порядок · Порядок правил",
+      "width": 1080,
+      "height": 760,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "srYPi",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "a0fMiE",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "FxY90",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "yOx0l",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "PXyR7",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "IjUfD",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "ARDiB",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Dn5vq",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "A9fTep",
+              "name": "Текущий шаблон",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Филиал Восток / edge-example",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "Ob9GC",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Маршрутизация роутера",
+              "fontFamily": "$font",
+              "fontSize": 29,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "text",
+              "id": "mTCsw",
+              "name": "Перетащите правило на нужное место или используйте кнопки «Выше» и «Ниже».",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Перетащите правило на нужное место или используйте кнопки «Выше» и «Ниже».",
+              "fontFamily": "$font",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "PXD0r",
+              "name": "Полный персональный порядок",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "E6O6wo",
+                  "name": "1. example-direct",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "dFfFa",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "1. example-direct",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "XtXqB",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Общее",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "TOZEE",
+                      "name": "Действия",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "id": "B12lY",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Ниже",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Ниже",
+                              "fill": "$ink"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "hkyg0",
+                  "name": "2. Правило 192.0.2.0/24",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "M2Zpay",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "2. Правило 192.0.2.0/24",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "pHV7M",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Локальное",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "GW6dj",
+                      "name": "Действия",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "id": "yD9mq",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Выше",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Выше",
+                              "fill": "$ink"
+                            }
+                          }
+                        },
+                        {
+                          "id": "JipwQ",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Ниже",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Ниже",
+                              "fill": "$ink"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "koUjd",
+                  "name": "Правило лабораторного входа",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "w29sO",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "3. Правило лабораторного входа",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Sokuj",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Общее · исключено",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "d4fF7",
+                      "name": "Действия",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "id": "E2CIZ",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Выше",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Выше",
+                              "fill": "$ink"
+                            }
+                          }
+                        },
+                        {
+                          "id": "H9BTMA",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Ниже",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Ниже",
+                              "fill": "$ink"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "BiQ0V",
+                  "name": "Резервное правило",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "y2424Y",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "4. Резервное правило",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "whgd9",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Общее · отключено",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "SrSJ4",
+                      "name": "Действия",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "id": "QZQkj",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Выше",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Выше",
+                              "fill": "$ink"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "G4rIk",
+              "name": "Действия",
+              "width": "fill_container",
+              "gap": 8,
+              "children": [
+                {
+                  "id": "U0kZhV",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Открыть редактор правила",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Добавить локальное правило"
+                    }
+                  }
+                },
+                {
+                  "id": "Z2ypD",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Вернуть порядок шаблона",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Вернуть порядок шаблона",
+                      "fill": "$ink"
+                    }
+                  }
+                },
+                {
+                  "id": "QG5mk",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "К активному роутеру",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "К роутеру",
+                      "fill": "$ink"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "d4el0",
+      "x": 1160,
+      "y": 91910,
+      "name": "35 / Роутер / Персональный порядок · После перемещения",
+      "width": 1080,
+      "height": 760,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "e2v0I",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "MKC1j",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "HtruD",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "KH0Il",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "HFhUc",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "cp7ih",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "xWmea",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "pzDbu",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "M971ix",
+              "name": "Текущий шаблон",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Филиал Восток / edge-example",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "W1P5I",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Маршрутизация роутера",
+              "fontFamily": "$font",
+              "fontSize": 29,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "text",
+              "id": "RVY8P",
+              "name": "Перетащите правило на нужное место или используйте кнопки «Выше» и «Ниже».",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Перетащите правило на нужное место или используйте кнопки «Выше» и «Ниже».",
+              "fontFamily": "$font",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "Y1Jyq",
+              "name": "Полный персональный порядок",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "f9Loxb",
+                  "name": "1. example-direct",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Z2ufb",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "1. example-direct",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "zuu3M",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Общее",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "o2mFw",
+                      "name": "Действия",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "id": "C9kQV",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Ниже",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Ниже",
+                              "fill": "$ink"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ty8Gu",
+                  "name": "2. Правило 192.0.2.0/24",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "x68ATS",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "2. Правило лабораторного входа",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "I2L97",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Общее · исключено",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "eUyWf",
+                      "name": "Действия",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "id": "dvqzN",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Выше",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Выше",
+                              "fill": "$ink"
+                            }
+                          }
+                        },
+                        {
+                          "id": "jjeGt",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Ниже",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Ниже",
+                              "fill": "$ink"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Uu3bS",
+                  "name": "Правило лабораторного входа",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "i3ZYfK",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "3. Правило 192.0.2.0/24",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "o9ceM",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Локальное",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "XbhlQ",
+                      "name": "Действия",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "id": "UYTrG",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Выше",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Выше",
+                              "fill": "$ink"
+                            }
+                          }
+                        },
+                        {
+                          "id": "EKn2N",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Ниже",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Ниже",
+                              "fill": "$ink"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Rr38L",
+                  "name": "Резервное правило",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "qitRJ",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "4. Резервное правило",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ZkrU5",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Общее · отключено",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "LVb7j",
+                      "name": "Действия",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "id": "y1mchL",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Выше",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Выше",
+                              "fill": "$ink"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "D1B7mi",
+              "name": "Персональный порядок сохранён.",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Персональный порядок сохранён.",
+              "fontFamily": "$font",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "nhk6q",
+              "name": "Действия",
+              "width": "fill_container",
+              "gap": 8,
+              "children": [
+                {
+                  "id": "KEA04",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Открыть редактор правила",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Добавить локальное правило"
+                    }
+                  }
+                },
+                {
+                  "id": "E6bmd",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Вернуть порядок шаблона",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Вернуть порядок шаблона",
+                      "fill": "$ink"
+                    }
+                  }
+                },
+                {
+                  "id": "UCjpR",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "К активному роутеру",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "К роутеру",
+                      "fill": "$ink"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "e4nXtj",
+      "x": 0,
+      "y": 92760,
+      "name": "35 / Роутер / Персональный порядок · Возвратить порядок шаблона",
+      "width": 1080,
+      "height": 760,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "adkuP",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "s3sNU",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "Z97LJ3",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "dmgTY",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "wLqmD",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "LlQfr",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "ML7xk",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "oEhZw",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "jT552",
+              "name": "Текущий шаблон",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Филиал Восток / edge-example",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "QLCVp",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Маршрутизация роутера",
+              "fontFamily": "$font",
+              "fontSize": 29,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "BjPyE",
+              "name": "Полный персональный порядок",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "ewd7d",
+                  "name": "1. example-direct",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "SmlU3",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "1. example-direct",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "qbSqx",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Общее",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "RCTeI",
+                  "name": "2. Правило 192.0.2.0/24",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "A0Doez",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "2. Правило 192.0.2.0/24",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "kZXtU",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Локальное",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "a3vACh",
+                  "name": "Правило лабораторного входа",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "n6vcYa",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "3. Правило лабораторного входа",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "xCTNI",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Общее · исключено",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "LPxMl",
+                  "name": "Резервное правило",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "nPLdS",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "4. Резервное правило",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "iufBO",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Общее · отключено",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "tM4aR",
+              "name": "Действия",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "P2QYEV",
+                  "name": "Вернуть порядок общих правил из шаблона? Локальные правила сохранят свои позиции.",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Вернуть порядок общих правил из шаблона? Локальные правила сохранят свои позиции.",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "HVQAA",
+                  "name": "Действия",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "Uw5Ep",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Вернуть порядок",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Вернуть порядок"
+                        }
+                      }
+                    },
+                    {
+                      "id": "NpMIK",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Отмена",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Отмена",
+                          "fill": "$ink"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "XKg6b",
+      "x": 1160,
+      "y": 92760,
+      "name": "35 / Роутер / Персональный порядок · Изменение не сохранено",
+      "width": 1080,
+      "height": 760,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "xIca9",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "ehHrh",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "mFkdr",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "ZzUok",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "E2cNpM",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "nJpF0",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "Q25QX6",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "mLqYJ",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "miTzY",
+              "name": "Текущий шаблон",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Филиал Восток / edge-example",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "uBBYp",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Маршрутизация роутера",
+              "fontFamily": "$font",
+              "fontSize": 29,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "v29Ee",
+              "name": "Полный персональный порядок",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "vOr1b",
+                  "name": "1. example-direct",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "U4mrm",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "1. example-direct",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "zBq51",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Общее",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "iTKcz",
+                  "name": "2. Правило 192.0.2.0/24",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "atObA",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "2. Правило 192.0.2.0/24",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "clvR5",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Локальное",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "zeQ1v",
+                  "name": "Правило лабораторного входа",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "rx1Y6",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "3. Правило лабораторного входа",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "uCcfT",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Общее · исключено",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "GW9tU",
+                  "name": "Резервное правило",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "iVLGK",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "4. Резервное правило",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "X4ilR",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Общее · отключено",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "rjkYZ",
+              "name": "Порядок изменился. Перечитайте настройки и повторите перемещение.",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Порядок изменился. Перечитайте настройки и повторите перемещение.",
+              "fontFamily": "$font",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "uyLn2",
+              "name": "Действия",
+              "width": "fill_container",
+              "gap": 8,
+              "children": [
+                {
+                  "id": "Nj1rs",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Перечитать настройки",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Перечитать настройки"
+                    }
+                  }
+                },
+                {
+                  "id": "m5BIa",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "К роутеру",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "К роутеру",
+                      "fill": "$ink"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "aGhf6",
+      "x": 0,
+      "y": 93610,
+      "name": "35 / Роутер / Персональный порядок · Источник недоступен",
+      "width": 1080,
+      "height": 760,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "rX1kv",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "YuIsw",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "P6dvc",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "s7otD",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "NNS8v",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "DQ2bg",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "X72cq",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "rHNLu",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "m3fCik",
+              "name": "Текущий шаблон",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Филиал Восток / edge-example",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "LAMeL",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Маршрутизация роутера",
+              "fontFamily": "$font",
+              "fontSize": 29,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "text",
+              "id": "CLsqc",
+              "name": "Не удалось подтвердить полный порядок. Перечитайте текущие настройки.",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Не удалось подтвердить полный порядок. Перечитайте текущие настройки.",
+              "fontFamily": "$font",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "H7J5gt",
+              "name": "Действия",
+              "width": "fill_container",
+              "gap": 8,
+              "children": [
+                {
+                  "id": "MXWkv",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Перечитать настройки",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Перечитать настройки"
+                    }
+                  }
+                },
+                {
+                  "id": "eQLJ1",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "К роутеру",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "К роутеру",
+                      "fill": "$ink"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "TiXW2",
+      "x": 2320,
+      "y": 91910,
+      "name": "35 / Роутер / Персональный порядок · Узкий экран",
+      "width": 400,
+      "height": 910,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "NvFrw",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "layout": "vertical",
+          "gap": 12,
+          "padding": [
+            14,
+            16
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "HcRn5",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "ONCyp",
+              "name": "Действия консоли",
+              "width": "fill_container",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "OGJT1",
+                  "name": "Ссылки консоли",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "xqyPw",
+                      "name": "Первая строка навигации",
+                      "width": "fill_container",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "id": "K6huez",
+                          "type": "ref",
+                          "ref": "oQHGq",
+                          "name": "Текущий раздел",
+                          "width": 94,
+                          "fill": "#273446",
+                          "descendants": {
+                            "uzKPJ": {
+                              "fill": "#FFFFFF",
+                              "icon": "layout-dashboard"
+                            },
+                            "G2nPu4": {
+                              "fill": "#FFFFFF",
+                              "content": "Обзор"
+                            }
+                          }
+                        },
+                        {
+                          "id": "c0lK17",
+                          "type": "ref",
+                          "ref": "oQHGq",
+                          "name": "Текущий раздел",
+                          "width": 108,
+                          "fill": "$ink",
+                          "descendants": {
+                            "uzKPJ": {
+                              "fill": "#FFFFFF",
+                              "icon": "layers"
+                            },
+                            "G2nPu4": {
+                              "fill": "#FFFFFF",
+                              "content": "Шаблоны"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "f3FkND",
+                      "type": "ref",
+                      "ref": "oQHGq",
+                      "name": "Настройки",
+                      "width": 112,
+                      "fill": "$ink",
+                      "descendants": {
+                        "uzKPJ": {
+                          "fill": "#FFFFFF",
+                          "icon": "settings"
+                        },
+                        "G2nPu4": {
+                          "fill": "#FFFFFF",
+                          "content": "Настройки"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "TTwjy",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Завершить сессию",
+                  "fill": "$accent",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Выйти"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "S0Gtp6",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 18,
+          "children": [
+            {
+              "type": "text",
+              "id": "KMlyx",
+              "name": "Текущий шаблон",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Филиал Восток / edge-example",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "bkzX2",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Маршрутизация роутера",
+              "fontFamily": "$font",
+              "fontSize": 24,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "text",
+              "id": "yHWQy",
+              "name": "Перетащите правило на нужное место или используйте кнопки «Выше» и «Ниже».",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Перетащите правило на нужное место или используйте кнопки «Выше» и «Ниже».",
+              "fontFamily": "$font",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "w04nwU",
+              "name": "Полный персональный порядок",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "TvqZa",
+                  "name": "1. example-direct",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "f6T4Ns",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "1. example-direct",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "MGZfX",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Общее",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "LxYQl",
+                      "name": "Действия",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "id": "e9AoL",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Ниже",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Ниже",
+                              "fill": "$ink"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "phEco",
+                  "name": "2. Правило 192.0.2.0/24",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Tc72f",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "2. Правило 192.0.2.0/24",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "s0uxf",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Локальное",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "sEZ1N",
+                      "name": "Действия",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "id": "nLJFs",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Выше",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Выше",
+                              "fill": "$ink"
+                            }
+                          }
+                        },
+                        {
+                          "id": "LNegC",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Ниже",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Ниже",
+                              "fill": "$ink"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "b7zFJ",
+                  "name": "Правило лабораторного входа",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "WTMfS",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "3. Правило лабораторного входа",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "e62tMX",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Общее · исключено",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "v0unn",
+                      "name": "Действия",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "id": "LjxED",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Выше",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Выше",
+                              "fill": "$ink"
+                            }
+                          }
+                        },
+                        {
+                          "id": "vYZfi",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Ниже",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Ниже",
+                              "fill": "$ink"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "x67yHG",
+                  "name": "Резервное правило",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "EbpnW",
+                      "name": "Имя правила",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "4. Резервное правило",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "semi-bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "tXkRM",
+                      "name": "Происхождение и состояние",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Общее · отключено",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "v7gdiH",
+                      "name": "Действия",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "id": "UgkBK",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Выше",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Выше",
+                              "fill": "$ink"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "SbttT",
+              "name": "Действия",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "dTUDQ",
+                  "name": "Действия",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "WLiAD",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть редактор правила",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Добавить локальное правило"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "YOtF7",
+                  "name": "Действия",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "o7vRV",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Вернуть порядок шаблона",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Вернуть порядок шаблона",
+                          "fill": "$ink"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "hMiWl",
+                  "name": "Действия",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "k0GNu",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "К активному роутеру",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "К роутеру",
+                          "fill": "$ink"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "variables": {

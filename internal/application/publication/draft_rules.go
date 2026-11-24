@@ -171,6 +171,28 @@ func (r DraftRules) Insert(newID, afterID string, source json.RawMessage) (route
 	return next, &basis, nil
 }
 
+// Reorder applies one move or a reset to the complete, reconciled rule list.
+func (r DraftRules) Reorder(id string, position *int) (routersettings.Draft, *OrderBasis, error) {
+	var order *configuration.RuleOrderCandidate
+	var issues []configuration.SelectionIssue
+	if position == nil {
+		if id != "" {
+			return routersettings.Draft{}, nil, ErrInvalidCandidate
+		}
+		order, issues = configuration.ResetRuleOrder(r.input)
+	} else {
+		order, issues = configuration.MoveRule(r.input, id, *position)
+	}
+	if len(issues) != 0 {
+		return routersettings.Draft{}, nil, &PreparationError{Issues: ruleSelectionIssues(issues)}
+	}
+	next := r.draft
+	next.PersonalOrder = order.PersonalOrder
+	basis := r.basis
+	basis.SharedRuleIDs = slices.Clone(basis.SharedRuleIDs)
+	return next, &basis, nil
+}
+
 func ruleSelectionIssues(issues []configuration.SelectionIssue) []configuration.CatalogIssue {
 	result := make([]configuration.CatalogIssue, len(issues))
 	for i, issue := range issues {

@@ -89,7 +89,7 @@ func (w WebRouterDrafts) Write(ctx context.Context, digest [32]byte, clock func(
 }
 
 func (w WebRouterDrafts) WriteOrder(ctx context.Context, digest [32]byte, clock func() time.Time, expected webadmin.RouterDraftBasis, draft routersettings.Draft, basis *publication.OrderBasis) (int64, error) {
-	if basis == nil || !validStoredBasis(draft, basis) {
+	if basis == nil || basis.SharedRuleIDs == nil || (draft.PersonalOrder != nil && !validStoredBasis(draft, basis)) {
 		return 0, routersettings.ErrInvalidDraft
 	}
 	return w.write(ctx, digest, clock, expected, draft, basis)
@@ -107,7 +107,7 @@ func (w WebRouterDrafts) write(ctx context.Context, digest [32]byte, clock func(
 		return 0, err
 	}
 	var rawBasis []byte
-	if basis != nil {
+	if basis != nil && draft.PersonalOrder != nil {
 		rawBasis, err = json.Marshal(basis)
 		if err != nil {
 			return 0, err
@@ -140,15 +140,15 @@ func (w WebRouterDrafts) write(ctx context.Context, digest [32]byte, clock func(
 	}
 	if current.DraftGeneration == 0 {
 		err = writePublicationRow(ctx, tx, `INSERT INTO router_settings (id, snapshot, order_basis)
-			VALUES (?, ?, coalesce(?, (SELECT order_basis FROM active_router_publications WHERE router_id = ?)))`,
-			draft.ID, raw, rawBasis, draft.ID)
+			VALUES (?, ?, CASE WHEN ? THEN ? ELSE (SELECT order_basis FROM active_router_publications WHERE router_id = ?) END)`,
+			draft.ID, raw, basis != nil, rawBasis, draft.ID)
 	} else {
 		var n int64
 		var result sql.Result
 		result, err = tx.ExecContext(ctx, `UPDATE router_settings
-			SET snapshot = ?, generation = generation + 1, order_basis = coalesce(?, order_basis)
+			SET snapshot = ?, generation = generation + 1, order_basis = CASE WHEN ? THEN ? ELSE order_basis END
 			WHERE id = ? AND generation = ? AND json_extract(CAST(snapshot AS TEXT), '$.TemplateID') = ?`,
-			raw, rawBasis, draft.ID, current.DraftGeneration, current.TemplateID)
+			raw, basis != nil, rawBasis, draft.ID, current.DraftGeneration, current.TemplateID)
 		if err == nil {
 			n, err = result.RowsAffected()
 			if err == nil && n != 1 {

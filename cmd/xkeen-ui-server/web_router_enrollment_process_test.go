@@ -71,7 +71,7 @@ func TestProcessWebRouterEnrollment(t *testing.T) {
 		if session != nil {
 			req.AddCookie(session)
 		}
-		if method == http.MethodPost {
+		if method == http.MethodPost || method == http.MethodPatch {
 			req.Header.Set("Origin", origin)
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Set("X-CSRF-Token", csrf)
@@ -229,6 +229,31 @@ func TestProcessWebRouterEnrollment(t *testing.T) {
 	if err := db.QueryRowContext(t.Context(), "SELECT snapshot FROM router_settings").Scan(&ruleBlob); err != nil ||
 		!bytes.Contains(ruleBlob, []byte(base64.StdEncoding.EncodeToString([]byte(ruleSource)))) {
 		t.Fatal("stored rule did not retain exact bytes")
+	}
+	firstLocal := ordered.Rules[0].ID
+	secondInsert, _ := json.Marshal(map[string]string{"templateId": "template-example", "activeGeneration": "1", "acceptedVersion": "1",
+		"draftGeneration": "7", "afterId": firstLocal, "source": `{"ruleTag":"second-local"}`})
+	body, _ = request(http.MethodPost, rulePath, secondInsert, http.StatusOK)
+	if json.Unmarshal(body, &ordered) != nil || ordered.DraftGeneration != "8" || len(ordered.Rules) != 2 {
+		t.Fatal("second local rule missing")
+	}
+	secondLocal := ordered.Rules[1].ID
+	basisJSON := `{"templateId":"template-example","activeGeneration":"1","acceptedVersion":"1",`
+	move := []byte(basisJSON + `"draftGeneration":"8","action":"move","ruleId":"` + secondLocal + `","position":0}`)
+	resetWithoutCSRF := csrf
+	csrf = ""
+	request(http.MethodPatch, rulePath, move, http.StatusForbidden)
+	csrf = resetWithoutCSRF
+	request(http.MethodPatch, rulePath, []byte(basisJSON+`"draftGeneration":"8","action":"reset","ruleId":null}`), http.StatusBadRequest)
+	body, _ = request(http.MethodPatch, rulePath, move, http.StatusOK)
+	if json.Unmarshal(body, &ordered) != nil || ordered.DraftGeneration != "9" || ordered.Rules[0].ID != secondLocal {
+		t.Fatal("move did not change the full order")
+	}
+	request(http.MethodPatch, rulePath, move, http.StatusConflict)
+	reset := []byte(basisJSON + `"draftGeneration":"9","action":"reset"}`)
+	body, _ = request(http.MethodPatch, rulePath, reset, http.StatusOK)
+	if json.Unmarshal(body, &ordered) != nil || ordered.DraftGeneration != "10" || ordered.Rules[0].ID != secondLocal || ordered.Rules[1].ID != firstLocal {
+		t.Fatal("template reset moved positional local rules")
 	}
 	var desired int
 	if err := db.QueryRowContext(t.Context(), "SELECT max(revision) FROM desired_router_revisions").Scan(&desired); err != nil || desired != 1 {

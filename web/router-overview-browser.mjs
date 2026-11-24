@@ -1,3 +1,4 @@
+import { checkRouterRuleOrder } from './router-rule-order-browser.mjs';
 import { checkLocalRule } from './router-local-rule-browser.mjs';
 import { checkRouterVariables } from "./router-variable-browser.mjs";
 import assert from 'node:assert/strict';
@@ -22,6 +23,7 @@ export async function checkRouterOverview(page,{origin,database,enrolledRouter,r
   await drawer.getByText('Применение: нет подтверждения',{exact:true}).waitFor();
   await checkRouterVariables(page, enrolledRouter, resetSession, password);
   await checkLocalRule(page,enrolledRouter,database);
+  await checkRouterRuleOrder(page,enrolledRouter,database,resetSession,password);
   await drawer.getByRole('button',{name:'Закрыть панель'}).click();
   assert.equal(await selected.evaluate(link=>document.activeElement===link),true);
   await page.goBack();
