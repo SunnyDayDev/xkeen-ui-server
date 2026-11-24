@@ -334,6 +334,10 @@ func readProtected(path string, mode os.FileMode, maximum int64) ([]byte, error)
 		return nil, err
 	}
 	defer file.Close()
+	return readBounded(file, maximum)
+}
+
+func readBounded(file io.Reader, maximum int64) ([]byte, error) {
 	raw, err := io.ReadAll(io.LimitReader(file, maximum+1))
 	if err != nil || int64(len(raw)) > maximum {
 		return nil, errSafety
