@@ -262,7 +262,11 @@ func (p applicationProfileRecord) control(action string, first bool) error {
 	if err != nil || target != "generations/"+p.Agent.Version {
 		return errApplication
 	}
-	dir := filepath.Join(applicationBase, target)
+	return p.controlGeneration(action, first)
+}
+
+func (p applicationProfileRecord) controlGeneration(action string, first bool) error {
+	dir := filepath.Join(applicationBase, "generations", p.Agent.Version)
 	supervisor := managedProcess{binary: filepath.Join(dir, supervisorAsset), receipt: applicationSupervisorReceipt,
 		arguments:    []string{"--config", p.LocalPath, "--application-config", p.ApplicationPath},
 		useReadyPipe: true, noNewPrivileges: true, notReady: errApplication,

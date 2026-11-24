@@ -53,7 +53,11 @@ func lifecycle(action string, p profile) error {
 	if err != nil || target != "generations/"+p.Version {
 		return errSafety
 	}
-	binary := filepath.Join(executableBase, target, agentAsset)
+	return transportGenerationAction(action, p)
+}
+
+func transportGenerationAction(action string, p profile) error {
+	binary := filepath.Join(executableBase, "generations", p.Version, agentAsset)
 	if err := rootDirs(false, filepath.Dir(binary)); err != nil {
 		return err
 	}

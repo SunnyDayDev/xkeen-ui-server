@@ -458,6 +458,24 @@ func TestEntwareInstallRegistersAgentAndRestartsSameIdentity(t *testing.T) {
 	if err := os.Remove(foreignFile); err != nil {
 		t.Fatal(err)
 	}
+	unknownGeneration := "/opt/libexec/xkeen-ui/agent-transport/generations/v91.1.1"
+	if err := os.Mkdir(unknownGeneration, 0755); err != nil {
+		t.Fatal(err)
+	}
+	unowned := filepath.Join(unknownGeneration, "xkeen-agent-linux-arm64")
+	if err := os.WriteFile(unowned, []byte("unmanaged generation"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if output, err := remove(); err == nil {
+		t.Fatalf("uninstall accepted unregistered generation: %s", output)
+	}
+	invoke("status")
+	if observed, err := os.ReadFile(unowned); err != nil || string(observed) != "unmanaged generation" {
+		t.Fatal("unregistered generation changed")
+	}
+	if err := os.Remove(unowned); err != nil || os.Remove(unknownGeneration) != nil {
+		t.Fatal("cannot remove fixture generation")
+	}
 	invoke("stop")
 	stateLock, err := os.Open(filepath.Join(stateDir, ".lock"))
 	if err != nil {
@@ -474,6 +492,19 @@ func TestEntwareInstallRegistersAgentAndRestartsSameIdentity(t *testing.T) {
 		t.Fatal("interrupted uninstall allowed startup")
 	}
 	if err := stateLock.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	const removalMarker = "/opt/var/lib/xkeen-ui/install/agent-transport.remove.json"
+	marker, err := os.ReadFile(removalMarker)
+	if err != nil || os.Remove(removalMarker) != nil {
+		t.Fatal("cannot simulate unavailable durable marker")
+	}
+	legacyPath := filepath.Join("/opt/libexec/xkeen-ui/agent-transport/generations", nextTag, "xkeen-entware-installer-linux-arm64")
+	if err := exec.CommandContext(t.Context(), legacyPath, "start").Run(); err == nil {
+		t.Fatal("legacy direct launcher bypassed the held current path")
+	}
+	if err := os.WriteFile(removalMarker, marker, 0600); err != nil {
 		t.Fatal(err)
 	}
 	if output, err := remove(); err != nil {

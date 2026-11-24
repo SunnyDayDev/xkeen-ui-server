@@ -20,6 +20,7 @@ var errRemoval = errors.New("agent service removal requires local recovery")
 type transportRemoval struct {
 	Active profile
 	Phase  string
+	Owned  []release
 }
 
 func uninstallTransport() error {
@@ -69,13 +70,14 @@ func uninstallTransport() error {
 		if _, err := serviceRunning(active); err != nil {
 			return err
 		}
-		if err := cleanAgentBinaries(executableBase, active, false); err != nil {
+		owned, err := knownTransportReleases(base)
+		if err != nil {
 			return err
 		}
-		if err := writeFile(initPath, []byte(heldTransportInit), 0755, 0, 0); err != nil {
-			return errRemoval
+		if err := cleanAgentBinaries(executableBase, active, owned, false); err != nil {
+			return err
 		}
-		record = transportRemoval{Active: active, Phase: "stop"}
+		record = transportRemoval{Active: active, Phase: "hold", Owned: owned}
 		if err := saveTransportRemoval(record); err != nil {
 			return err
 		}
@@ -84,11 +86,25 @@ func uninstallTransport() error {
 	if err != nil && !(record.Phase == "remove" && errors.Is(err, os.ErrNotExist)) {
 		return errRemoval
 	}
-	if err == nil && string(init) != heldTransportInit {
+	if record.Phase == "hold" {
+		if string(init) != initScript && string(init) != recoveryInitScript && string(init) != heldTransportInit {
+			return errRemoval
+		}
+		if err := holdServiceCurrent(current, record.Active.Version); err != nil {
+			return err
+		}
+		if err := writeFile(initPath, []byte(heldTransportInit), 0755, 0, 0); err != nil {
+			return errRemoval
+		}
+		record.Phase = "stop"
+		if err := saveTransportRemoval(record); err != nil {
+			return err
+		}
+	} else if err == nil && string(init) != heldTransportInit {
 		return errRemoval
 	}
 	if record.Phase == "stop" {
-		if err := lifecycle("stop", record.Active); err != nil {
+		if err := transportGenerationAction("stop", record.Active); err != nil {
 			return err
 		}
 		raw, err := json.Marshal(record.Active)
@@ -105,7 +121,7 @@ func uninstallTransport() error {
 		return err
 	}
 	defer stateLock.Close()
-	if err := cleanAgentBinaries(executableBase, record.Active, true); err != nil {
+	if err := cleanAgentBinaries(executableBase, record.Active, record.Owned, true); err != nil {
 		return err
 	}
 	if err := syncDir(filepath.Dir(executableBase)); err != nil {
@@ -128,8 +144,18 @@ func loadTransportRemoval(base profile) (transportRemoval, error) {
 	}
 	var record transportRemoval
 	if err != nil || jsonv2.Unmarshal(raw, &record, jsonv2.RejectUnknownMembers(true)) != nil ||
-		(record.Phase != "stop" && record.Phase != "remove") ||
+		(record.Phase != "hold" && record.Phase != "stop" && record.Phase != "remove") ||
 		!validRelease(release{record.Active.Version, record.Active.Manifest}) {
+		return record, errRemoval
+	}
+	seen := map[string]bool{}
+	for _, release := range record.Owned {
+		if !validRelease(release) || seen[release.Version] {
+			return record, errRemoval
+		}
+		seen[release.Version] = true
+	}
+	if !seen[record.Active.Version] {
 		return record, errRemoval
 	}
 	retained := record.Active
@@ -148,7 +174,11 @@ func saveTransportRemoval(record transportRemoval) error {
 	return nil
 }
 
-func cleanAgentBinaries(base string, active profile, remove bool) error {
+func cleanAgentBinaries(base string, active profile, releases []release, remove bool) error {
+	known := map[string]bool{active.Version: true}
+	for _, release := range releases {
+		known[release.Version] = true
+	}
 	// Inventory first, so an unexpected file blocks the operation before any
 	// deletion. No recursive removal is used, including on interrupted retries.
 	var files, dirs []string
@@ -173,8 +203,7 @@ func cleanAgentBinaries(base string, active profile, remove bool) error {
 				continue
 			}
 			if (path == base && (name == "generations" || (name == "control" && base != applicationBase))) ||
-				(path == filepath.Join(base, "generations") && tagPattern.MatchString(name) && len(name) <= 40 &&
-					(base != applicationBase || name == active.Version)) {
+				(path == filepath.Join(base, "generations") && known[name]) {
 				if err := inventory(child); err != nil {
 					return err
 				}
@@ -210,6 +239,33 @@ func cleanAgentBinaries(base string, active profile, remove bool) error {
 		}
 	}
 	return nil
+}
+
+func knownTransportReleases(base profile) ([]release, error) {
+	entries, err := os.ReadDir(filepath.Join(executableBase, "generations"))
+	if err != nil {
+		return nil, errRemoval
+	}
+	var releases []release
+	for _, entry := range entries {
+		known, err := readRelease(base, entry.Name())
+		if err != nil {
+			return nil, errRemoval
+		}
+		releases = append(releases, known)
+	}
+	return releases, nil
+}
+
+func holdServiceCurrent(path, version string) error {
+	target, err := os.Readlink(path)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return errSafety
+	}
+	if err == nil && target != "generations/"+version {
+		return errSafety
+	}
+	return removePublished(path)
 }
 
 func lockRetainedAgentState(dir string, p profile) (*os.File, error) {

@@ -59,18 +59,30 @@ func uninstallApplication() error {
 		if err := p.verifySources(); err != nil {
 			return err
 		}
-		if err := cleanAgentBinaries(applicationBase, p.Agent, false); err != nil {
+		if err := cleanAgentBinaries(applicationBase, p.Agent, nil, false); err != nil {
 			return err
 		}
-		if err := writeFile(applicationInit, []byte(heldApplicationInit), 0755, 0, 0); err != nil {
-			return errApplication
-		}
-		record = applicationRemoval{Profile: p, Phase: "stop"}
+		record = applicationRemoval{Profile: p, Phase: "hold"}
 		if err := saveApplicationRemoval(record); err != nil {
 			return err
 		}
 	} else if initErr != nil && !(record.Phase == "remove" && errors.Is(initErr, os.ErrNotExist)) {
 		return errApplication
+	}
+	if record.Phase == "hold" {
+		if string(init) != applicationInitScript && string(init) != heldApplicationInit {
+			return errApplication
+		}
+		if err := holdServiceCurrent(applicationCurrent, p.Agent.Version); err != nil {
+			return err
+		}
+		if err := writeFile(applicationInit, []byte(heldApplicationInit), 0755, 0, 0); err != nil {
+			return errApplication
+		}
+		record.Phase = "stop"
+		if err := saveApplicationRemoval(record); err != nil {
+			return err
+		}
 	} else if initErr == nil && string(init) != heldApplicationInit {
 		return errApplication
 	}
@@ -78,7 +90,7 @@ func uninstallApplication() error {
 		if err := p.verifySources(); err != nil {
 			return err
 		}
-		if err := p.control("stop", false); err != nil {
+		if err := p.controlGeneration("stop", false); err != nil {
 			return err
 		}
 		if err := p.detachRuntime(); err != nil {
@@ -94,7 +106,7 @@ func uninstallApplication() error {
 		return err
 	}
 	defer stateLock.Close()
-	if err := cleanAgentBinaries(applicationBase, p.Agent, true); err != nil {
+	if err := cleanAgentBinaries(applicationBase, p.Agent, nil, true); err != nil {
 		return err
 	}
 	if syncDir(filepath.Dir(applicationBase)) != nil || removePublished(applicationInit) != nil ||
@@ -138,7 +150,7 @@ func loadApplicationRemoval(p applicationProfileRecord) (applicationRemoval, err
 	}
 	var record applicationRemoval
 	if err != nil || jsonv2.Unmarshal(raw, &record, jsonv2.RejectUnknownMembers(true)) != nil ||
-		record.Profile != p || (record.Phase != "stop" && record.Phase != "remove") {
+		record.Profile != p || (record.Phase != "hold" && record.Phase != "stop" && record.Phase != "remove") {
 		return record, errApplication
 	}
 	return record, nil
