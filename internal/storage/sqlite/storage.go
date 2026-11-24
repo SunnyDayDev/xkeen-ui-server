@@ -15,10 +15,16 @@ import (
 
 const createMigrationHistory = "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY)"
 
+const createRouterSettings = `CREATE TABLE router_settings (
+	id TEXT NOT NULL PRIMARY KEY COLLATE BINARY,
+	snapshot BLOB NOT NULL
+)`
+
 // Migrations are indexed by version minus one and remain immutable once released.
 var migrations = []string{
 	createMigrationHistory,
 	"CREATE TABLE templates (id TEXT PRIMARY KEY NOT NULL, draft BLOB NOT NULL)",
+	createRouterSettings,
 }
 
 func Open(ctx context.Context, path string) (*sql.DB, error) {
