@@ -137,7 +137,7 @@ func NewExternalTemplates(store ExternalTemplateStore) ExternalOperation {
 		mutating := adding || r.Method == http.MethodPatch
 		if mutating {
 			var ok bool
-			condition, ok = readDraftCondition(w, r)
+			condition, ok = externalCondition(w, r)
 			if !ok {
 				return
 			}
@@ -273,18 +273,6 @@ func readExternalDefinitions(w http.ResponseWriter, r *http.Request) (string, []
 		return "", nil, false
 	}
 	return data.ElementID, defs, true
-}
-func readDraftCondition(w http.ResponseWriter, r *http.Request) (string, bool) {
-	tags := r.Header.Values("If-Match")
-	if len(tags) == 0 {
-		externalError(w, 428, "precondition_required")
-		return "", false
-	}
-	if len(tags) != 1 || !externalDraftTag.MatchString(tags[0]) {
-		externalError(w, 400, "invalid_request")
-		return "", false
-	}
-	return tags[0], true
 }
 func readExternalEdit(w http.ResponseWriter, r *http.Request, adding bool) (externalEdit, string, bool) {
 	var edit externalEdit
