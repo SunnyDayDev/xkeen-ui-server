@@ -91,6 +91,12 @@ func TestProcessWebRouterPreparation(t *testing.T) {
 		}
 		return raw, res
 	}
+	const unpublishedID = "unassigned / example"
+	if _, err := templates.New(sqlite.NewTemplateRepository(databaseHandle)).Create(ctx, configuration.TemplateDraft{ID: unpublishedID}); err != nil {
+		t.Fatal(err)
+	}
+	publicationPath := "/ui/v1/templates/publication?templateId=" + url.QueryEscape(unpublishedID)
+	request(http.MethodGet, publicationPath, nil, 401)
 	const route = "/ui/v1/routers/prepare"
 	selectedRoute := route + "?templateId=" + url.QueryEscape(templateID)
 	request(http.MethodGet, selectedRoute, nil, 401)
@@ -101,6 +107,31 @@ func TestProcessWebRouterPreparation(t *testing.T) {
 		t.Fatal("missing verified session")
 	}
 	csrf, session = loginResult.CSRF, res.Cookies()[0]
+	initial, _ := request(http.MethodGet, publicationPath, nil, 200)
+	if !strings.Contains(string(initial), `"acceptedVersion":"0"`) {
+		t.Fatalf("unexpected initial publication: %s", initial)
+	}
+	request(http.MethodPost, publicationPath, []byte(`{"action":"preview","version":"1","receipt":null}`), 400)
+	checked, _ := request(http.MethodPost, publicationPath, []byte(`{"action":"preview","version":"1"}`), 200)
+	var result struct {
+		Receipt string
+		Members []any
+	}
+	if json.Unmarshal(checked, &result) != nil || result.Receipt == "" || result.Members == nil || len(result.Members) != 0 {
+		t.Fatalf("missing zero-member preview: %s", checked)
+	}
+	beforeConfirmation, _ := request(http.MethodGet, publicationPath, nil, 200)
+	if !bytes.Equal(initial, beforeConfirmation) {
+		t.Fatalf("preview changed state: %s", beforeConfirmation)
+	}
+	request(http.MethodPost, publicationPath, []byte(`{"action":"confirm","receipt":"invalid"}`), 409)
+	confirmation, _ := json.Marshal(map[string]string{"action": "confirm", "receipt": result.Receipt})
+	committed, _ := request(http.MethodPost, publicationPath, confirmation, 200)
+	if !strings.Contains(string(committed), `"acceptedVersion":"1"`) || !strings.Contains(string(committed), `"members":[]`) {
+		t.Fatalf("unexpected zero-member commit: %s", committed)
+	}
+	request(http.MethodPost, publicationPath, confirmation, 409)
+
 	request(http.MethodGet, "/ui/routers/connect", nil, 200)
 	raw, _ = request(http.MethodGet, selectedRoute, nil, 200)
 	var form struct{ RouterID, TemplateID, Source, Version string }

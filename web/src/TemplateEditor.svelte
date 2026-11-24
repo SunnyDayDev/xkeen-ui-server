@@ -10,9 +10,9 @@
   type Reply = Snapshot & { state?: string; code?: string; offset?: number; path?: string };
   type ReadState = 'loading' | 'ready' | 'missing' | 'unavailable';
 
-  let { id, active, sessionEpoch, csrf, signedOut, refreshSession, changed, openCopy }: {
+  let { id, active, sessionEpoch, csrf, signedOut, refreshSession, changed, openCopy, openPublication }: {
     id: string; active: boolean; sessionEpoch: number; csrf: string;
-    signedOut: () => void; refreshSession: () => void; changed: () => void; openCopy: (path: string) => void;
+    signedOut: () => void; refreshSession: () => void; changed: () => void; openCopy: (path: string) => void; openPublication: (path: string) => void;
   } = $props();
 
   const sectionLabels: Record<string, string> = {
@@ -143,6 +143,13 @@
     if (buffer.value !== (current.selected?.source ?? '') &&
         !window.confirm('Копируется сохранённая версия. Перейти без несохранённого JSON?')) return;
     openCopy('/ui/templates/copy?' + new URLSearchParams({templateId:id,version:current.version}));
+  }
+
+  function beginPublication() {
+    if (!active || busy || !current || appending) return;
+    if (buffer.value !== (current.selected?.source ?? '') &&
+        !window.confirm('Проверяется сохранённая версия. Перейти без несохранённого JSON?')) return;
+    openPublication('/ui/templates/publication?' + new URLSearchParams({templateId:id,version:current.version}));
   }
 
   async function beginAppend() {
@@ -325,6 +332,8 @@
   <button onclick={() => load()}>Повторить</button>
 {:else if current}
   {#if !appending}<button type="button" class="secondary copy-template" disabled={!active || busy} onclick={beginCopy}>Копировать шаблон</button>{/if}
+  {#if !appending}<button type="button" class="secondary copy-template" disabled={!active || busy}
+    onclick={beginPublication}>Просмотреть последствия публикации</button>{/if}
   <a href={'/ui/templates/exclusions?'+new URLSearchParams({templateId:id})}>Исключения XKeen</a>
   <form onsubmit={save} aria-busy={busy}>
     <div class="editor-coordinates">

@@ -1,3 +1,4 @@
+import { checkTemplatePublication } from './template-publication-browser.mjs';
 import { checkTemplateCopy } from './template-copy-browser.mjs';
 import { checkAgentKeys } from './agent-keys-browser.mjs';
 import {checkRouterExclusions} from './router-exclusions-browser.mjs';
@@ -376,6 +377,7 @@ try {
     if (enrolledRouter) {
       await checkAgentKeys(page,{origin,dir,cert,database,enrolledRouter});
       await checkRouterOverview(page,{origin, database, enrolledRouter, resetSession: () => admin('reset',first), password:first});
+      await checkTemplatePublication(page,{origin,database,resetSession: () => admin('reset',first),password:first});
     }
   } else {
     await page.getByText('Проверка Xray сейчас недоступна.',{exact:true}).waitFor();

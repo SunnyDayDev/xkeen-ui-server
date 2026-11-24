@@ -28,7 +28,8 @@ type GroupMemberPreview struct {
 }
 
 type CatalogFileChange struct {
-	Name, Kind string
+	Name string `json:"name"`
+	Kind string `json:"kind"`
 }
 
 // Preview validates the complete saved group using the same preparation as
