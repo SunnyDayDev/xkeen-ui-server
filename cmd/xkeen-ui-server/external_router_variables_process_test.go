@@ -119,6 +119,7 @@ func TestProcessExternalRouterVariableEditing(t *testing.T) {
 	const pathToValues = "/api/v1/routers/variables" + externalRouterSelection
 	const element = externalRouterElement
 	const update = `{"values":[{"name":"port","source":" 9007199254740993 "}]}`
+	const catalog = "/api/v1/routers/catalog?routerId=router-example&source="
 	call(http.MethodGet, pathToValues, "", "", "", 404)
 	settings, _, err = access.Owner(ctx, owner, &externalaccess.Change{Version: settings.Version, Enabled: true, Protected: false})
 	if err != nil {
@@ -129,12 +130,45 @@ func TestProcessExternalRouterVariableEditing(t *testing.T) {
 		bytes.Contains(first.Body, []byte(`"sections"`)) {
 		t.Fatalf("wrong initial external view: %s", first.Body)
 	}
+	desired := call(http.MethodGet, catalog+"desired", "", "", "", 200)
+	if !bytes.Contains(desired.Body, []byte(`"evidence":"server_xray_validated"`)) ||
+		!bytes.Contains(desired.Body, []byte(`"desiredRevision":"1"`)) ||
+		bytes.Contains(desired.Body, []byte(`"acceptedVersion"`)) || bytes.Contains(desired.Body, []byte(`"appliedRevision"`)) {
+		t.Fatalf("mislabeled desired proof: %s", desired.Body)
+	}
+	var exact struct {
+		Files []struct {
+			Name    string
+			Content []byte
+		}
+	}
+	if json.Unmarshal(desired.Body, &exact) != nil || len(exact.Files) != 5 || string(exact.Files[0].Content) != "{}\n" {
+		t.Fatalf("desired bytes changed: %s", desired.Body)
+	}
+	call(http.MethodGet, catalog+"desired&source=personal", "", "", "", 400)
 	call(http.MethodPatch, pathToValues, "", update, "", 428)
 	call(http.MethodPatch, pathToValues, first.Tag, `{"values":[{"name":"port","source":null}]}`, "", 400)
 	call(http.MethodPatch, pathToValues, first.Tag, `{"values":[{"name":"port","source":"{"}]}`, "", 422)
 	saved := call(http.MethodPatch, pathToValues, first.Tag, update, "", 200)
 	if saved.Tag == "" || saved.Tag == first.Tag || !bytes.Contains(saved.Body, []byte(`"personalSource":" 9007199254740993 "`)) {
 		t.Fatalf("literal source lost or precondition unchanged: %s", saved.Body)
+	}
+	personal := call(http.MethodGet, catalog+"personal", "", "", "", 200)
+	if !bytes.Contains(personal.Body, []byte(`"evidence":"assembly_only"`)) ||
+		!bytes.Contains(personal.Body, []byte(`"draftGeneration":"1"`)) || bytes.Contains(personal.Body, []byte(`"desiredRevision"`)) {
+		t.Fatalf("mislabeled draft: %s", personal.Body)
+	}
+	if err := json.Unmarshal(personal.Body, &exact); err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, file := range exact.Files {
+		if file.Name == "04_outbounds.json" && bytes.Contains(file.Content, []byte("9007199254740993")) {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("exact B12 value missing")
 	}
 	call(http.MethodPatch, pathToValues, first.Tag, update, "", 412)
 	if again := call(http.MethodGet, pathToValues, "", "", "", 200); again.Tag != saved.Tag || !bytes.Equal(again.Body, saved.Body) {
@@ -146,6 +180,10 @@ func TestProcessExternalRouterVariableEditing(t *testing.T) {
 	literalNull := call(http.MethodPatch, pathToValues, saved.Tag, `{"values":[{"name":"port","source":"null"}]}`, "", 200)
 	if json.Unmarshal(literalNull.Body, &mismatched) != nil || len(mismatched.Definitions) != 1 || mismatched.Definitions[0].Issue == "" {
 		t.Fatalf("not-ready literal lost its B01 diagnostic: %s", literalNull.Body)
+	}
+	failure := call(http.MethodGet, catalog+"personal", "", "", "", 422)
+	if !bytes.Contains(failure.Body, []byte(`"code":"catalog_unready"`)) || bytes.Contains(failure.Body, []byte(`"files"`)) {
+		t.Fatalf("failed assembly exposed a partial output: %s", failure.Body)
 	}
 	inherited := call(http.MethodPatch, pathToValues, literalNull.Tag, `{"values":[{"name":"port"}]}`, "", 200)
 	if bytes.Contains(inherited.Body, []byte(`"personalSource"`)) || !bytes.Contains(inherited.Body, []byte(`"defaultSource":"443"`)) {
@@ -189,10 +227,18 @@ func TestProcessExternalRouterVariableEditing(t *testing.T) {
 		t.Fatal(err)
 	}
 	call(http.MethodGet, pathToValues, "", "", bearer, 200)
+	if protected := call(http.MethodGet, catalog+"desired", "", "", bearer, 200); !bytes.Equal(protected.Body, desired.Body) {
+		t.Fatal("draft editing or F20 changed the desired snapshot")
+	}
+	if err := sqlite.NewRouterVisibility(db).Hide(ctx, "router-example"); err != nil {
+		t.Fatal(err)
+	}
+	call(http.MethodGet, catalog+"desired", "", "", bearer, 404)
 	if _, _, err := access.Owner(ctx, owner, &externalaccess.Change{Version: settings.Version, Rotate: true}); err != nil {
 		t.Fatal(err)
 	}
 	call(http.MethodPatch, pathToValues, inherited.Tag, update, bearer, 401)
+	call(http.MethodGet, catalog+"personal", "", "", bearer, 401)
 	var revision int64
 	if err := db.QueryRowContext(ctx, "SELECT max(revision) FROM desired_router_revisions").Scan(&revision); err != nil || revision != 1 {
 		t.Fatalf("external draft editor changed desired revision: %d / %v", revision, err)

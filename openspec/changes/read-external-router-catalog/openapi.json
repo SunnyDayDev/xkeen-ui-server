@@ -1,0 +1,190 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "XKeen external router catalog",
+    "version": "1"
+  },
+  "paths": {
+    "/api/v1/routers/catalog": {
+      "get": {
+        "operationId": "readRouterCatalog",
+        "security": [
+          {
+            "externalBearer": []
+          },
+          {}
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "routerId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "desired",
+                "personal"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete exact files, no-store",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "required": [
+                        "routerId",
+                        "source",
+                        "evidence",
+                        "files",
+                        "desiredRevision"
+                      ],
+                      "properties": {
+                        "routerId": {
+                          "type": "string"
+                        },
+                        "source": {
+                          "const": "desired"
+                        },
+                        "evidence": {
+                          "const": "server_xray_validated"
+                        },
+                        "files": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "name",
+                              "content"
+                            ],
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "content": {
+                                "type": "string",
+                                "contentEncoding": "base64"
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        },
+                        "desiredRevision": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]*$"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "routerId",
+                        "source",
+                        "evidence",
+                        "files",
+                        "templateId",
+                        "acceptedVersion",
+                        "activeGeneration",
+                        "draftGeneration"
+                      ],
+                      "properties": {
+                        "routerId": {
+                          "type": "string"
+                        },
+                        "source": {
+                          "const": "personal"
+                        },
+                        "evidence": {
+                          "const": "assembly_only"
+                        },
+                        "files": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "name",
+                              "content"
+                            ],
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "content": {
+                                "type": "string",
+                                "contentEncoding": "base64"
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        },
+                        "templateId": {
+                          "type": "string"
+                        },
+                        "acceptedVersion": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]*$"
+                        },
+                        "activeGeneration": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]*$"
+                        },
+                        "draftGeneration": {
+                          "type": "string",
+                          "pattern": "^(0|[1-9][0-9]*)$"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid scope or source"
+          },
+          "401": {
+            "description": "Current external bearer required"
+          },
+          "404": {
+            "description": "Router unavailable or external API disabled"
+          },
+          "409": {
+            "description": "Source changed or draft belongs to another template"
+          },
+          "422": {
+            "description": "Catalog assembly refused without partial files"
+          },
+          "503": {
+            "description": "Storage unavailable"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "externalBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}
