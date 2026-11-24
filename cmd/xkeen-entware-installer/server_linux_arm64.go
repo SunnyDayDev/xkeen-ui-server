@@ -153,15 +153,19 @@ func installServer(args []string) error {
 }
 
 func prepareServerState(p serverProfile) error {
-	if err := os.Mkdir(serverState, 0700); err == nil {
-		if os.Chown(serverState, int(p.UID), int(p.GID)) != nil || syncDir(serverState) != nil || syncDir(stateBase) != nil {
+	info, err := os.Lstat(serverState)
+	if errors.Is(err, os.ErrNotExist) {
+		stage, stageErr := os.MkdirTemp(stateBase, ".server-state-")
+		if stageErr != nil {
 			return errSafety
 		}
-	} else if !errors.Is(err, os.ErrExist) {
-		return errSafety
+		defer os.RemoveAll(stage)
+		if os.Chown(stage, int(p.UID), int(p.GID)) != nil || syncDir(stage) != nil || os.Rename(stage, serverState) != nil {
+			return errSafety
+		}
+		info, err = os.Lstat(serverState)
 	}
-	info, err := os.Lstat(serverState)
-	if err != nil || !owned(info, p.UID, os.ModeDir, 0700) || info.Sys().(*syscall.Stat_t).Gid != p.GID {
+	if err != nil || !owned(info, p.UID, os.ModeDir, 0700) || info.Sys().(*syscall.Stat_t).Gid != p.GID || syncDir(stateBase) != nil {
 		return errSafety
 	}
 	return nil
