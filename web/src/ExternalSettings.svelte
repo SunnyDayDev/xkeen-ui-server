@@ -6,6 +6,7 @@
   let state = $state<Settings>();
   let enabled = $state(false);
   let protectedMode = $state(true);
+  let changed = $derived(state && (enabled !== state.enabled || protectedMode !== state.protected));
   let busy = $state(false);
   let confirmReplace = $state(false);
   let secret = $state('');
@@ -80,7 +81,7 @@
       <label><span>Внешний API</span><input type="checkbox" bind:checked={enabled} /></label>
       <label><span>Авторизация API</span><input type="checkbox" bind:checked={protectedMode} /></label>
       {#if enabled && !protectedMode}<p>Без авторизации управлять через API сможет любой клиент с сетевым доступом к серверу.</p>{/if}
-      <button disabled={enabled === state.enabled && protectedMode === state.protected} onclick={() => request('save')}>Сохранить настройки</button>
+      <button disabled={!changed} onclick={() => request('save')}>Сохранить настройки</button>
     </fieldset>
     <section class="token-panel">
       {#if secret}
@@ -96,7 +97,7 @@
           <div class="actions"><button onclick={() => request('issue')}>Подтвердить замену</button><button onclick={() => confirmReplace = false}>Отмена</button></div>
         {:else}
           <p>{state.hasToken ? 'Токен выпущен. При замене прежнее значение сразу перестанет работать у всех клиентов.' : 'Токен ещё не выпущен. При включённой авторизации внешним клиентам нужен токен.'}</p>
-          <button disabled={busy || needsReload} onclick={() => state?.hasToken ? confirmReplace = true : request('issue')}>{state.hasToken ? 'Заменить токен' : 'Выпустить токен'}</button>
+          <button disabled={busy || needsReload || changed} onclick={() => state?.hasToken ? confirmReplace = true : request('issue')}>{state.hasToken ? 'Заменить токен' : 'Выпустить токен'}</button>
         {/if}
       {/if}
     </section>

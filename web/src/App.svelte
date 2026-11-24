@@ -156,7 +156,7 @@
     </header>
     <main bind:this={workspace} tabindex="-1">
       {#if settings}
-        {#if view === 'active'}<ExternalSettings {csrf} refreshSession={refresh} />{/if}
+        {#if view === 'active'}{#key csrf}<ExternalSettings {csrf} refreshSession={refresh} />{/key}{/if}
       {:else}<h1>Обзор</h1>{/if}
       {#if message && view === 'active'}
         <p class="notice error" role="status">{message}</p>
