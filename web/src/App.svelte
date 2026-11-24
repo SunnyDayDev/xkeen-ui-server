@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
+  import ExternalSettings from './ExternalSettings.svelte';
+  let settings = $state(false);
   import { sessionRequest, type Session } from './session';
 
   let view = $state<'initial' | 'setup_required' | 'signed_out' | 'active' | 'unavailable'>('initial');
@@ -8,7 +10,7 @@
   let expired = $state(false);
   let busy = $state(false);
   let password = $state('');
-  let csrf = '';
+  let csrf = $state('');
   let passwordField = $state<HTMLInputElement>();
   let workspace = $state<HTMLElement>();
   let reading = false;
@@ -108,6 +110,7 @@
     if (result.state === 'signed_out') {
       csrf = '';
       opened = false;
+      settings = false;
       expired = false;
       retainedFocus = undefined;
       view = 'signed_out';
@@ -140,17 +143,21 @@
     <header class="console-header">
       <strong>XKeen Console</strong>
       <nav aria-label="Основная навигация">
-        <a href="/ui/" aria-current="page" onclick={(event) => {
+        <a href="/ui/" aria-current={settings ? undefined : "page"} onclick={(event) => {
           if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
             event.preventDefault();
+            settings = false;
             void focusWorkspace();
           }
         }}>Обзор</a>
+        <a href="#settings" aria-current={settings ? "page" : undefined} onclick={(event) => {event.preventDefault(); settings = true; void focusWorkspace();}}>Настройки</a>
       </nav>
       <button onclick={logout} disabled={busy}>Выйти</button>
     </header>
     <main bind:this={workspace} tabindex="-1">
-      <h1>Обзор</h1>
+      {#if settings}
+        {#if view === 'active'}<ExternalSettings {csrf} refreshSession={refresh} />{/if}
+      {:else}<h1>Обзор</h1>{/if}
       {#if message && view === 'active'}
         <p class="notice error" role="status">{message}</p>
       {/if}
