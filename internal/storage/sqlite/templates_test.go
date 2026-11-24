@@ -206,3 +206,40 @@ func TestTemplatesRejectCorruptEnvelope(t *testing.T) {
 		}
 	}
 }
+
+func TestVerbatimDefaultMigration(t *testing.T) {
+	ctx := t.Context()
+	path := filepath.Join(t.TempDir(), "defaults.sqlite")
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	prior := migrations[:14]
+	if err := migrate(ctx, db, prior); err != nil {
+		t.Fatal(err)
+	}
+	const uuid = "550e8400-e29b-41d4-a716-446655440000"
+	const legacy = `[{"name":"rules","elements":[{"disabled":false,"record":{"id":"` + uuid + `","content":"{}","variables":[{"name":"x","type":"number","default":1}]}}]}]`
+	if _, err = db.Exec("INSERT INTO templates(id,draft) VALUES (?,?)", "test.example", []byte(legacy)); err != nil {
+		t.Fatal(err)
+	}
+	if err = db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	db, err = OpenExisting(ctx, path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	if got := readText(t, db, "SELECT CAST(draft AS TEXT) FROM templates"); got != legacy {
+		t.Fatal("migration rewrote legacy source")
+	}
+	store := templates.New(NewTemplateRepository(db))
+	got, err := store.Get(ctx, "test.example")
+	if err != nil || string(got.Sections[0].Elements[0].Element.Variables[0].Default) != "1" {
+		t.Fatal(got, err)
+	}
+	if err = migrate(ctx, db, prior); err == nil || !strings.Contains(err.Error(), "exceeds supported version 14") {
+		t.Fatal("previous binary accepted current schema", err)
+	}
+}

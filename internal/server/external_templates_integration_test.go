@@ -549,6 +549,56 @@ func TestExternalTemplateAddElementConsumer(t *testing.T) {
 	if firstElement.ID != firstID || firstElement.Source != source || len(firstElement.Variables) != 1 || firstElement.Variables[0].Name != "label" || firstElement.Variables[0].Type != "string" {
 		t.Fatalf("first element %+v", firstElement)
 	}
+	t.Run("definition consumer", func(t *testing.T) {
+		expect := func(got reply, status int, code string) {
+			t.Helper()
+			if got.err != nil || got.status != status || code != "" && got.text != fmt.Sprintf(`{"code":%q}`, code) {
+				t.Fatalf("got %d %q %v, want %d %q", got.status, got.text, got.err, status, code)
+			}
+		}
+		const defsID = "definitions.example"
+		own := call(http.MethodPost, "/api/v1/templates", `{"id":"definitions.example"}`, "", token)
+		expect(own, 201, "")
+		resource := own.location
+		initial := call(http.MethodGet, resource, "", "", token)
+		elem := call(http.MethodPost, "/api/v1/templates/item/elements?templateId="+defsID, body("rules", firstID, source), initial.tag, token)
+		expect(elem, 201, "")
+		sibling := call(http.MethodPost, "/api/v1/templates/item/elements?templateId="+defsID, body("rules", secondID, `{"sibling":true}`), elem.tag, token)
+		expect(sibling, 201, "")
+		url := "/api/v1/templates/item/definitions?templateId=" + defsID
+		change := func(defs, tag string) reply {
+			return call(http.MethodPatch, url, `{"elementId":"`+firstID+`","definitions":`+defs+`}`, tag, token)
+		}
+		const valid = `[{"name":"label","type":"number","defaultSource":" 9007199254740993 " }]`
+		expect(change(`[{"name":"label","type":"string","defaultSource":"{"}]`, sibling.tag), 422, "invalid_definitions")
+		expect(change(valid, ""), 428, "precondition_required")
+		expect(change(valid, elem.tag), 412, "precondition_failed")
+		expect(change(`[{"name":"label","type":"number","defaultSource":null}]`, sibling.tag), 400, "invalid_request")
+		expect(change(`[{"name":"other","type":"number"}]`, sibling.tag), 422, "invalid_definitions")
+		updated := change(valid, sibling.tag)
+		expect(updated, 200, "")
+		got := call(http.MethodGet, resource, "", "", token)
+		if updated.tag == sibling.tag || got.tag != updated.tag || got.text != updated.text || !strings.Contains(got.text, `"defaultSource":" 9007199254740993 "`) || !strings.Contains(got.text, secondID) {
+			t.Fatal("wrong F21 receipt", got)
+		}
+		required := change(`[{"name":"label","type":"number"}]`, got.tag)
+		expect(required, 200, "")
+		if strings.Contains(required.text, "defaultSource") {
+			t.Fatal("default retained")
+		}
+		hook.beforeReplace <- func() {
+			var rotateErr error
+			issued, token, rotateErr = store.Owner(ctx, session, &externalaccess.Change{Version: issued.Version, Rotate: true})
+			if rotateErr != nil {
+				t.Error(rotateErr)
+			}
+		}
+		expect(change(valid, required.tag), 401, "unauthorized")
+		latest := call(http.MethodGet, resource, "", "", token)
+		if latest.tag != required.tag || latest.text != required.text {
+			t.Fatal("revoked change mutated draft")
+		}
+	})
 	expect(add(body("outbounds", firstID, `{}`), first.tag), 409, "element_exists")
 	expect(add(body("rules", secondID, `{}`), empty.tag), 412, "precondition_failed")
 	expect(add(body("rules", secondID, `{"x":0,"x":1}`), first.tag), 422, "invalid_content")

@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -12,6 +13,7 @@ import (
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/templates"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration/elementjson"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/jsonvalue"
 )
 
 // TemplateRepository stores one authored template per row.
@@ -25,8 +27,9 @@ type templateSectionRecord struct {
 }
 
 type templateElementRecord struct {
-	Disabled *bool           `json:"disabled"`
-	Record   json.RawMessage `json:"record"`
+	DefaultSources map[int]string  `json:"defaultSources,omitempty"`
+	Disabled       *bool           `json:"disabled"`
+	Record         json.RawMessage `json:"record"`
 }
 
 func (r TemplateRepository) Insert(ctx context.Context, draft configuration.TemplateDraft) error {
@@ -144,7 +147,23 @@ func encodeTemplateRecords(draft configuration.TemplateDraft, encode func(config
 			if len(issues) != 0 {
 				return nil, &templates.InvalidDraftError{Issues: issues}
 			}
-			sections[i].Elements[j] = templateElementRecord{Disabled: &item.Disabled, Record: record}
+			stored := templateElementRecord{Disabled: &item.Disabled, Record: record}
+			for index, definition := range item.Element.Variables {
+				if definition.Default == nil {
+					continue
+				}
+				canonical, ok := normalizedStoredDefault(definition.Default)
+				if !ok {
+					return nil, templates.ErrInvalid
+				}
+				if !bytes.Equal(canonical, definition.Default) {
+					if stored.DefaultSources == nil {
+						stored.DefaultSources = make(map[int]string)
+					}
+					stored.DefaultSources[index] = string(definition.Default)
+				}
+			}
+			sections[i].Elements[j] = stored
 		}
 	}
 	raw, err := json.Marshal(sections)
@@ -174,6 +193,16 @@ func decodeTemplate(id string, raw []byte) (*configuration.TemplateDraft, error)
 			if len(issues) != 0 {
 				return nil, fmt.Errorf("%w: %w", templates.ErrCorrupt, &templates.InvalidDraftError{Issues: issues})
 			}
+			for index, source := range item.DefaultSources {
+				if index < 0 || index >= len(element.Variables) {
+					return nil, templates.ErrCorrupt
+				}
+				canonical, ok := normalizedStoredDefault([]byte(source))
+				if !ok || !bytes.Equal(canonical, element.Variables[index].Default) {
+					return nil, templates.ErrCorrupt
+				}
+				element.Variables[index].Default = json.RawMessage(source)
+			}
 			draft.Sections[i].Elements[j] = configuration.TemplateElement{Element: *element, Disabled: *item.Disabled}
 		}
 	}
@@ -185,4 +214,13 @@ func operationError(operation string, cancellation error) error {
 		return fmt.Errorf("%s: %w", operation, cancellation)
 	}
 	return errors.New(operation + ": SQLite operation failed")
+}
+
+func normalizedStoredDefault(raw []byte) ([]byte, bool) {
+	tree, issue := jsonvalue.Parse(raw)
+	if issue != nil {
+		return nil, false
+	}
+	v, err := json.Marshal(tree)
+	return v, err == nil
 }

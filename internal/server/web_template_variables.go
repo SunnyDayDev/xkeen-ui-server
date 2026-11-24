@@ -59,11 +59,7 @@ func readWebVariablesEdit(w http.ResponseWriter, r *http.Request) (int64, []conf
 	if status != 0 {
 		return 0, nil, status
 	}
-	type variableInput struct {
-		Name          *string         `json:"name"`
-		Type          *string         `json:"type"`
-		DefaultSource json.RawMessage `json:"defaultSource"`
-	}
+
 	var input struct {
 		Version     string           `json:"version"`
 		Definitions []*variableInput `json:"definitions"`
@@ -75,21 +71,38 @@ func readWebVariablesEdit(w http.ResponseWriter, r *http.Request) (int64, []conf
 	if err != nil || version < 1 || strconv.FormatInt(version, 10) != input.Version {
 		return 0, nil, http.StatusBadRequest
 	}
-	definitions := make([]configuration.VariableDefinition, len(input.Definitions))
-	for i, item := range input.Definitions {
+	definitions, ok := decodeVariableInputs(input.Definitions)
+	if !ok {
+		return 0, nil, http.StatusBadRequest
+	}
+	return version, definitions, 0
+}
+
+type variableInput struct {
+	Name          *string         `json:"name"`
+	Type          *string         `json:"type"`
+	DefaultSource json.RawMessage `json:"defaultSource"`
+}
+
+func decodeVariableInputs(items []*variableInput) ([]configuration.VariableDefinition, bool) {
+	if items == nil {
+		return nil, false
+	}
+	definitions := make([]configuration.VariableDefinition, len(items))
+	for i, item := range items {
 		if item == nil || item.Name == nil || item.Type == nil {
-			return 0, nil, http.StatusBadRequest
+			return nil, false
 		}
 		definitions[i] = configuration.VariableDefinition{Name: *item.Name, Type: *item.Type}
 		if item.DefaultSource != nil {
 			var text *string
 			if jsonv2.Unmarshal(item.DefaultSource, &text) != nil || text == nil {
-				return 0, nil, http.StatusBadRequest
+				return nil, false
 			}
 			definitions[i].Default = json.RawMessage(*text)
 		}
 	}
-	return version, definitions, 0
+	return definitions, true
 }
 
 type webVariableDefinition struct {
