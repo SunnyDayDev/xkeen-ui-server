@@ -111,3 +111,8 @@ func removePublished(path string) error {
 	}
 	return syncDir(filepath.Dir(path))
 }
+
+func trustedStage(path string) bool {
+	info, err := os.Lstat(path)
+	return err == nil && filepath.Dir(path) == "/opt/tmp" && owned(info, 0, os.ModeDir, 0700)
+}
