@@ -2,23 +2,14 @@ package webadmin
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/publication"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/reporting"
 )
 
-const templatePreviewLifetime = 5 * time.Minute
-
-var ErrTemplatePreviewChanged = errors.New("publication preview has changed")
-var previewEncoding = base64.RawURLEncoding.Strict()
+var ErrTemplatePreviewChanged = publication.ErrGroupPreviewChanged
 
 type TemplatePublicationStore interface {
 	ForTemplateGroup([32]byte, func() time.Time, time.Time) publication.TemplateGroupStore
@@ -29,7 +20,7 @@ type TemplatePublication struct {
 	store     TemplatePublicationStore
 	validator publication.CatalogValidator
 	now       func() time.Time
-	key       [32]byte
+	receipts  publication.GroupReceipts
 }
 
 type TemplatePublicationPreview struct {
@@ -38,17 +29,8 @@ type TemplatePublicationPreview struct {
 	Receipt string
 }
 
-type previewReceipt struct {
-	TemplateHash      [sha256.Size]byte
-	Version, Accepted int64
-	Expires           int64
-	Plan              [sha256.Size]byte
-}
-
 func NewTemplatePublication(store TemplatePublicationStore, validator publication.CatalogValidator, now func() time.Time) TemplatePublication {
-	s := TemplatePublication{store: store, validator: validator, now: now}
-	rand.Read(s.key[:])
-	return s
+	return TemplatePublication{store: store, validator: validator, now: now, receipts: publication.NewGroupReceipts()}
 }
 
 func (s TemplatePublication) Preview(ctx context.Context, token, id string, version int64) (*TemplatePublicationPreview, error) {
@@ -65,15 +47,10 @@ func (s TemplatePublication) Preview(ctx context.Context, token, id string, vers
 	if err != nil {
 		return nil, templatePublicationError(err)
 	}
-	payload, err := json.Marshal(previewReceipt{
-		TemplateHash: sha256.Sum256([]byte(id)), Version: preview.Version, Accepted: preview.AcceptedVersion,
-		Expires: s.now().Add(templatePreviewLifetime).UnixNano(), Plan: preview.Fingerprint,
-	})
+	receipt, err := s.receipts.Issue(digest, preview, s.now())
 	if err != nil {
 		return nil, err
 	}
-	body := previewEncoding.EncodeToString(payload)
-	receipt := body + "." + previewEncoding.EncodeToString(s.signReceipt(digest, body))
 	return &TemplatePublicationPreview{Preview: preview, Contact: status, Receipt: receipt}, nil
 }
 
@@ -82,36 +59,16 @@ func (s TemplatePublication) Confirm(ctx context.Context, token, csrf, id, recei
 	if err != nil {
 		return nil, err
 	}
-	body, signature, ok := strings.Cut(receipt, ".")
-	auth, err := previewEncoding.DecodeString(signature)
-	if !ok || err != nil || !hmac.Equal(auth, s.signReceipt(digest, body)) {
-		return nil, ErrTemplatePreviewChanged
-	}
-	raw, err := previewEncoding.DecodeString(body)
-	var claim previewReceipt
-	if err != nil || json.Unmarshal(raw, &claim) != nil || claim.TemplateHash != sha256.Sum256([]byte(id)) || claim.Version < 1 {
-		return nil, ErrTemplatePreviewChanged
-	}
-	expires := time.Unix(0, claim.Expires)
-	if !s.now().Before(expires) {
-		return nil, ErrTemplatePreviewChanged
+	request, expires, err := s.receipts.Open(digest, id, receipt, s.now())
+	if err != nil {
+		return nil, err
 	}
 	groups := publication.NewTemplateGroupService(s.store.ForTemplateGroup(digest, s.now, expires), s.validator)
-	result, err := groups.Publish(ctx, publication.SharedPublishRequest{
-		TemplateID: id, TemplateDraftVersion: claim.Version, AcceptedVersion: claim.Accepted,
-		Source: publication.SourceSharedDraft, PreviewFingerprint: &claim.Plan,
-	})
+	result, err := groups.Publish(ctx, request)
 	if err != nil {
 		return nil, templatePublicationError(err)
 	}
 	return result, nil
-}
-
-func (s TemplatePublication) signReceipt(session [32]byte, body string) []byte {
-	mac := hmac.New(sha256.New, s.key[:])
-	_, _ = mac.Write(session[:])
-	_, _ = mac.Write([]byte(body))
-	return mac.Sum(nil)
 }
 
 func templatePublicationError(err error) error {

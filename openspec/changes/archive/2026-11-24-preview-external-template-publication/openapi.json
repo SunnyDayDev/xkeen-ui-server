@@ -1,0 +1,189 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "XKeen external publication preview",
+    "version": "1"
+  },
+  "paths": {
+    "/api/v1/templates/publication/preview": {
+      "post": {
+        "operationId": "previewTemplatePublication",
+        "description": "Validates the entire saved group without publishing. Body limit 1024 bytes. The external receipt is valid for up to five minutes.",
+        "security": [
+          {
+            "externalBearer": []
+          },
+          {}
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "templateId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "version"
+                ],
+                "properties": {
+                  "version": {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]*$"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Complete verified preview, no publication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "state",
+                    "templateId",
+                    "version",
+                    "acceptedVersion",
+                    "receipt",
+                    "members"
+                  ],
+                  "properties": {
+                    "state": {
+                      "const": "preview"
+                    },
+                    "templateId": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string",
+                      "pattern": "^[1-9][0-9]*$"
+                    },
+                    "acceptedVersion": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9][0-9]*)$"
+                    },
+                    "receipt": {
+                      "type": "string"
+                    },
+                    "members": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "routerId",
+                          "desiredRevision",
+                          "contact",
+                          "estimate"
+                        ],
+                        "properties": {
+                          "routerId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "desiredRevision": {
+                            "type": "string",
+                            "pattern": "^[1-9][0-9]*$"
+                          },
+                          "contact": {
+                            "enum": [
+                              "online",
+                              "offline",
+                              "unobserved"
+                            ]
+                          },
+                          "estimate": {
+                            "enum": [
+                              "unchanged",
+                              "restart_expected",
+                              "hot_rules_possible"
+                            ]
+                          },
+                          "changes": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "name",
+                                "kind"
+                              ],
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "kind": {
+                                  "enum": [
+                                    "added",
+                                    "changed",
+                                    "removed"
+                                  ]
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid scope or body"
+          },
+          "401": {
+            "description": "Current external bearer required"
+          },
+          "403": {
+            "description": "Request origin refused"
+          },
+          "404": {
+            "description": "Template unavailable or external API disabled"
+          },
+          "409": {
+            "description": "Preview inputs changed"
+          },
+          "413": {
+            "description": "Oversized body"
+          },
+          "415": {
+            "description": "Expected application/json"
+          },
+          "422": {
+            "description": "Group assembly or exact Xray candidate rejected"
+          },
+          "503": {
+            "description": "Validator or service unavailable"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "externalBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

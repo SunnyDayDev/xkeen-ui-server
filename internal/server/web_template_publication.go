@@ -49,13 +49,12 @@ func NewWebTemplatePublicationHandler(lifetime context.Context, origin WebOrigin
 		if !allowWebEndpoint(w, r, origin, true, http.MethodGet, http.MethodPost) {
 			return
 		}
-		query, err := url.ParseQuery(r.URL.RawQuery)
-		ids := query["templateId"]
-		if err != nil || len(query) != 1 || len(ids) != 1 || ids[0] == "" || !utf8.ValidString(ids[0]) {
+		id, ok := publicationTemplateID(r.URL.RawQuery)
+		if !ok {
 			webResult(w, http.StatusBadRequest, "invalid_request", "")
 			return
 		}
-		token, id := webSessionToken(r), ids[0]
+		token := webSessionToken(r)
 		var reply webPublicationResponse
 		if r.Method == http.MethodGet {
 			result, err := service.Current(r.Context(), token, id)
@@ -69,13 +68,8 @@ func NewWebTemplatePublicationHandler(lifetime context.Context, origin WebOrigin
 				reply.Members = append(reply.Members, webPublicationMember{RouterID: item.RouterID, Name: item.Name, DesiredRevision: strconv.FormatInt(item.Desired, 10)})
 			}
 		} else {
-			ctx, cancel := context.WithTimeout(r.Context(), 90*time.Second)
-			defer cancel()
-			stop := context.AfterFunc(lifetime, cancel)
-			defer stop()
-			if lifetime.Err() != nil {
-				cancel()
-			}
+			ctx, done := publicationRequestContext(r.Context(), lifetime)
+			defer done()
 			csrf := webCSRFProof(r)
 			if err := admission.CheckMutation(ctx, token, csrf); err != nil {
 				webFailure(w, err)
@@ -90,6 +84,18 @@ func NewWebTemplatePublicationHandler(lifetime context.Context, origin WebOrigin
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(reply)
 	})
+}
+
+func publicationRequestContext(request, lifetime context.Context) (context.Context, func()) {
+	ctx, cancel := context.WithTimeout(request, 90*time.Second)
+	stop := context.AfterFunc(lifetime, cancel)
+	if lifetime.Err() != nil {
+		cancel()
+	}
+	return ctx, func() {
+		stop()
+		cancel()
+	}
 }
 
 func prepareWebPublication(w http.ResponseWriter, r *http.Request, service webTemplatePublicationService, admission webPreparationAdmission, token, csrf, id string) (webPublicationResponse, bool) {
@@ -123,15 +129,9 @@ func prepareWebPublication(w http.ResponseWriter, r *http.Request, service webTe
 		if err != nil {
 			return failure(err)
 		}
-		if result.Preview == nil || len(result.Preview.Members) != len(result.Contact) {
-			return failure(publication.ErrStoredState)
-		}
-		reply := webPublicationResponse{State: "preview", TemplateID: result.Preview.TemplateID, Version: strconv.FormatInt(result.Preview.Version, 10),
-			AcceptedVersion: strconv.FormatInt(result.Preview.AcceptedVersion, 10), Receipt: result.Receipt,
-			Members: make([]webPublicationMember, 0, len(result.Preview.Members))}
-		for i, item := range result.Preview.Members {
-			reply.Members = append(reply.Members, webPublicationMember{RouterID: item.Expected.RouterID, Name: item.Name,
-				DesiredRevision: strconv.FormatInt(item.Expected.DesiredNumber, 10), Contact: result.Contact[i], Estimate: item.Estimate, Changes: item.Changes})
+		reply, err := templatePublicationPreviewResponse(result.Preview, result.Contact, result.Receipt)
+		if err != nil {
+			return failure(err)
 		}
 		return reply, true
 	case "confirm":
@@ -153,6 +153,29 @@ func prepareWebPublication(w http.ResponseWriter, r *http.Request, service webTe
 	}
 	webResult(w, http.StatusBadRequest, "invalid_request", "")
 	return webPublicationResponse{}, false
+}
+
+func publicationTemplateID(raw string) (string, bool) {
+	query, err := url.ParseQuery(raw)
+	ids := query["templateId"]
+	if err != nil || len(query) != 1 || len(ids) != 1 || ids[0] == "" || !utf8.ValidString(ids[0]) {
+		return "", false
+	}
+	return ids[0], true
+}
+
+func templatePublicationPreviewResponse(plan *publication.TemplateGroupPreview, contact []reporting.Presence, receipt string) (webPublicationResponse, error) {
+	if plan == nil || len(plan.Members) != len(contact) {
+		return webPublicationResponse{}, publication.ErrStoredState
+	}
+	reply := webPublicationResponse{State: "preview", TemplateID: plan.TemplateID, Version: strconv.FormatInt(plan.Version, 10),
+		AcceptedVersion: strconv.FormatInt(plan.AcceptedVersion, 10), Receipt: receipt,
+		Members: make([]webPublicationMember, 0, len(plan.Members))}
+	for i, item := range plan.Members {
+		reply.Members = append(reply.Members, webPublicationMember{RouterID: item.Expected.RouterID, Name: item.Name,
+			DesiredRevision: strconv.FormatInt(item.Expected.DesiredNumber, 10), Contact: contact[i], Estimate: item.Estimate, Changes: item.Changes})
+	}
+	return reply, nil
 }
 
 func webPublicationFailure(w http.ResponseWriter, err error) {

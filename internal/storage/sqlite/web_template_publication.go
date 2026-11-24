@@ -45,14 +45,23 @@ func (s sessionTemplateGroup) CommitTemplateGroup(ctx context.Context, plan publ
 }
 
 func (w WebTemplatePublications) CheckPreview(ctx context.Context, digest [32]byte, clock func() time.Time, preview *publication.TemplateGroupPreview) ([]reporting.Presence, error) {
-	tx, err := w.publications.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+	return w.publications.checkTemplateGroupPreview(ctx, clock, preview, func(ctx context.Context, tx *sql.Tx, now time.Time) error {
+		return requireActiveWebSession(ctx, tx, activeWebSessionArgs(digest, now))
+	})
+}
+
+func (p *Publications) checkTemplateGroupPreview(ctx context.Context, clock func() time.Time, preview *publication.TemplateGroupPreview, admission func(context.Context, *sql.Tx, time.Time) error) ([]reporting.Presence, error) {
+	tx, err := p.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
 		return nil, err
 	}
 	defer tx.Rollback()
 	now := clock()
-	if err := requireActiveWebSession(ctx, tx, activeWebSessionArgs(digest, now)); err != nil {
+	if err := admission(ctx, tx, now); err != nil {
 		return nil, err
+	}
+	if preview == nil {
+		return nil, nil
 	}
 	plan := publication.TemplateGroupPlan{TemplateID: preview.TemplateID, TemplateDraftVersion: preview.Version, AcceptedVersion: preview.AcceptedVersion}
 	for _, member := range preview.Members {

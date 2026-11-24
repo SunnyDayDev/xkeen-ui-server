@@ -134,6 +134,8 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 	externalOperations = server.NewExternalRouterStatuses(external, externalOperations)
 	externalOperations = server.NewExternalRouterRules(external, externalOperations)
 	externalOperations = server.NewExternalRouterCatalog(externalaccess.NewRouterCatalog(external), externalOperations)
+	externalPublication := externalaccess.NewTemplatePublications(sqlite.NewExternalTemplatePublications(publications), validator, time.Now)
+	externalOperations = server.NewExternalTemplatePublications(ctx, externalPublication, externalOperations)
 	handler = server.NewExternalAccessHandler(cfg.webOrigin, external, externalOperations, handler)
 	if err := json.NewEncoder(stderr).Encode(struct {
 		Event   string `json:"event"`
