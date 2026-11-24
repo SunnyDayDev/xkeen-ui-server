@@ -1,6 +1,7 @@
 package server
 
 import (
+	"crypto/tls"
 	"errors"
 	"net"
 	"net/http"
@@ -56,7 +57,7 @@ func ParseWebOrigin(raw string) (WebOrigin, error) {
 
 func (o WebOrigin) allows(r *http.Request, requireOrigin bool) bool {
 	authority, err := ParseWebOrigin("https://" + r.Host)
-	if r.TLS == nil || err != nil || authority != o {
+	if r.TLS == nil || r.TLS.Version < tls.VersionTLS12 || err != nil || authority != o {
 		return false
 	}
 	headers := r.Header.Values("Origin")

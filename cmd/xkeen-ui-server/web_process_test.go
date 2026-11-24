@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"encoding/json"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -20,6 +21,26 @@ func TestProcessWebRejectsOriginWithoutTLS(t *testing.T) {
 	}
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
 		t.Fatalf("invalid configuration reached storage: %v", err)
+	}
+}
+
+func TestProcessWebAdminRejectsUnusableDatabasePaths(t *testing.T) {
+	dir := t.TempDir()
+	password := filepath.Join(dir, "password")
+	if err := os.WriteFile(password, []byte("synthetic private password"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	for _, command := range []struct{ action, path string }{
+		{"reset", filepath.Join(dir, "missing.sqlite")},
+		{"setup", filepath.Join(dir, "missing-directory", "server.sqlite")},
+	} {
+		_, _, status := runBinaryInDir(t, dir, "admin", command.action, "--db-path", command.path, "--password-file", password)
+		if status != 1 {
+			t.Fatalf("operation %s status = %d", command.action, status)
+		}
+		if _, err := os.Stat(command.path); !os.IsNotExist(err) {
+			t.Fatalf("operation %s created a stray database: %v", command.action, err)
+		}
 	}
 }
 
@@ -115,6 +136,7 @@ func TestProcessWebAdministratorLifecycle(t *testing.T) {
 	second, secondCookie := login(pass, nil)
 	request("POST", "/logout", origin, second.CSRF, "", firstCookie, 403, "invalid_csrf")
 	request("POST", "/session/activity", origin, first.CSRF, "", firstCookie, 200, "active")
+	client.CloseIdleConnections()
 	stopAgentProcess(t, p)
 	p, endpoint = launch()
 	reopened, _ := request("GET", "/session", "", "", "", firstCookie, 200, "active")
@@ -136,6 +158,54 @@ func TestProcessWebAdministratorLifecycle(t *testing.T) {
 	request("GET", "/session", "", "", "", secondCookie, 200, "signed_out")
 	request("POST", "/login", origin, "", `{"password":"synthetic first password"}`, nil, 401, "invalid_credentials")
 	login(replacement, nil)
+	// Exercise expensive incorrect passwords while the non-browser handler remains available.
+	const rejectedLogin = `{"password":"synthetic incorrect password"}`
+	start := make(chan struct{})
+	statuses := make(chan int, 8)
+	for i := 0; i < cap(statuses); i++ {
+		go func() {
+			<-start
+			req, err := http.NewRequestWithContext(t.Context(), http.MethodPost, endpoint+"/ui/v1/login", strings.NewReader(rejectedLogin))
+			if err != nil {
+				statuses <- 0
+				return
+			}
+			req.Host = authority
+			req.Header.Set("Origin", origin)
+			req.Header.Set("Content-Type", "application/json")
+			response, err := client.Do(req)
+			if err != nil {
+				statuses <- 0
+				return
+			}
+			_, _ = io.Copy(io.Discard, response.Body)
+			response.Body.Close()
+			statuses <- response.StatusCode
+		}()
+	}
+	close(start)
+	health, err := client.Get(endpoint + "/healthz")
+	if err != nil {
+		t.Fatal(err)
+	}
+	health.Body.Close()
+	if health.StatusCode != http.StatusOK {
+		t.Fatalf("health during verification: %d", health.StatusCode)
+	}
+	throttled := 0
+	for i := 0; i < cap(statuses); i++ {
+		switch status := <-statuses; status {
+		case http.StatusUnauthorized:
+		case http.StatusTooManyRequests:
+			throttled++
+		default:
+			t.Fatalf("parallel login status = %d", status)
+		}
+	}
+	if throttled == 0 {
+		t.Fatal("parallel invalid login was never throttled")
+	}
+	client.CloseIdleConnections()
 	stopAgentProcess(t, p)
 	if strings.Contains(p.output(), firstCookie.Value) || strings.Contains(p.output(), pass) || strings.Contains(p.output(), replacement) {
 		t.Fatal("secret printed")

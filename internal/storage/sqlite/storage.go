@@ -91,15 +91,20 @@ func Open(ctx context.Context, path string) (*sql.DB, error) {
 			return nil, fmt.Errorf("open SQLite: %w", err)
 		}
 	case errors.Is(err, os.ErrExist):
-		info, err := os.Stat(path)
-		if err != nil {
-			return nil, fmt.Errorf("open SQLite: %w", err)
-		}
-		if !info.Mode().IsRegular() {
-			return nil, errors.New("open SQLite: database path must be a regular file")
-		}
 	default:
 		return nil, fmt.Errorf("open SQLite: %w", err)
+	}
+	return OpenExisting(ctx, path)
+}
+
+// OpenExisting requires an existing regular database and applies migrations.
+func OpenExisting(ctx context.Context, path string) (*sql.DB, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, fmt.Errorf("open SQLite: %w", err)
+	}
+	if !info.Mode().IsRegular() {
+		return nil, errors.New("open SQLite: database path must be a regular file")
 	}
 	// Preserve parent traversal through symlinks, as when creating the file.
 	if !filepath.IsAbs(path) {

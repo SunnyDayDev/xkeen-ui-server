@@ -1,18 +1,20 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/webadmin"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/storage/sqlite"
+	"golang.org/x/sys/unix"
 	"golang.org/x/term"
 )
 
@@ -83,7 +85,11 @@ func runAdmin(args []string, terminal *os.File, stdout, stderr io.Writer) int {
 		}
 	}
 	ctx := context.Background()
-	db, err := sqlite.Open(ctx, *path)
+	open := sqlite.Open
+	if reset {
+		open = sqlite.OpenExisting
+	}
+	db, err := open(ctx, *path)
 	if err != nil {
 		fmt.Fprintln(stderr, "administrator database unavailable")
 		return 1
@@ -102,29 +108,55 @@ func runAdmin(args []string, terminal *os.File, stdout, stderr io.Writer) int {
 }
 
 func readAdminTerminal(input *os.File, prompt io.Writer) ([]byte, error) {
-	errInput := errors.New("administrator password requires an interactive terminal or --password-file")
 	fd := int(input.Fd())
 	if !term.IsTerminal(fd) {
-		return nil, errInput
+		return nil, errors.New("administrator password requires an interactive terminal or --password-file")
 	}
-	fmt.Fprint(prompt, "Administrator password: ")
-	first, err := term.ReadPassword(fd)
-	fmt.Fprintln(prompt)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	state, err := term.MakeRaw(fd)
 	if err != nil {
-		clear(first)
-		return nil, errInput
+		return nil, errors.New("cannot protect administrator password terminal")
 	}
-	fmt.Fprint(prompt, "Confirm administrator password: ")
-	second, err := term.ReadPassword(fd)
-	fmt.Fprintln(prompt)
-	defer clear(second)
+	defer term.Restore(fd, state)
+	terminal := term.NewTerminal(struct {
+		io.Reader
+		io.Writer
+	}{Reader: adminTerminalInput{ctx, input}, Writer: prompt}, "")
+	first, err := terminal.ReadPassword("Administrator password: ")
 	if err != nil {
-		clear(first)
-		return nil, errInput
+		return nil, errors.New("administrator password input interrupted")
 	}
-	if !bytes.Equal(first, second) {
-		clear(first)
+	second, err := terminal.ReadPassword("Confirm administrator password: ")
+	if err != nil || ctx.Err() != nil {
+		return nil, errors.New("administrator password input interrupted")
+	}
+	if first != second {
 		return nil, errors.New("administrator password confirmation differs")
 	}
-	return first, nil
+	return []byte(first), nil
+}
+
+// Poll so termination can leave the terminal in its original mode even when
+// the operator has not pressed a key.
+type adminTerminalInput struct {
+	ctx  context.Context
+	file *os.File
+}
+
+func (in adminTerminalInput) Read(buffer []byte) (int, error) {
+	fds := []unix.PollFd{{Fd: int32(in.file.Fd()), Events: unix.POLLIN}}
+	for in.ctx.Err() == nil {
+		n, err := unix.Poll(fds, 100)
+		if errors.Is(err, unix.EINTR) {
+			continue
+		}
+		if err != nil {
+			return 0, err
+		}
+		if n > 0 {
+			return in.file.Read(buffer)
+		}
+	}
+	return 0, in.ctx.Err()
 }

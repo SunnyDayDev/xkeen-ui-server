@@ -6,6 +6,7 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"time"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/webadmin"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/jsonvalue"
@@ -25,6 +26,14 @@ func NewWebAdminHandler(origin WebOrigin, sessions *webadmin.Service, next http.
 			return
 		}
 		w.Header().Set("Cache-Control", "no-store")
+		if err := http.NewResponseController(w).SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil && !errors.Is(err, http.ErrNotSupported) {
+			webResult(w, http.StatusServiceUnavailable, "unavailable", "")
+			return
+		}
+		if r.URL.RawQuery != "" || r.URL.ForceQuery {
+			webResult(w, http.StatusBadRequest, "invalid_request", "")
+			return
+		}
 		if r.Method != method {
 			w.Header().Set("Allow", method)
 			webResult(w, http.StatusMethodNotAllowed, "method_not_allowed", "")

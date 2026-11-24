@@ -1,10 +1,12 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestWebOriginStrict(t *testing.T) {
@@ -48,5 +50,40 @@ func TestWebPasswordBodyRejectsUnknownAndAmbiguousValues(t *testing.T) {
 		if _, err := webLoginPassword(httptest.NewRecorder(), r); err == nil {
 			t.Fatalf("accepted %q", raw)
 		}
+	}
+}
+
+type webDeadlineRecorder struct {
+	*httptest.ResponseRecorder
+	deadline time.Time
+	err      error
+}
+
+func (w *webDeadlineRecorder) SetReadDeadline(deadline time.Time) error {
+	w.deadline = deadline
+	return w.err
+}
+
+func TestWebRoutesBoundReadAndRejectURLQuery(t *testing.T) {
+	origin, err := ParseWebOrigin("https://admin.example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler := NewWebAdminHandler(origin, nil, http.NotFoundHandler())
+	for _, suffix := range []string{"?unexpected", "?"} {
+		start := time.Now()
+		r := httptest.NewRequest(http.MethodGet, "https://admin.example/ui/v1/session"+suffix, nil)
+		r.Header.Set("Origin", "https://admin.example")
+		w := &webDeadlineRecorder{ResponseRecorder: httptest.NewRecorder()}
+		handler.ServeHTTP(w, r)
+		if w.deadline.Before(start) || w.deadline.After(start.Add(6*time.Second)) || w.Code != http.StatusBadRequest {
+			t.Fatalf("read deadline and query rejection: %v, %d", w.deadline, w.Code)
+		}
+	}
+	r := httptest.NewRequest(http.MethodGet, "https://admin.example/ui/v1/session", nil)
+	w := &webDeadlineRecorder{ResponseRecorder: httptest.NewRecorder(), err: errors.New("synthetic transport error")}
+	handler.ServeHTTP(w, r)
+	if w.Code != http.StatusServiceUnavailable {
+		t.Fatalf("unavailable deadline: %d", w.Code)
 	}
 }
