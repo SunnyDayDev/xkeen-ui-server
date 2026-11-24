@@ -27,7 +27,8 @@ printf '%s  %s\n' "$INSTALLER_SHA256" "$stage/install-entware.sh" | sha256sum -c
 ```sh
 sh "$stage/install-entware.sh" install \
   --role agent-transport --version "$RELEASE_TAG" --manifest-sha256 "$MANIFEST_SHA256" \
-  --run-as 65532:65532 --server https://controller.example:8443
+  --run-as 65532:65532 --server https://controller.example:8443 \
+  --invitation-file /opt/etc/xkeen-ui-install/agent-invitation
 ```
 
 UID/GID, сервер и путь до файла в примере заменяются параметрами владельца. Скачивание использует `https://github.com/SunnyDayDev/xkeen-ui-server/releases/download/<tag>/`. Перенаправления допустимы только по HTTPS. Установщик проверяет закреплённый `SHA256SUMS` перед получением известных имён и затем проверяет каждый необходимый файл. Служебная утилита установки, агент, supervisor и сервер имеют отдельные имена Linux ARM64. Синтетическое зеркало использует такую же раскладку и свой явный доверенный сертификат.
