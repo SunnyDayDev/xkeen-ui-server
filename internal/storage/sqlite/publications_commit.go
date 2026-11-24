@@ -93,20 +93,29 @@ func encodePublicationPlan(plan publication.CommitPlan) (encodedPublication, err
 			return encodedPublication{}, publication.ErrInvalidState
 		}
 	}
-	if plan.NewRevision != nil {
-		records := make([]publicationFileRecord, len(plan.NewRevision.Files))
-		for i, file := range plan.NewRevision.Files {
-			records[i] = publicationFileRecord{Name: file.Name, Bytes: file.Content}
-		}
-		if !validPublicationID(plan.NewRevision.Profile) || !validFileRecords(records) {
-			return encodedPublication{}, publication.ErrInvalidState
-		}
-		result.files, err = json.Marshal(records)
-		if err != nil {
-			return encodedPublication{}, publication.ErrInvalidState
-		}
+	result.files, err = encodeVerifiedFiles(plan.NewRevision)
+	if err != nil {
+		return encodedPublication{}, err
 	}
 	return result, nil
+}
+
+func encodeVerifiedFiles(catalog *publication.VerifiedFiles) ([]byte, error) {
+	if catalog == nil {
+		return nil, nil
+	}
+	records := make([]publicationFileRecord, len(catalog.Files))
+	for i, file := range catalog.Files {
+		records[i] = publicationFileRecord{Name: file.Name, Bytes: file.Content}
+	}
+	if !validPublicationID(catalog.Profile) || !validFileRecords(records) {
+		return nil, publication.ErrInvalidState
+	}
+	raw, err := json.Marshal(records)
+	if err != nil {
+		return nil, publication.ErrInvalidState
+	}
+	return raw, nil
 }
 
 func validCommitMode(plan publication.CommitPlan) bool {
