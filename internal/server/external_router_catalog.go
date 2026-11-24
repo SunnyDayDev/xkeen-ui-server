@@ -9,7 +9,7 @@ import (
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/externalaccess"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/publication"
-	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/webadmin"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routerdraft"
 )
 
 type externalRouterCatalogService interface {
@@ -81,7 +81,7 @@ func externalRouterCatalogFailure(w http.ResponseWriter, err error) {
 		externalError(w, http.StatusConflict, "catalog_changed")
 	case errors.Is(err, publication.ErrSourceMismatch):
 		externalError(w, http.StatusConflict, "different_template")
-	case errors.Is(err, publication.ErrSourceMissing), errors.Is(err, webadmin.ErrRouterDraftMissing):
+	case errors.Is(err, publication.ErrSourceMissing), errors.Is(err, routerdraft.ErrMissing):
 		externalError(w, http.StatusNotFound, "not_found")
 	default:
 		externalFailure(w, err)
