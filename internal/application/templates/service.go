@@ -38,7 +38,7 @@ type Service struct{ repository Repository }
 func New(repository Repository) Service { return Service{repository: repository} }
 
 func (s Service) Create(ctx context.Context, draft configuration.TemplateDraft) (*Snapshot, error) {
-	prepared, err := copyDraft(draft, prepareElement)
+	prepared, err := PrepareDraft(draft)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (s Service) Replace(ctx context.Context, draft configuration.TemplateDraft,
 	if expectedVersion < 1 {
 		return nil, ErrInvalidVersion
 	}
-	prepared, err := copyDraft(draft, prepareElement)
+	prepared, err := PrepareDraft(draft)
 	if err != nil {
 		return nil, err
 	}
@@ -79,6 +79,12 @@ func (s Service) Replace(ctx context.Context, draft configuration.TemplateDraft,
 		return nil, err
 	}
 	return &Snapshot{TemplateDraft: prepared, Version: version}, nil
+}
+
+// PrepareDraft validates a complete authored snapshot and prepares declarations
+// without writing it. Create, Replace, and shared publication use the same path.
+func PrepareDraft(draft configuration.TemplateDraft) (configuration.TemplateDraft, error) {
+	return copyDraft(draft, prepareElement)
 }
 
 func prepareElement(element configuration.Element, location configuration.ElementLocation) (*configuration.Element, []configuration.ElementIssue) {
