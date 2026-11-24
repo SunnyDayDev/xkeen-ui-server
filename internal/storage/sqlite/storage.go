@@ -91,6 +91,8 @@ var migrations = []string{
 	`ALTER TABLE router_settings ADD COLUMN order_basis BLOB`,
 	// Older readers reject personal exclusion records in the existing snapshot columns.
 	`SELECT 1`,
+	// Older readers reject verbatim default source metadata. Existing templates need no rewrite.
+	`SELECT 1`,
 }
 
 func Open(ctx context.Context, path string) (*sql.DB, error) {

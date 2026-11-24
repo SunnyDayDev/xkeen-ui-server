@@ -105,8 +105,14 @@ func NewExternalTemplates(store ExternalTemplateStore) ExternalOperation {
 			return
 		}
 		adding := r.URL.Path == externalTemplateItemPath+"/elements"
-		if r.URL.Path != externalTemplateItemPath && !adding {
+		definitionsPath := r.URL.Path == externalTemplateItemPath+"/definitions"
+		if r.URL.Path != externalTemplateItemPath && !adding && !definitionsPath {
 			externalError(w, 404, "not_found")
+			return
+		}
+		if definitionsPath && r.Method != http.MethodPatch {
+			w.Header().Set("Allow", http.MethodPatch)
+			externalError(w, 405, "method_not_allowed")
 			return
 		}
 		if adding && r.Method != http.MethodPost {
@@ -126,11 +132,20 @@ func NewExternalTemplates(store ExternalTemplateStore) ExternalOperation {
 			return
 		}
 		var edit externalEdit
+		var defs []configuration.VariableDefinition
 		var condition, section string
 		mutating := adding || r.Method == http.MethodPatch
 		if mutating {
 			var ok bool
-			edit, condition, section, ok = readExternalEdit(w, r, adding)
+			condition, ok = readDraftCondition(w, r)
+			if !ok {
+				return
+			}
+			if definitionsPath {
+				edit.ElementID, defs, ok = readExternalDefinitions(w, r)
+			} else {
+				edit, section, ok = readExternalEdit(w, r, adding)
+			}
 			if !ok {
 				return
 			}
@@ -155,7 +170,9 @@ func NewExternalTemplates(store ExternalTemplateStore) ExternalOperation {
 				return
 			}
 			var candidate configuration.TemplateDraft
-			if adding {
+			if definitionsPath {
+				candidate, err = templates.EditElementDefinitions(s, edit.ElementID, defs)
+			} else if adding {
 				candidate, err = templates.AddElement(s, section, edit.ElementID, *edit.Source)
 			} else {
 				candidate, err = templates.EditElementContent(s, edit.ElementID, *edit.Source)
@@ -169,6 +186,8 @@ func NewExternalTemplates(store ExternalTemplateStore) ExternalOperation {
 					externalError(w, 409, "element_exists")
 				case errors.Is(err, templates.ErrSectionOccupied):
 					externalError(w, 409, "section_occupied")
+				case definitionsPath && (errors.Is(err, templates.ErrInvalid) || errors.As(err, &invalid)):
+					externalError(w, 422, "invalid_definitions")
 				case errors.As(err, &invalid):
 					externalError(w, 422, "invalid_content")
 				case adding && errors.Is(err, templates.ErrInvalid):
@@ -240,14 +259,37 @@ type externalEdit struct {
 
 var externalDraftTag = regexp.MustCompile(`^"[0-9a-f]{64}"$`)
 
-func readExternalEdit(w http.ResponseWriter, r *http.Request, adding bool) (externalEdit, string, string, bool) {
-	var edit externalEdit
-	condition, ok := externalCondition(w, r)
-	if !ok {
-		return edit, "", "", false
+func readExternalDefinitions(w http.ResponseWriter, r *http.Request) (string, []configuration.VariableDefinition, bool) {
+	var data struct {
+		ElementID   string           `json:"elementId"`
+		Definitions []*variableInput `json:"definitions"`
 	}
+	if !readExternalTemplateJSON(w, r, maxWebEditorBody, &data) {
+		return "", nil, false
+	}
+	defs, ok := decodeVariableInputs(data.Definitions)
+	if !ok || !configuration.ValidElementID(data.ElementID) {
+		externalError(w, 400, "invalid_request")
+		return "", nil, false
+	}
+	return data.ElementID, defs, true
+}
+func readDraftCondition(w http.ResponseWriter, r *http.Request) (string, bool) {
+	tags := r.Header.Values("If-Match")
+	if len(tags) == 0 {
+		externalError(w, 428, "precondition_required")
+		return "", false
+	}
+	if len(tags) != 1 || !externalDraftTag.MatchString(tags[0]) {
+		externalError(w, 400, "invalid_request")
+		return "", false
+	}
+	return tags[0], true
+}
+func readExternalEdit(w http.ResponseWriter, r *http.Request, adding bool) (externalEdit, string, bool) {
+	var edit externalEdit
 	if !readExternalTemplateJSON(w, r, maxWebEditorBody, &edit) {
-		return edit, "", "", false
+		return edit, "", false
 	}
 	var section string
 	validSection := edit.Section == nil
@@ -256,9 +298,9 @@ func readExternalEdit(w http.ResponseWriter, r *http.Request, adding bool) (exte
 	}
 	if !configuration.ValidElementID(edit.ElementID) || edit.Source == nil || !validSection {
 		externalError(w, http.StatusBadRequest, "invalid_request")
-		return edit, "", "", false
+		return edit, "", false
 	}
-	return edit, condition, section, true
+	return edit, section, true
 }
 
 func readExternalTemplateJSON(w http.ResponseWriter, r *http.Request, limit int64, out any) bool {

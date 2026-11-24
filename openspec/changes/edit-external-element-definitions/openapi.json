@@ -1,0 +1,142 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "XKeen external element variable definitions",
+    "version": "1"
+  },
+  "paths": {
+    "/api/v1/templates/item/definitions": {
+      "patch": {
+        "operationId": "editTemplateElementDefinitions",
+        "description": "Replace ordered definitions of one existing element in a saved draft. The body limit is 8388608 bytes.",
+        "security": [
+          {
+            "externalBearer": []
+          },
+          {}
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "templateId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "in": "header",
+            "name": "If-Match",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[0-9a-f]{64}\"$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "elementId",
+                  "definitions"
+                ],
+                "properties": {
+                  "elementId": {
+                    "$ref": "../2026-11-24-define-external-management-api/openapi.json#/components/schemas/ElementID"
+                  },
+                  "definitions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "name",
+                        "type"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        },
+                        "defaultSource": {
+                          "type": "string",
+                          "description": "Exact JSON source; omission denotes no default."
+                        }
+                      }
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid body, target or tag"
+          },
+          "401": {
+            "description": "Missing, invalid or revoked authorization"
+          },
+          "403": {
+            "description": "Request origin refused"
+          },
+          "404": {
+            "description": "Template missing or external API disabled"
+          },
+          "412": {
+            "description": "Template changed"
+          },
+          "413": {
+            "description": "Request body exceeds 8388608 bytes"
+          },
+          "415": {
+            "description": "Expected application/json"
+          },
+          "422": {
+            "description": "Invalid stored definition or ordered name mismatch"
+          },
+          "428": {
+            "description": "If-Match required"
+          },
+          "503": {
+            "description": "Storage unavailable"
+          },
+          "200": {
+            "description": "Complete saved F21 draft",
+            "headers": {
+              "ETag": {
+                "required": true,
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "../2026-11-24-define-external-management-api/openapi.json#/components/schemas/TemplateDraft"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "externalBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}
