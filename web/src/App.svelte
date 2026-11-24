@@ -17,11 +17,13 @@
   import RouterRules from './RouterRules.svelte';
   import RouterInbounds from './RouterInbounds.svelte';
   import RouterCatalog from './RouterCatalog.svelte';
+  import TemplatePublication from './TemplatePublication.svelte';
 
-  type Section = 'router-exclusions' | 'template-exclusions' | 'overview' | 'templates' | 'settings' | 'template-editor' | 'template-copy' | 'router-connect' | 'router-enroll' | 'router-variables' | 'router-replacement' | 'router-rules' | 'router-inbounds' | 'router-catalog';
+  type Section = 'router-exclusions' | 'template-exclusions' | 'overview' | 'templates' | 'settings' | 'template-editor' | 'template-copy' | 'router-connect' | 'router-enroll' | 'router-variables' | 'router-replacement' | 'router-rules' | 'router-inbounds' | 'router-catalog' | 'template-publication';
 
   function sectionForPath(): Section {
     if (location.pathname === '/ui/templates/copy') return 'template-copy';
+    if (location.pathname === '/ui/templates/publication') return 'template-publication';
     if (location.pathname === '/ui/templates/exclusions') return 'template-exclusions';
     if (location.pathname === '/ui/templates/item') return 'template-editor';
     if (location.pathname === '/ui/routers/inbounds') return 'router-inbounds';
@@ -217,9 +219,9 @@
     <header class="console-header">
       <strong>XKeen Console</strong>
       <nav aria-label="Основная навигация">
-        <a href="/ui/" aria-current={section === 'overview' || section === 'router-variables' || section === 'router-replacement' || section === 'router-rules' || section === 'router-inbounds' ? 'page' : undefined}
+        <a href="/ui/" aria-current={section === 'overview' || section === 'router-variables' || section === 'router-replacement' || section === 'router-rules' || section === 'router-inbounds' || section === 'router-catalog' ? 'page' : undefined}
           onclick={(event) => navigate(event, '/ui/', 'overview')}>Обзор</a>
-        <a href="/ui/templates" aria-current={section === 'templates' || section === 'template-editor' || section === 'template-copy' || section === 'template-exclusions' ? 'page' : undefined}
+        <a href="/ui/templates" aria-current={section === 'templates' || section === 'template-editor' || section === 'template-copy' || section === 'template-exclusions' || section === 'template-publication' ? 'page' : undefined}
           onclick={(event) => navigate(event, '/ui/templates', 'templates')}>Шаблоны</a>
         <a href="/ui/settings" aria-current={section === 'settings' ? 'page' : undefined}
           onclick={(event) => navigate(event, '/ui/settings', 'settings')}>Настройки</a>
@@ -239,7 +241,14 @@
       {:else if section === 'template-editor'}
         {#key editorID}<TemplateEditor id={editorID} active={view === 'active'} sessionEpoch={mutation} {csrf}
           changed={() => { templateRevision++; }} signedOut={() => { void endAccess('signed_out'); }}
-          refreshSession={() => { void refresh(); }} openCopy={(path) => goTo(path,'template-copy')} />{/key}
+          refreshSession={() => { void refresh(); }} openCopy={(path) => goTo(path,'template-copy')}
+          openPublication={(path) => goTo(path,'template-publication')} />{/key}
+      {:else if section === 'template-publication'}
+        {#key editorID}
+          <TemplatePublication id={editorID} active={view === 'active' && !busy} sessionEpoch={mutation} {csrf}
+            signedOut={() => { void endAccess('signed_out'); }} refreshSession={() => { void refresh(); }}
+            back={(event,path) => navigate(event,path,'template-editor')} />
+        {/key}
       {:else if section === 'template-copy'}
         {#key editorID}<TemplateCopy id={editorID} active={view === 'active'} sessionEpoch={mutation} {csrf}
           signedOut={() => { void endAccess('signed_out'); }} refreshSession={() => { void refresh(); }}

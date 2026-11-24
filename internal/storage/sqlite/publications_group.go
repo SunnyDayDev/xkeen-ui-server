@@ -17,6 +17,10 @@ import (
 var _ publication.TemplateGroupStore = (*Publications)(nil)
 
 func (p *Publications) ReadTemplateGroup(ctx context.Context, id string) (*publication.TemplateGroupInputs, error) {
+	return p.readTemplateGroup(ctx, id, nil)
+}
+
+func (p *Publications) readTemplateGroup(ctx context.Context, id string, guard func(context.Context, *sql.Tx) error) (*publication.TemplateGroupInputs, error) {
 	if !validPublicationID(id) {
 		return nil, publication.ErrInvalidState
 	}
@@ -25,6 +29,11 @@ func (p *Publications) ReadTemplateGroup(ctx context.Context, id string) (*publi
 		return nil, operationError("read publication group", ctx.Err())
 	}
 	defer tx.Rollback()
+	if guard != nil {
+		if err := guard(ctx, tx); err != nil {
+			return nil, err
+		}
+	}
 
 	draft, err := readPublicationTemplate(ctx, tx, readTemplateDraft, id)
 	if err != nil {
@@ -100,6 +109,10 @@ func readGroupRouterIDs(ctx context.Context, tx *sql.Tx, id string) ([]string, e
 }
 
 func (p *Publications) CommitTemplateGroup(ctx context.Context, plan publication.TemplateGroupPlan) (*publication.TemplateGroupResult, error) {
+	return p.commitTemplateGroup(ctx, plan, nil)
+}
+
+func (p *Publications) commitTemplateGroup(ctx context.Context, plan publication.TemplateGroupPlan, guard func(context.Context, *sql.Tx) error) (*publication.TemplateGroupResult, error) {
 	members, err := orderedGroupPlan(plan)
 	if err != nil {
 		return nil, err
@@ -113,6 +126,12 @@ func (p *Publications) CommitTemplateGroup(ctx context.Context, plan publication
 		return nil, operationError("write publication group", ctx.Err())
 	}
 	defer tx.Rollback()
+	if guard != nil {
+		if err := guard(ctx, tx); err != nil {
+			return nil, err
+		}
+	}
+
 	if err := checkGroupExpectations(ctx, tx, plan, members); err != nil {
 		return nil, err
 	}

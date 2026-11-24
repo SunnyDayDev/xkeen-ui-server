@@ -97,6 +97,8 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 		handler = server.NewWebShellHandler(cfg.webOrigin, handler)
 		preparation := webadmin.NewRouterPreparation(sqlite.NewWebRouterPreparation(publications), validator, time.Now)
 		handler = server.NewWebRouterPreparationHandler(ctx, cfg.webOrigin, preparation, sessions, handler)
+		templatePublication := webadmin.NewTemplatePublication(sqlite.NewWebTemplatePublications(publications), validator, time.Now)
+		handler = server.NewWebTemplatePublicationHandler(ctx, cfg.webOrigin, templatePublication, sessions, handler)
 		enrollmentStore := sqlite.NewWebRouterEnrollment(db, notifyCredentialChange)
 		enrollment := webadmin.NewRouterEnrollment(enrollmentStore, time.Now)
 		handler = server.NewWebRouterEnrollmentHandler(cfg.webOrigin, cfg.agentOrigin, enrollment, sessions, handler)
