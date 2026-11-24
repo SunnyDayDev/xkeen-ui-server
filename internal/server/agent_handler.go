@@ -25,11 +25,11 @@ type AgentAuthenticator interface {
 
 // NewAgentHandler adds the agent endpoints to the existing health endpoint.
 // A directly established TLS connection is required before invoking the port.
-func NewAgentHandler(authenticator AgentAuthenticator) http.Handler {
+func NewAgentHandler(authenticator AgentAuthenticator, desired DesiredRevisionReader) http.Handler {
 	health := NewHandler()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case "/agent/v1/enroll", "/agent/v1/identity":
+		case "/agent/v1/enroll", "/agent/v1/identity", "/agent/v1/desired":
 			if r.TLS == nil || r.TLS.Version < tls.VersionTLS12 {
 				http.NotFound(w, r)
 				return
@@ -43,11 +43,14 @@ func NewAgentHandler(authenticator AgentAuthenticator) http.Handler {
 				agentError(w, http.StatusBadRequest, "invalid_request")
 				return
 			}
-			if r.URL.Path == "/agent/v1/enroll" {
+			switch r.URL.Path {
+			case "/agent/v1/enroll":
 				enrollAgent(w, r, authenticator)
-				return
+			case "/agent/v1/identity":
+				identifyAgent(w, r, authenticator)
+			case "/agent/v1/desired":
+				readAgentDesired(w, r, authenticator, desired)
 			}
-			identifyAgent(w, r, authenticator)
 		default:
 			health.ServeHTTP(w, r)
 		}
