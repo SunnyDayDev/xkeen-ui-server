@@ -28,10 +28,7 @@ func (r *RouterSettings) Save(ctx context.Context, draft routersettings.Draft) e
 	_, err = r.db.ExecContext(ctx, `INSERT INTO router_settings (id, snapshot) VALUES (?, ?)
 		ON CONFLICT (id) DO UPDATE SET snapshot = excluded.snapshot`, draft.ID, snapshot)
 	if err != nil {
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
-		return errors.New("write router draft")
+		return operationError("write router draft", ctx.Err())
 	}
 	return nil
 }
@@ -43,10 +40,7 @@ func (r *RouterSettings) Get(ctx context.Context, id string) (routersettings.Dra
 		return routersettings.Draft{}, false, nil
 	}
 	if err != nil {
-		if ctx.Err() != nil {
-			return routersettings.Draft{}, false, ctx.Err()
-		}
-		return routersettings.Draft{}, false, errors.New("read router draft")
+		return routersettings.Draft{}, false, operationError("read router draft", ctx.Err())
 	}
 	tree, issue := jsonvalue.Parse(raw)
 	if issue != nil || !validRouterRecord(tree) {

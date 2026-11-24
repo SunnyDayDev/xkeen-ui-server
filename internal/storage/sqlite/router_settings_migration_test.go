@@ -15,10 +15,11 @@ func TestRouterSettingsMigrationPreservesEarlierData(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer earlier.Close()
-	execSQL(t, earlier, createMigrationHistory)
-	execSQL(t, earlier, "INSERT INTO schema_migrations VALUES (1)")
-	execSQL(t, earlier, "CREATE TABLE earlier_data (value TEXT NOT NULL)")
-	execSQL(t, earlier, "INSERT INTO earlier_data VALUES ('fixture.example')")
+	// Versions 1 and 2 are the accepted C01 and C02 schema.
+	if err := migrate(ctx, earlier, migrations[:2]); err != nil {
+		t.Fatal(err)
+	}
+	execSQL(t, earlier, "INSERT INTO templates (id, draft) VALUES ('fixture.example', x'5B5D')")
 	if err := earlier.Close(); err != nil {
 		t.Fatal(err)
 	}
@@ -28,8 +29,11 @@ func TestRouterSettingsMigrationPreservesEarlierData(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	if got := readText(t, db, "SELECT value FROM earlier_data"); got != "fixture.example" {
+	if got := readText(t, db, "SELECT CAST(draft AS TEXT) FROM templates WHERE id = 'fixture.example'"); got != "[]" {
 		t.Fatalf("migration changed existing data: %q", got)
+	}
+	if got := readText(t, db, "SELECT version FROM schema_migrations WHERE version = 3"); got != "3" {
+		t.Fatalf("migration version = %q", got)
 	}
 	if got := readText(t, db, "SELECT name FROM sqlite_schema WHERE name = 'router_settings'"); got != "router_settings" {
 		t.Fatalf("router settings table = %q", got)
