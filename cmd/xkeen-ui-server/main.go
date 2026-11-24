@@ -81,6 +81,7 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 	}
 	if cfg.webOrigin != "" {
 		handler = server.NewWebShellHandler(cfg.webOrigin, handler)
+		handler = server.NewWebTemplatesHandler(cfg.webOrigin, webadmin.NewTemplateLister(sqlite.NewWebTemplates(db), time.Now), handler)
 		handler = server.NewWebAdminHandler(cfg.webOrigin, webadmin.New(sqlite.NewWebAdmin(db), time.Now), handler)
 	}
 	handler = server.NewExternalAccessHandler(cfg.webOrigin, sqlite.NewExternalAccess(db, time.Now), nil, handler)

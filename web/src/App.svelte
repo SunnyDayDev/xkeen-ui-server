@@ -1,8 +1,18 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
   import ExternalSettings from './ExternalSettings.svelte';
-  let settings = $state(false);
   import { sessionRequest, type Session } from './session';
+
+  import TemplateList from './TemplateList.svelte';
+
+  type Section = 'overview' | 'templates' | 'settings';
+
+  function sectionForPath(): Section {
+    if (location.pathname === '/ui/settings') return 'settings';
+    return location.pathname === '/ui/templates' ? 'templates' : 'overview';
+  }
+
+  let section = $state<Section>(sectionForPath());
 
   let view = $state<'initial' | 'setup_required' | 'signed_out' | 'active' | 'unavailable'>('initial');
   let message = $state('');
@@ -31,6 +41,28 @@
     workspace?.focus();
   }
 
+  function navigate(event: MouseEvent, path: string, destination: Section) {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    if (location.pathname !== path) history.pushState({}, '', path);
+    section = destination;
+    void focusWorkspace();
+  }
+
+  async function endAccess(state: 'signed_out' | 'setup_required') {
+    if (view === 'active') {
+      mutation++;
+      const focused = document.activeElement;
+      retainedFocus = focused instanceof HTMLElement && workspace?.contains(focused) ? focused : undefined;
+      expired = true;
+      message = '';
+    }
+    csrf = '';
+    const changed = view !== state;
+    view = state;
+    if (changed && state === 'signed_out') await focusPassword();
+  }
+
   async function refresh() {
     if (busy || reading || document.hidden) return;
     reading = true;
@@ -46,16 +78,7 @@
         await focusWorkspace();
       }
     } else if (reply.state === 'signed_out' || reply.state === 'setup_required') {
-      if (view === 'active') {
-        const focused = document.activeElement;
-        retainedFocus = focused instanceof HTMLElement && workspace?.contains(focused) ? focused : undefined;
-        expired = true;
-        message = '';
-      }
-      csrf = '';
-      const changed = view !== reply.state;
-      view = reply.state;
-      if (changed && view === 'signed_out') await focusPassword();
+      await endAccess(reply.state);
     } else if (reply.state === 'unavailable' && (view === 'initial' || view === 'unavailable')) {
       view = 'unavailable';
     }
@@ -110,7 +133,6 @@
     if (result.state === 'signed_out') {
       csrf = '';
       opened = false;
-      settings = false;
       expired = false;
       retainedFocus = undefined;
       view = 'signed_out';
@@ -126,12 +148,18 @@
 
   onMount(() => {
     const check = () => { void refresh(); };
+    const locationChanged = () => {
+      section = sectionForPath();
+      if (view === 'active') void focusWorkspace();
+    };
+    window.addEventListener('popstate', locationChanged);
     check();
     const timer = setInterval(check, 15_000);
     window.addEventListener('focus', check);
     document.addEventListener('visibilitychange', check);
     return () => {
       clearInterval(timer);
+      window.removeEventListener('popstate', locationChanged);
       window.removeEventListener('focus', check);
       document.removeEventListener('visibilitychange', check);
     };
@@ -143,21 +171,24 @@
     <header class="console-header">
       <strong>XKeen Console</strong>
       <nav aria-label="Основная навигация">
-        <a href="/ui/" aria-current={settings ? undefined : "page"} onclick={(event) => {
-          if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
-            event.preventDefault();
-            settings = false;
-            void focusWorkspace();
-          }
-        }}>Обзор</a>
-        <a href="#settings" aria-current={settings ? "page" : undefined} onclick={(event) => {event.preventDefault(); settings = true; void focusWorkspace();}}>Настройки</a>
+        <a href="/ui/" aria-current={section === 'overview' ? 'page' : undefined}
+          onclick={(event) => navigate(event, '/ui/', 'overview')}>Обзор</a>
+        <a href="/ui/templates" aria-current={section === 'templates' ? 'page' : undefined}
+          onclick={(event) => navigate(event, '/ui/templates', 'templates')}>Шаблоны</a>
+        <a href="/ui/settings" aria-current={section === 'settings' ? 'page' : undefined}
+          onclick={(event) => navigate(event, '/ui/settings', 'settings')}>Настройки</a>
       </nav>
       <button onclick={logout} disabled={busy}>Выйти</button>
     </header>
     <main bind:this={workspace} tabindex="-1">
-      {#if settings}
+      {#if section === 'settings'}
         {#if view === 'active'}{#key csrf}<ExternalSettings {csrf} refreshSession={refresh} />{/key}{/if}
-      {:else}<h1>Обзор</h1>{/if}
+      {:else}
+        <h1>{section === 'templates' ? 'Шаблоны' : 'Обзор'}</h1>
+      {/if}
+      {#if section === 'templates'}
+        <TemplateList active={view === 'active'} signedOut={() => { void endAccess('signed_out'); }} />
+      {/if}
       {#if message && view === 'active'}
         <p class="notice error" role="status">{message}</p>
       {/if}
