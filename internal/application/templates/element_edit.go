@@ -10,6 +10,7 @@ import (
 var (
 	ErrElementNotFound  = errors.New("template element not found")
 	ErrTemplateNotEmpty = errors.New("template already has elements")
+	ErrSectionOccupied  = errors.New("template section already has an element")
 )
 
 var firstElementSections = []string{"log", "api", "inbounds", "outbounds", "routing", "rules", "dns", "policy", "stats", "observatory", "fakedns"}
@@ -88,13 +89,67 @@ func CreateFirstElement(base *Snapshot, sectionName, newID, source string) (conf
 			target = i
 		}
 	}
+	return insertElement(candidate, target, sectionName, newID, source)
+}
+
+func AppendElementSections(base *Snapshot) []string {
+	sections := FirstElementSections()
+	for _, section := range base.Sections {
+		if len(section.Elements) != 0 && !collectionSection(section.Name) {
+			sections = slices.DeleteFunc(sections, func(name string) bool { return name == section.Name })
+		}
+	}
+	return sections
+}
+
+func collectionSection(name string) bool {
+	switch name {
+	case "inbounds", "outbounds", "rules", "fakedns":
+		return true
+	}
+	return false
+}
+
+// AppendElement adds one item while retaining all existing records in order.
+func AppendElement(base *Snapshot, sectionName, newID, source string) (configuration.TemplateDraft, error) {
+	if base == nil || !configuration.ValidElementID(newID) || !slices.Contains(firstElementSections, sectionName) {
+		return configuration.TemplateDraft{}, ErrInvalid
+	}
+	candidate, err := RestoreSnapshot(base.ID, base)
+	if err != nil {
+		return configuration.TemplateDraft{}, err
+	}
+	target := len(candidate.Sections)
+	populated := false
+	for i, section := range candidate.Sections {
+		for _, item := range section.Elements {
+			populated = true
+			if item.Element.ID == newID {
+				return configuration.TemplateDraft{}, ErrInvalid
+			}
+		}
+		if section.Name == sectionName {
+			if len(section.Elements) != 0 && !collectionSection(sectionName) {
+				return configuration.TemplateDraft{}, ErrSectionOccupied
+			}
+			target = i
+		}
+	}
+	if !populated {
+		return configuration.TemplateDraft{}, ErrInvalid
+	}
+	return insertElement(candidate, target, sectionName, newID, source)
+}
+
+func insertElement(candidate *Snapshot, target int, sectionName, newID, source string) (configuration.TemplateDraft, error) {
 	if target == len(candidate.Sections) {
 		candidate.Sections = append(candidate.Sections, configuration.TemplateSection{Name: sectionName})
 	}
-	element, issues := configuration.PrepareElement(configuration.Element{ID: newID, Content: source}, candidate.ElementLocation(target, 0), nil)
+	section := &candidate.Sections[target]
+	element, issues := configuration.PrepareElement(configuration.Element{ID: newID, Content: source}, candidate.ElementLocation(target, len(section.Elements)), nil)
 	if len(issues) != 0 {
 		return configuration.TemplateDraft{}, &InvalidDraftError{Issues: issues}
 	}
-	candidate.Sections[target].Elements = []configuration.TemplateElement{{Element: *element}}
+	section.Elements = append(section.Elements, configuration.TemplateElement{Element: *element})
 	return candidate.TemplateDraft, nil
 }

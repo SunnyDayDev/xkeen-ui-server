@@ -143,4 +143,36 @@ func TestProcessWebTemplateEditor(t *testing.T) {
 	if remaining["version"] != "6" || remaining["selected"].(map[string]any)["source"] != edited {
 		t.Fatal("variable edit changed authored content")
 	}
+
+	if options, _ := remaining["appendSections"].([]any); len(options) == 0 {
+		t.Fatal("no append sections in the authorized editor snapshot")
+	}
+	add := map[string]string{"version": "6", "appendSection": "log", "source": `{}`}
+	request("POST", target, add, 200)
+	request("POST", target, add, 409)
+	add["version"] = "7"
+	rejected, _ := request("POST", target, add, 409)
+	if rejected["state"] != "section_occupied" {
+		t.Fatal("occupied singleton did not produce its distinct refusal")
+	}
+	add["appendSection"] = "rules"
+	add["source"] = raw
+	firstRule, _ := request("POST", target, add, 200)
+	firstRuleID := firstRule["selected"].(map[string]any)["id"].(string)
+	add["version"] = "8"
+	secondRule, _ := request("POST", target, add, 200)
+	secondRuleID := secondRule["selected"].(map[string]any)["id"].(string)
+	groups := secondRule["sections"].([]any)
+	rules := groups[len(groups)-1].(map[string]any)
+	members := rules["members"].([]any)
+	if firstRuleID == secondRuleID || len(members) != 2 || members[0].(map[string]any)["id"] != firstRuleID ||
+		members[1].(map[string]any)["id"] != secondRuleID || secondRule["selected"].(map[string]any)["source"] != raw {
+		t.Fatal("rules were not appended in order or exact source changed")
+	}
+	add["version"] = "9"
+	add["section"] = "rules"
+	request("POST", target, add, 400)
+	delete(add, "section")
+	request("POST", "/ui/v1/logout", nil, 200)
+	request("POST", target, add, 401)
 }
