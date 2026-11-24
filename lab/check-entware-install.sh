@@ -35,3 +35,10 @@ docker run --rm --platform linux/arm64 --network none \
   -e XKEEN_TEST_ENTWARE_UPDATE_RECOVERY=1 \
   --entrypoint /proof/recovery.test "$image" \
   -test.run '^TestEntwareUpdateRecoveryRequiresDurableCurrentAndCompleteIntent$' -test.v -test.timeout 1m
+
+docker run --rm --platform linux/arm64 --network none --cap-add SYS_PTRACE \
+  --mount "type=bind,source=$build,target=/proof,readonly" \
+  --mount "type=bind,source=$root/scripts,target=/scripts,readonly" \
+  -e XKEEN_TEST_SERVER_BINARY=/proof/server -e XKEEN_TEST_ENTWARE_INSTALLER=/scripts/install-entware.sh \
+  -e XKEEN_TEST_SERVER_MAINTENANCE_MATRIX=1 --entrypoint /proof/installation.test "$image" \
+  -test.run '^TestEntwareInstallServerKeepsTLSAndAdministrator$' -test.v -test.timeout 1m
