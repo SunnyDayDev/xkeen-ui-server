@@ -56,6 +56,9 @@ func TestExternalSettingsSerialiseAccessAndSession(t *testing.T) {
 	if err != nil || p.Version != v.Version {
 		t.Fatal(err)
 	}
+	if protected, err := s.ReadActiveMode(ctx, p); err != nil || !protected {
+		t.Fatal("protected mode missing from authorized snapshot")
+	}
 	var digest []byte
 	if err = db.QueryRow("SELECT digest FROM external_access").Scan(&digest); err != nil || bytes.Contains(digest, []byte(token)) || len(digest) != 32 {
 		t.Fatal("unexpected persisted verifier")
@@ -70,6 +73,9 @@ func TestExternalSettingsSerialiseAccessAndSession(t *testing.T) {
 	}
 	if _, err = s.Admit(ctx, []string{"Bearer " + token}); !errors.Is(err, externalaccess.ErrUnauthorized) {
 		t.Fatal(err)
+	}
+	if _, err := s.ReadActiveMode(ctx, p); !errors.Is(err, externalaccess.ErrUnauthorized) {
+		t.Fatal("stale policy generation was accepted")
 	}
 	v, _, err = s.Owner(ctx, session, &externalaccess.Change{Version: v.Version, Enabled: true, Protected: false})
 	if err != nil {

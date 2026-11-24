@@ -9,19 +9,6 @@ import (
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 )
 
-func requireExternalPermit(ctx context.Context, tx *sql.Tx, permit externalaccess.Permit) error {
-	state, _, err := readExternalSettings(ctx, tx)
-	if err != nil {
-		return err
-	}
-	if !state.Enabled {
-		return externalaccess.ErrDisabled
-	}
-	if permit.Version <= 0 || state.Version != permit.Version {
-		return externalaccess.ErrUnauthorized
-	}
-	return nil
-}
 func (s *ExternalAccess) CreateExternalTemplate(ctx context.Context, permit externalaccess.Permit, id string) (templates.Summary, error) {
 	draft, err := templates.PrepareDraft(configuration.TemplateDraft{ID: id})
 	if err != nil {

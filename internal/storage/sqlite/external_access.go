@@ -47,6 +47,36 @@ func (s *ExternalAccess) Admit(ctx context.Context, headers []string) (externala
 	return externalaccess.Admit(v, digest, headers)
 }
 
+// ReadActiveMode returns only the protected flag after rechecking admission.
+func (s *ExternalAccess) ReadActiveMode(ctx context.Context, permit externalaccess.Permit) (bool, error) {
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+	if err != nil {
+		return false, err
+	}
+	defer tx.Rollback()
+	return readExternalPermitMode(ctx, tx, permit)
+}
+
+func requireExternalPermit(ctx context.Context, tx *sql.Tx, permit externalaccess.Permit) error {
+	_, err := readExternalPermitMode(ctx, tx, permit)
+	return err
+}
+
+func readExternalPermitMode(ctx context.Context, tx *sql.Tx, permit externalaccess.Permit) (bool, error) {
+	var enabled, protected bool
+	var version int64
+	if err := tx.QueryRowContext(ctx, "SELECT enabled,protected,version FROM external_access WHERE id=1").Scan(&enabled, &protected, &version); err != nil {
+		return false, err
+	}
+	if !enabled {
+		return false, externalaccess.ErrDisabled
+	}
+	if permit.Version <= 0 || version != permit.Version {
+		return false, externalaccess.ErrUnauthorized
+	}
+	return protected, nil
+}
+
 func (s *ExternalAccess) Owner(ctx context.Context, session [32]byte, change *externalaccess.Change) (externalaccess.Settings, string, error) {
 	var zero externalaccess.Settings
 	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: change == nil})
