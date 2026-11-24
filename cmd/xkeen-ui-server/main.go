@@ -133,6 +133,7 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 	externalOperations = server.NewExternalRouterReplacement(external, externalOperations)
 	externalOperations = server.NewExternalRouterStatuses(external, externalOperations)
 	externalOperations = server.NewExternalLocalRuleSource(external, externalOperations)
+	externalOperations = server.NewExternalRuleState(external, externalOperations)
 	externalOperations = server.NewExternalRouterRules(external, externalOperations)
 	externalOperations = server.NewExternalRouterCatalog(externalaccess.NewRouterCatalog(external), externalOperations)
 	externalPublication := externalaccess.NewTemplatePublications(sqlite.NewExternalTemplatePublications(publications), validator, time.Now)
