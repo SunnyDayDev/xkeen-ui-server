@@ -13,9 +13,19 @@ export async function checkTemplateCopy(page,id,database) {
   try {
     db.prepare('UPDATE templates SET version=version+1 WHERE id=?').run(id);
   } finally { db.close(); }
-  await page.getByRole('button',{name:'Создать копию'}).click();
+  await page.setViewportSize({width:320,height:740});
+  await field.press('Tab');
+  assert.equal(await page.evaluate(()=>document.activeElement?.textContent?.trim()),'Создать копию');
+  await page.keyboard.press('Enter');
   await page.getByText('Исходный шаблон изменился. Перечитайте текущую версию.',{exact:true}).waitFor();
-  await page.getByRole('button',{name:'Перечитать'}).click();
+  await page.waitForFunction(()=>document.activeElement?.textContent?.trim()==='Перечитать');
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),320);
+  assert.equal(await page.evaluate(()=>document.activeElement?.matches(':focus-visible')),true);
+  await page.keyboard.press('Tab');
+  assert.equal(await page.evaluate(()=>document.activeElement?.textContent?.trim()),'Отмена');
+  await page.keyboard.press('Shift+Tab');
+  assert.equal(await page.evaluate(()=>document.activeElement?.textContent?.trim()),'Перечитать');
+  await page.keyboard.press('Enter');
   await page.getByRole('button',{name:'Создать копию'}).waitFor();
   assert.equal(await field.inputValue(),target);
   await page.setViewportSize({width:360,height:740});
@@ -35,9 +45,11 @@ export async function checkTemplateCopy(page,id,database) {
   const expected=await read(path);
   await page.getByRole('button',{name:'Создать копию'}).click();
   await page.getByText('Не удалось подтвердить создание копии.',{exact:true}).waitFor();
-  await page.getByRole('button',{name:'Проверить список'}).click();
+  await page.waitForFunction(()=>document.activeElement?.textContent?.trim()==='Проверить список');
+  await page.keyboard.press('Enter');
   await page.getByText('Шаблон с этим ID найден. Источник записи не подтверждён.',{exact:true}).waitFor();
-  await page.getByRole('link',{name:'Открыть шаблон'}).click();
+  await page.waitForFunction(()=>document.activeElement?.textContent?.trim()==='Открыть шаблон');
+  await page.keyboard.press('Enter');
   await page.getByRole('heading',{name:'Сырой JSON элемента'}).waitFor();
   const copyPath='/ui/v1/templates/item?'+new URLSearchParams({templateId:target});
   const copy=await read(copyPath);

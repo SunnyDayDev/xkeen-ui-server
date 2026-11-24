@@ -15,6 +15,12 @@
   let work = $state<'save' | 'refresh' | 'lookup'>();
   let request: AbortController | undefined;
   let input = $state<HTMLInputElement>();
+  let nextAction = $state<HTMLButtonElement | HTMLAnchorElement>();
+
+  async function focusNextAction(epoch: number) {
+    await tick();
+    if (active && epoch === sessionEpoch && document.activeElement === document.body) nextAction?.focus();
+  }
   const endpoint = () => '/ui/v1/templates/copy?' + new URLSearchParams({templateId:id});
   const editor = (id: string) => '/ui/templates/item?' + new URLSearchParams({templateId:id});
   const canonicalVersion = (value: string) => /^[1-9][0-9]*$/.test(value);
@@ -72,16 +78,19 @@
     if (!id || !target || !version || state!=='ready' || work) return;
     error='';
     const exact = target;
+    const epoch = sessionEpoch;
     const reply=await exchange('save',endpoint(),{targetId:exact,version});
     if (!reply) return;
     if (reply.status===201 && reply.body?.id===exact && reply.body.version==='1') {
       resultId=exact;
       state='saved';
       saved();
+      await focusNextAction(epoch);
     } else if (reply.status===409 && reply.body?.state==='template_exists') {
       error='Этот ID уже занят.';
     } else if (reply.status===409 && reply.body?.state==='source_changed') {
       state='stale';
+      await focusNextAction(epoch);
     } else if (reply.status===404) {
       error='Исходный шаблон недоступен.';
     } else if (reply.status===400 || reply.status===413 || reply.status===415) {
@@ -89,10 +98,12 @@
     } else {
       resultId=exact;
       state='unknown';
+      await focusNextAction(epoch);
     }
   }
 
   async function lookup() {
+    const epoch = sessionEpoch;
     error='';
     const reply=await exchange('lookup','/ui/v1/templates');
     if (!reply) return;
@@ -100,6 +111,7 @@
       error='Не удалось прочитать список. Повторите проверку.';
     } else if (reply.body.templates.some((item: {id:string})=>item.id===resultId)) {
       state='found';
+      await focusNextAction(epoch);
     } else {
       error='Шаблон с этим ID пока не найден.';
     }
@@ -141,13 +153,13 @@
   {#if error}<p role="alert">{error}</p>{/if}
   {#if state==='saved' || state==='found'}
     {@const path=editor(resultId)}
-    <a href={path} onclick={event => openTemplate(event,path)}>Открыть шаблон</a>
+    <a bind:this={nextAction} href={path} onclick={event => openTemplate(event,path)}>Открыть шаблон</a>
   {:else if state==='unknown'}
     <p role="status">Не удалось подтвердить создание копии.</p>
-    <button disabled={!!work || !active} onclick={lookup}>Проверить список</button>
+    <button bind:this={nextAction} disabled={!!work || !active} onclick={lookup}>Проверить список</button>
   {:else if state==='stale'}
     <p role="alert">Исходный шаблон изменился. Перечитайте текущую версию.</p>
-    <button disabled={!!work || !active} onclick={refresh}>Перечитать</button>
+    <button bind:this={nextAction} disabled={!!work || !active} onclick={refresh}>Перечитать</button>
   {:else if !version}
     {#if work}<p role="status">Загружаем версию…</p>
     {:else}<button onclick={refresh}>Перечитать</button>{/if}
