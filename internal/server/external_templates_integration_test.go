@@ -259,4 +259,33 @@ func TestExternalTemplateListConsumer(t *testing.T) {
 		t.Fatal(err)
 	}
 	get(path, 401)
+	state, token, err := store.Owner(ctx, session, &externalaccess.Change{Version: state.Version + 1, Rotate: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, srv.URL+path, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	resp, err := srv.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil || resp.StatusCode != 200 || !bytes.Contains(raw, []byte(`"id":"A+example"`)) {
+		t.Fatal("protected list", resp.StatusCode, err)
+	}
+	permit, err := store.Admit(ctx, []string{"Bearer " + token})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err = store.Owner(ctx, session, &externalaccess.Change{Version: state.Version, Rotate: true}); err != nil {
+		t.Fatal(err)
+	}
+	if rows, err := store.ListExternalTemplates(ctx, permit); rows != nil || !errors.Is(err, externalaccess.ErrUnauthorized) {
+		t.Fatal("stale collection permit", err)
+	}
+
 }
