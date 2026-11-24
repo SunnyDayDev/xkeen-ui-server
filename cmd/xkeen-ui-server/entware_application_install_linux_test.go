@@ -301,4 +301,86 @@ func TestEntwareInstallManagedApplication(t *testing.T) {
 	if f.status(t).Applied != published.Revision {
 		t.Fatal("restart changed applied confirmation")
 	}
+	remove := func() ([]byte, error) {
+		t.Helper()
+		return exec.CommandContext(t.Context(), "/opt/bin/sh", script, "uninstall", "--role", "agent-application",
+			"--version", tag, "--manifest-sha256", manifestDigest, "--confirm", "remove-service",
+			"--release-mirror", mirror.URL, "--mirror-ca-file", mirrorCert).CombinedOutput()
+	}
+	retained, err := os.ReadFile(path("journal/application.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	retainedConfig, err := os.ReadFile(path("work/01_log.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	claimant := exec.Command("/opt/bin/sh", "-c", "read unused", "foreign-runtime-fixture", path("work"))
+	input, err := claimant.StdinPipe()
+	if err != nil || claimant.Start() != nil {
+		t.Fatal("cannot start foreign same-directory claimant")
+	}
+	defer func() { _ = input.Close(); _ = claimant.Wait() }()
+	if out, err := remove(); err == nil || !strings.Contains(string(out), "startup is held") {
+		t.Fatalf("managed uninstall accepted ambiguous runtime: %v, %s", err, out)
+	}
+	if err := exec.CommandContext(t.Context(), initPath, "start").Run(); err == nil {
+		t.Fatal("held managed init allowed startup after failed removal")
+	}
+	if claimant.Process.Signal(syscall.Signal(0)) != nil {
+		t.Fatal("ambiguous runtime removal signalled foreign process")
+	}
+	waitSocket(t, "tcp", proxy)
+	if err := input.Close(); err != nil {
+		t.Fatal(err)
+	}
+	_ = claimant.Wait()
+
+	if out, err := remove(); err != nil || !strings.Contains(string(out), "startup entrypoint not verified") {
+		t.Fatalf("managed uninstall failed or misrepresented former startup: %v, %s", err, out)
+	}
+	for _, owned := range []string{initPath, agentReceipt, supervisorReceipt, "/opt/libexec/xkeen-ui/agent-application"} {
+		if _, err := os.Lstat(owned); !os.IsNotExist(err) {
+			t.Fatalf("uninstall left managed file: %s", owned)
+		}
+	}
+	conn, err := net.DialTimeout("tcp", proxy, time.Second)
+	if err == nil {
+		conn.Close()
+		t.Fatal("managed Xray was not stopped")
+	}
+	if raw, err := os.ReadFile(path("journal/application.json")); err != nil || string(raw) != string(retained) {
+		t.Fatal("uninstall changed committed application journal")
+	}
+	if raw, err := os.ReadFile(path("work/01_log.json")); err != nil || string(raw) != string(retainedConfig) {
+		t.Fatal("uninstall changed committed working catalog")
+	}
+	if foreign.Process.Signal(syscall.Signal(0)) != nil {
+		t.Fatal("managed uninstall signalled foreign process")
+	}
+	if out, err := remove(); err != nil {
+		t.Fatalf("managed uninstall repeat failed: %v, %s", err, out)
+	}
+	// The fixture operator knows the exact original direct entrypoint
+	// and verifies both of its inputs before choosing to start it.
+	verifiedBinary, err := os.ReadFile(xray)
+	if err != nil || fmt.Sprintf("%x", sha256.Sum256(verifiedBinary)) != cfg.XraySHA256 {
+		t.Fatal("cannot verify original Xray executable")
+	}
+	if _, err := localvalidation.WorkingManifest(path("work")); err != nil {
+		t.Fatal("cannot verify the retained working catalog")
+	}
+	manual := startProcess(t, xray, "run", "-confdir", path("work"))
+	waitSocket(t, "tcp", proxy)
+	stopRouterAgent(t, manual)
+
+	if out, err := run(f.origin); err != nil {
+		t.Fatalf("managed reinstall with protected journal failed: %v, %s", err, out)
+	}
+	invoke("status")
+	waitSocket(t, "tcp", proxy)
+	if f.status(t).Applied != published.Revision {
+		t.Fatal("reinstallation changed confirmed server revision")
+	}
+
 }
