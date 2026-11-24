@@ -31,7 +31,13 @@ G15 устанавливает центральный сервер Linux ARM64 �
 Если владелец выбрал внешний валидатор F09, добавьте к первой команде установки полный набор аргументов. Доверенная CA выделена для исполнителя. Клиентский приватный ключ передаётся по пути к исходному файлу root с режимом 0600. После установки ключ защищён режимом 0640 и доступен только root и группе сервера.
 
 ```sh
---validator-origin https://validator.example:9443 \
+/opt/bin/sh "$INSTALLER" install \
+  --role server --version "$RELEASE_TAG" --manifest-sha256 "$MANIFEST_SHA256" \
+  --run-as 65531:65531 --listen 0.0.0.0:8443 \
+  --web-origin https://controller.example:8443 \
+  --tls-cert /opt/etc/xkeen-ui-install/controller-cert.pem \
+  --tls-key /opt/etc/xkeen-ui-install/controller-key.pem \
+  --validator-origin https://validator.example:9443 \
 --validator-ca /opt/etc/xkeen-ui-install/validator-ca.pem \
 --validator-client-cert /opt/etc/xkeen-ui-install/validator-client-cert.pem \
 --validator-client-key /opt/etc/xkeen-ui-install/validator-client-key.pem \
