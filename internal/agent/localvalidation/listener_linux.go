@@ -19,6 +19,11 @@ func ownsListener(pid int, address string) bool {
 	if err != nil || endpoint.Port() == 0 || !endpoint.Addr().IsLoopback() {
 		return false
 	}
+	local, localErr := os.Stat("/proc/self/ns/net")
+	remote, remoteErr := os.Stat(procPath(pid, "ns/net"))
+	if localErr != nil || remoteErr != nil || !os.SameFile(local, remote) {
+		return false
+	}
 	fdDir := procPath(pid, "fd")
 	descriptors, err := os.ReadDir(fdDir)
 	if err != nil || len(descriptors) > 4096 {
