@@ -2,18 +2,18 @@
 package publication
 
 import (
- "context"
- "errors"
+	"context"
+	"errors"
 
- "github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 )
 
 var (
- ErrCatalogRejected = errors.New("catalog rejected")
- ErrValidatorUnavailable = errors.New("validator unavailable")
+	ErrCatalogRejected      = errors.New("catalog rejected")
+	ErrValidatorUnavailable = errors.New("validator unavailable")
 )
 
 // CatalogValidator checks the exact profile and named bytes owned by its caller.
 type CatalogValidator interface {
- Validate(context.Context, string, []configuration.CatalogFile) error
+	Validate(context.Context, string, []configuration.CatalogFile) error
 }
