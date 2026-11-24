@@ -55,11 +55,13 @@ func rootDirs(create bool, paths ...string) error {
 	return nil
 }
 
-func lockService() (*os.File, error) {
+func lockService() (*os.File, error) { return lockRole("agent-transport") }
+
+func lockRole(role string) (*os.File, error) {
 	if err := rootDirs(true, control); err != nil {
 		return nil, err
 	}
-	path := control + "/agent-transport.lock"
+	path := filepath.Join(control, role+".lock")
 	fd, err := unix.Open(path, unix.O_CREAT|unix.O_RDWR|unix.O_CLOEXEC|unix.O_NOFOLLOW|unix.O_NONBLOCK, 0600)
 	if err != nil {
 		return nil, errSafety

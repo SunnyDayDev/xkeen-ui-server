@@ -59,6 +59,10 @@ func run(args []string) error {
 		return install(args[1:])
 	case args[0] == "update-stage" && len(args) == 4:
 		return update(args[1], args[2], args[3])
+	case args[0] == "install-server-stage" && len(args) == 9:
+		return installServer(args[1:])
+	case args[0] == "server-service":
+		return serverService(args[1:])
 	case len(args) == 1 && (args[0] == "start" || args[0] == "stop" || args[0] == "status"):
 		lock, err := lockService()
 		if err != nil {
@@ -103,6 +107,11 @@ func install(args []string) error {
 	if err := probePIDFD(); err != nil {
 		return errors.New("Entware kernel cannot identify managed processes")
 	}
+	admission, err := lockAdmission("agent-transport", p.UID, p.GID)
+	if err != nil {
+		return err
+	}
+	defer admission.Close()
 	lock, err := lockService()
 	if err != nil {
 		return err

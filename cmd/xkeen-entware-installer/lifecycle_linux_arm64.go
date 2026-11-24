@@ -55,7 +55,27 @@ func lifecycle(action string, p profile) error {
 	if err := rootDirs(false, filepath.Dir(binary)); err != nil {
 		return err
 	}
-	file, err := checkedFile(binary, 0, 0755)
+	args := []string{"--server", p.Origin, "--state-dir", stateDir}
+	if p.CADigest != "" {
+		args = append(args, "--ca-file", profileDir+"/ca.pem")
+	}
+	return managedProcess{binary: binary, receipt: receiptPath, uid: p.UID, gid: p.GID, arguments: args, notReady: errNotReady}.control(action)
+}
+
+type managedProcess struct {
+	binary    string
+	receipt   string
+	uid, gid  uint32
+	arguments []string
+	notReady  error
+	probe     func(int) bool
+}
+
+func (s managedProcess) control(action string) error {
+	if err := rootDirs(false, filepath.Dir(s.binary)); err != nil {
+		return err
+	}
+	file, err := checkedFile(s.binary, 0, 0755)
 	if err != nil {
 		return errSafety
 	}
@@ -68,9 +88,9 @@ func lifecycle(action string, p profile) error {
 	if err != nil {
 		return err
 	}
-	r, err := readReceipt()
+	r, err := readReceipt(s.receipt)
 	if err == nil {
-		pidfd, active, err := identify(r, boot, p, info)
+		pidfd, active, err := identify(r, boot, s.uid, s.gid, info)
 		if err != nil {
 			return err
 		}
@@ -80,14 +100,17 @@ func lifecycle(action string, p profile) error {
 				if r.Pending {
 					return errProcess
 				}
+				if s.probe != nil && !s.probe(r.PID) {
+					return s.notReady
+				}
 				return nil
 			}
 			if err := terminate(pidfd); err != nil {
 				return err
 			}
-			return removePublished(receiptPath)
+			return removePublished(s.receipt)
 		}
-		if err := removePublished(receiptPath); err != nil {
+		if err := removePublished(s.receipt); err != nil {
 			return err
 		}
 	} else if !errors.Is(err, os.ErrNotExist) {
@@ -99,12 +122,12 @@ func lifecycle(action string, p profile) error {
 	case "status":
 		return errStopped
 	default:
-		return launch(binary, boot, p, info)
+		return s.launch(boot, info)
 	}
 }
 
-func readReceipt() (receipt, error) {
-	file, err := checkedFile(receiptPath, 0, 0600)
+func readReceipt(path string) (receipt, error) {
+	file, err := checkedFile(path, 0, 0600)
 	if err != nil {
 		return receipt{}, err
 	}
@@ -121,12 +144,12 @@ func readReceipt() (receipt, error) {
 	return r, nil
 }
 
-func saveReceipt(r receipt) error {
+func saveReceipt(path string, r receipt) error {
 	raw, err := json.Marshal(r)
 	if err != nil {
 		return errSafety
 	}
-	return writeFile(receiptPath, raw, 0600, 0, 0)
+	return writeFile(path, raw, 0600, 0, 0)
 }
 
 func processTick(pid int) (string, error) {
@@ -154,7 +177,7 @@ func currentBoot() (string, error) {
 	return boot, nil
 }
 
-func identify(r receipt, boot string, p profile, binary os.FileInfo) (int, bool, error) {
+func identify(r receipt, boot string, uid, gid uint32, binary os.FileInfo) (int, bool, error) {
 	if len(r.Boot) != 36 {
 		return -1, false, errProcess
 	}
@@ -181,7 +204,7 @@ func identify(r receipt, boot string, p profile, binary os.FileInfo) (int, bool,
 		unix.Close(fd)
 		return -1, false, nil
 	}
-	principalErr := verifyProcessPrincipal(r.PID, p)
+	principalErr := verifyProcessPrincipal(r.PID, uid, gid)
 	exe, exeErr := os.Stat(fmt.Sprintf("/proc/%d/exe", r.PID))
 	if err != nil || principalErr != nil || exeErr != nil || !os.SameFile(exe, binary) {
 		unix.Close(fd)
@@ -190,12 +213,12 @@ func identify(r receipt, boot string, p profile, binary os.FileInfo) (int, bool,
 	return fd, true, nil
 }
 
-func verifyProcessPrincipal(pid int, p profile) error {
+func verifyProcessPrincipal(pid int, uid, gid uint32) error {
 	raw, err := os.ReadFile(fmt.Sprintf("/proc/%d/status", pid))
 	if err != nil {
 		return errProcess
 	}
-	for label, id := range map[string]uint32{"Uid": p.UID, "Gid": p.GID} {
+	for label, id := range map[string]uint32{"Uid": uid, "Gid": gid} {
 		prefix := label + ":"
 		expected := strconv.FormatUint(uint64(id), 10)
 		matched := false
@@ -250,60 +273,89 @@ func terminate(fd int) error {
 	return nil
 }
 
-func launch(binary, boot string, p profile, info os.FileInfo) error {
-	read, write, err := os.Pipe()
-	if err != nil {
-		return errProcess
-	}
-	defer read.Close()
-	defer write.Close()
-	args := []string{"--server", p.Origin, "--state-dir", stateDir}
-	if p.CADigest != "" {
-		args = append(args, "--ca-file", profileDir+"/ca.pem")
-	}
-	cmd := exec.Command(binary, args...)
-	cmd.Stdout = write
+func (s managedProcess) launch(boot string, info os.FileInfo) error {
+	cmd := exec.Command(s.binary, s.arguments...)
 	cmd.Dir = "/"
 	cmd.Env = []string{"PATH=/opt/bin:/opt/sbin:/usr/sbin:/usr/bin:/sbin:/bin", "SSL_CERT_FILE=/opt/etc/ssl/certs/ca-certificates.crt"}
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setsid:     true,
-		Credential: &syscall.Credential{Uid: p.UID, Gid: p.GID, Groups: []uint32{}},
+		Credential: &syscall.Credential{Uid: s.uid, Gid: s.gid, Groups: []uint32{}},
+	}
+	var reader, writer *os.File
+	if s.probe == nil {
+		var err error
+		reader, writer, err = os.Pipe()
+		if err != nil {
+			return errProcess
+		}
+		defer reader.Close()
+		defer writer.Close()
+		cmd.Stdout = writer
 	}
 	// The zero receipt forbids another start after an interrupted launch for
 	// which an owned process has not yet been recorded.
-	if err := saveReceipt(receipt{Boot: boot}); err != nil {
+	if err := saveReceipt(s.receipt, receipt{Boot: boot}); err != nil {
 		return err
 	}
 	if err := cmd.Start(); err != nil {
-		_ = removePublished(receiptPath)
-		return errProcess
+		_ = removePublished(s.receipt)
+		return s.notReady
 	}
-	write.Close()
+	if writer != nil {
+		writer.Close()
+	}
 	fail := func(err error) error {
 		_ = cmd.Process.Kill()
 		_ = cmd.Wait()
-		if cleanupErr := removePublished(receiptPath); cleanupErr != nil {
+		if cleanupErr := removePublished(s.receipt); cleanupErr != nil {
 			return cleanupErr
 		}
 		return err
 	}
 	tick, err := processTick(cmd.Process.Pid)
 	if err != nil {
-		return fail(errProcess)
+		return fail(s.notReady)
 	}
 	r := receipt{Boot: boot, PID: cmd.Process.Pid, Tick: tick, Pending: true}
-	fd, active, err := identify(r, boot, p, info)
+	fd, active, err := identify(r, boot, s.uid, s.gid, info)
 	if err != nil || !active {
-		return fail(errProcess)
+		return fail(s.notReady)
 	}
 	defer unix.Close(fd)
-	if err := saveReceipt(r); err != nil {
+	if err := saveReceipt(s.receipt, r); err != nil {
 		return fail(err)
 	}
+	if !s.waitReady(r.PID, fd, reader) {
+		return fail(s.notReady)
+	}
+	if dead, err := exited(fd, 0); err != nil || dead {
+		return fail(s.notReady)
+	}
+	r.Pending = false
+	if err := saveReceipt(s.receipt, r); err != nil {
+		return fail(err)
+	}
+	cmd.Process.Release()
+	return nil
+}
 
+func (s managedProcess) waitReady(pid, fd int, reader io.Reader) bool {
+	if s.probe != nil {
+		deadline := time.Now().Add(15 * time.Second)
+		for time.Now().Before(deadline) {
+			dead, err := exited(fd, 50)
+			if err != nil || dead {
+				return false
+			}
+			if s.probe(pid) {
+				return true
+			}
+		}
+		return false
+	}
 	ready := make(chan bool, 1)
 	go func() {
-		scanner := bufio.NewScanner(io.LimitReader(read, 4096))
+		scanner := bufio.NewScanner(io.LimitReader(reader, 4096))
 		for scanner.Scan() {
 			if scanner.Text() == "agent authenticated" {
 				ready <- true
@@ -316,19 +368,8 @@ func launch(binary, boot string, p profile, info os.FileInfo) error {
 	defer timer.Stop()
 	select {
 	case ok := <-ready:
-		if !ok {
-			return fail(errNotReady)
-		}
+		return ok
 	case <-timer.C:
-		return fail(errNotReady)
+		return false
 	}
-	if dead, err := exited(fd, 0); err != nil || dead {
-		return fail(errNotReady)
-	}
-	r.Pending = false
-	if err := saveReceipt(r); err != nil {
-		return fail(err)
-	}
-	cmd.Process.Release()
-	return nil
 }
