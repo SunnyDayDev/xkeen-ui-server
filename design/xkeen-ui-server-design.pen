@@ -13726,7 +13726,8 @@
               "width": "fill_container",
               "content": "Используйте пароль администратора этой установки.",
               "fontFamily": "$font",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             },
             {
               "id": "CD5aS",
@@ -13806,7 +13807,8 @@
               "width": "fill_container",
               "content": "Настройте пароль администратора на сервере через терминал или приватный файл.",
               "fontFamily": "$font",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             },
             {
               "type": "frame",
@@ -13827,7 +13829,8 @@
                   "width": "fill_container",
                   "content": "После настройки обновите эту страницу и войдите.",
                   "fontFamily": "$font",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             }
@@ -13896,7 +13899,8 @@
               "width": "fill_container",
               "content": "Используйте пароль администратора этой установки.",
               "fontFamily": "$font",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             },
             {
               "type": "frame",
@@ -13917,7 +13921,8 @@
                   "width": "fill_container",
                   "content": "Не удалось войти. Проверьте пароль и попробуйте ещё раз.",
                   "fontFamily": "$font",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -13999,7 +14004,8 @@
               "width": "fill_container",
               "content": "Войдите снова, чтобы вернуться к редактированию.",
               "fontFamily": "$font",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             },
             {
               "type": "frame",
@@ -14020,7 +14026,8 @@
                   "width": "fill_container",
                   "content": "Черновик сохранён в этой вкладке. После входа вы сможете проверить и сохранить его вручную.",
                   "fontFamily": "$font",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -14105,7 +14112,8 @@
               "width": "fill_container",
               "content": "Проверяем пароль.",
               "fontFamily": "$font",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             },
             {
               "id": "ijALO",
@@ -14192,7 +14200,8 @@
               "width": "fill_container",
               "content": "Войдите снова, чтобы вернуться к редактированию.",
               "fontFamily": "$font",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             },
             {
               "type": "frame",
@@ -14213,7 +14222,8 @@
                   "width": "fill_container",
                   "content": "Черновик сохранён в этой вкладке. Сохраните изменения вручную после входа.",
                   "fontFamily": "$font",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -14294,7 +14304,8 @@
               "width": "fill_container",
               "content": "Используйте пароль администратора этой установки.",
               "fontFamily": "$font",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             },
             {
               "type": "frame",
@@ -14315,7 +14326,8 @@
                   "width": "fill_container",
                   "content": "Слишком много попыток входа. Повторите позже.",
                   "fontFamily": "$font",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -14400,7 +14412,8 @@
               "width": "fill_container",
               "content": "Используйте пароль администратора этой установки.",
               "fontFamily": "$font",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             },
             {
               "type": "frame",
@@ -14421,7 +14434,8 @@
                   "width": "fill_container",
                   "content": "Сервер сейчас недоступен. Попробуйте ещё раз.",
                   "fontFamily": "$font",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -14497,7 +14511,8 @@
               "width": "fill_container",
               "content": "Вы вышли из консоли.",
               "fontFamily": "$font",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             },
             {
               "id": "ncMs2",
@@ -14605,6 +14620,208 @@
                   "content": "Сохранить изменения"
                 }
               }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Q5UW7",
+      "x": 0,
+      "y": 10890,
+      "name": "20 / Консоль / Широкий экран",
+      "width": 1080,
+      "height": 660,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "o9MBQ2",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "d1f1FT",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "GJltp",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 120,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "icon": "layout-dashboard",
+                  "fill": "#FFFFFF"
+                },
+                "G2nPu4": {
+                  "content": "Обзор",
+                  "fill": "#FFFFFF"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "oFNr4",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "QtVjH",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "AOvgT",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "muT50",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Обзор",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "QXIyh",
+      "x": 0,
+      "y": 11620,
+      "name": "20 / Консоль / Узкий экран",
+      "width": 360,
+      "height": 620,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "y6Su0y",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "layout": "vertical",
+          "gap": 12,
+          "padding": [
+            14,
+            16
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "rq4Y6",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "E2mUM",
+              "name": "Действия консоли",
+              "width": "fill_container",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "id": "ka9e6",
+                  "type": "ref",
+                  "ref": "oQHGq",
+                  "name": "Текущий раздел",
+                  "width": 120,
+                  "fill": "#273446",
+                  "descendants": {
+                    "uzKPJ": {
+                      "icon": "layout-dashboard",
+                      "fill": "#FFFFFF"
+                    },
+                    "G2nPu4": {
+                      "content": "Обзор",
+                      "fill": "#FFFFFF"
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "UmSOM",
+                  "name": "Свободное место",
+                  "width": "fill_container",
+                  "height": 1
+                },
+                {
+                  "id": "tyOxc",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Завершить сессию",
+                  "fill": "$accent",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Выйти"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "NXHSE",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "W6g95",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Обзор",
+              "fontFamily": "$font",
+              "fontSize": 24,
+              "fontWeight": "semibold"
             }
           ]
         }

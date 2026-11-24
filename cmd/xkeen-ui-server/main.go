@@ -80,6 +80,7 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 		handler = server.NewAgentHandler(credentials, publications, sqlite.NewContacts(db, time.Now), watch)
 	}
 	if cfg.webOrigin != "" {
+		handler = server.NewWebShellHandler(cfg.webOrigin, handler)
 		handler = server.NewWebAdminHandler(cfg.webOrigin, webadmin.New(sqlite.NewWebAdmin(db), time.Now), handler)
 	}
 	if err := json.NewEncoder(stderr).Encode(struct {
