@@ -21,13 +21,15 @@ const receiptPath = control + "/agent-transport.process.json"
 
 var (
 	errProcess  = errors.New("agent instance ownership is unavailable")
+	errStopped  = errors.New("agent service is stopped")
 	errNotReady = errors.New("installed agent did not confirm HTTPS authentication")
 )
 
 type receipt struct {
-	Boot string
-	PID  int
-	Tick string
+	Boot    string
+	PID     int
+	Tick    string
+	Pending bool `json:",omitempty"`
 }
 
 func probePIDFD() error {
@@ -75,6 +77,9 @@ func lifecycle(action string, p profile) error {
 		if active {
 			defer unix.Close(pidfd)
 			if action != "stop" {
+				if r.Pending {
+					return errProcess
+				}
 				return nil
 			}
 			if err := terminate(pidfd); err != nil {
@@ -92,7 +97,7 @@ func lifecycle(action string, p profile) error {
 	case "stop":
 		return nil
 	case "status":
-		return errors.New("agent service is stopped")
+		return errStopped
 	default:
 		return launch(binary, boot, p, info)
 	}
@@ -286,12 +291,15 @@ func launch(binary, boot string, p profile, info os.FileInfo) error {
 	if err != nil {
 		return fail(errProcess)
 	}
-	r := receipt{Boot: boot, PID: cmd.Process.Pid, Tick: tick}
+	r := receipt{Boot: boot, PID: cmd.Process.Pid, Tick: tick, Pending: true}
 	fd, active, err := identify(r, boot, p, info)
 	if err != nil || !active {
 		return fail(errProcess)
 	}
 	defer unix.Close(fd)
+	if err := saveReceipt(r); err != nil {
+		return fail(err)
+	}
 
 	ready := make(chan bool, 1)
 	go func() {
@@ -317,6 +325,7 @@ func launch(binary, boot string, p profile, info os.FileInfo) error {
 	if dead, err := exited(fd, 0); err != nil || dead {
 		return fail(errNotReady)
 	}
+	r.Pending = false
 	if err := saveReceipt(r); err != nil {
 		return fail(err)
 	}

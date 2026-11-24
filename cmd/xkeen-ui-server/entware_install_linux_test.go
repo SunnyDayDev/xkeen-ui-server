@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"testing"
 	"time"
@@ -102,32 +103,65 @@ func TestEntwareInstallRegistersAgentAndRestartsSameIdentity(t *testing.T) {
 	defer web.CloseIdleConnections()
 
 	const tag = "v0.0.13"
+	const nextTag = "v0.0.14"
+	const invalidTag = "v0.0.15"
+	const crashTag = "v0.0.16"
+	const formatName = "agent-state-format.txt"
 	mirrorFiles := t.TempDir()
-	var manifest strings.Builder
-	for _, name := range []string{"xkeen-entware-installer-linux-arm64", "xkeen-agent-linux-arm64"} {
-		raw, err := os.ReadFile(filepath.Join("/proof", name))
-		if err != nil {
+	sums := map[string]string{}
+	for _, version := range []string{tag, nextTag, invalidTag, crashTag} {
+		dir := filepath.Join(mirrorFiles, version)
+		if err := os.Mkdir(dir, 0700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(filepath.Join(mirrorFiles, name), raw, 0600); err != nil {
+		var manifest strings.Builder
+		for _, name := range []string{"xkeen-entware-installer-linux-arm64", "xkeen-agent-linux-arm64", formatName} {
+			var raw []byte
+			if name == formatName {
+				if version == tag {
+					continue
+				}
+				raw = []byte("agent-transport-state-v1\n")
+			} else {
+				source := name
+				if version == invalidTag && name == "xkeen-agent-linux-arm64" {
+					source = "xkeen-entware-installer-linux-arm64"
+				}
+				var err error
+				raw, err = os.ReadFile(filepath.Join("/proof", source))
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := os.WriteFile(filepath.Join(dir, name), raw, 0600); err != nil {
+				t.Fatal(err)
+			}
+			fmt.Fprintf(&manifest, "%x  %s\n", sha256.Sum256(raw), name)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "SHA256SUMS"), []byte(manifest.String()), 0600); err != nil {
 			t.Fatal(err)
 		}
-		fmt.Fprintf(&manifest, "%x  %s\n", sha256.Sum256(raw), name)
+		sums[version] = fmt.Sprintf("%x", sha256.Sum256([]byte(manifest.String())))
 	}
-	manifestFile := filepath.Join(mirrorFiles, "SHA256SUMS")
-	if err := os.WriteFile(manifestFile, []byte(manifest.String()), 0600); err != nil {
-		t.Fatal(err)
-	}
+	var failTransfer atomic.Bool
 	mirror := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		name, ok := strings.CutPrefix(r.URL.Path, "/releases/download/"+tag+"/")
+		path, ok := strings.CutPrefix(r.URL.Path, "/releases/download/")
+		version, name, found := strings.Cut(path, "/")
+		if !ok || !found || sums[version] == "" {
+			http.NotFound(w, r)
+			return
+		}
 		switch name {
-		case "SHA256SUMS", "xkeen-entware-installer-linux-arm64", "xkeen-agent-linux-arm64":
-			if ok {
-				http.ServeFile(w, r, filepath.Join(mirrorFiles, name))
+		case "SHA256SUMS", "xkeen-entware-installer-linux-arm64", "xkeen-agent-linux-arm64", formatName:
+			if version == nextTag && name == "xkeen-agent-linux-arm64" && failTransfer.Load() {
+				w.Header().Set("Content-Length", "131072")
+				fmt.Fprint(w, "truncated file")
 				return
 			}
+			http.ServeFile(w, r, filepath.Join(mirrorFiles, version, name))
+		default:
+			http.NotFound(w, r)
 		}
-		http.NotFound(w, r)
 	}))
 	if err := startEntwareFixtureTLS(mirror, cert, key); err != nil {
 		t.Fatal(err)
@@ -140,7 +174,7 @@ func TestEntwareInstallRegistersAgentAndRestartsSameIdentity(t *testing.T) {
 		t.Helper()
 		cmd := exec.CommandContext(t.Context(), "/opt/bin/sh", script, "install",
 			"--role", role, "--version", tag, "--manifest-sha256",
-			fmt.Sprintf("%x", sha256.Sum256([]byte(manifest.String()))), "--run-as", "65532:65532",
+			sums[tag], "--run-as", "65532:65532",
 			"--server", chosenOrigin, "--ca-file", agentCA, "--invitation-file", invitationPath,
 			"--release-mirror", mirror.URL, "--mirror-ca-file", cert)
 		return cmd.CombinedOutput()
@@ -279,10 +313,118 @@ func TestEntwareInstallRegistersAgentAndRestartsSameIdentity(t *testing.T) {
 
 	invoke("start")
 	invoke("status")
+	update := func(version string) ([]byte, error) {
+		t.Helper()
+		cmd := exec.CommandContext(t.Context(), "/opt/bin/sh", script, "update", "--role", "agent-transport",
+			"--version", version, "--manifest-sha256", sums[version], "--release-mirror", mirror.URL, "--mirror-ca-file", cert)
+		return cmd.CombinedOutput()
+	}
+	receipt := func() string {
+		t.Helper()
+		bytes, err := os.ReadFile(processReceipt)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(bytes)
+	}
+	generation := func() string {
+		t.Helper()
+		target, err := os.Readlink("/opt/libexec/xkeen-ui/agent-transport/current")
+		if err != nil {
+			t.Fatal(err)
+		}
+		return target
+	}
+	previous := receipt()
+	failTransfer.Store(true)
+	if out, err := update(nextTag); err == nil || !strings.Contains(string(out), "cannot download selected release asset") {
+		t.Fatalf("truncated release did not fail before install: %v, %s", err, out)
+	}
+	failTransfer.Store(false)
+	if receipt() != previous || generation() != "generations/"+tag {
+		t.Fatal("failed transfer changed the running instance")
+	}
+	if out, err := update(tag); err != nil || receipt() != previous {
+		t.Fatalf("exact rollout repeat restarted or failed: %v, %s", err, out)
+	}
+	if out, err := update(nextTag); err != nil {
+		t.Fatalf("verified successor failed: %v, %s", err, out)
+	}
+	if receipt() == previous || generation() != "generations/"+nextTag {
+		t.Fatal("new authenticated generation was not selected")
+	}
+	if out, err := update(invalidTag); err == nil || !strings.Contains(string(out), "previous generation restored") {
+		t.Fatalf("unready successor did not restore previous: %v, %s", err, out)
+	}
+	if generation() != "generations/"+nextTag {
+		t.Fatal("failed update left wrong active executable generation")
+	}
+	// The release is already verified. Interrupt the actual update controller
+	// after it starts its new child while the central TLS endpoint is paused.
+	stage, err := os.MkdirTemp("/opt/tmp", "xkeen-interrupted-update-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(stage)
+	for _, asset := range []string{"xkeen-entware-installer-linux-arm64", "xkeen-agent-linux-arm64", formatName} {
+		raw, err := os.ReadFile(filepath.Join(mirrorFiles, crashTag, asset))
+		if err != nil {
+			t.Fatal(err)
+		}
+		mode := os.FileMode(0600)
+		if asset == "xkeen-entware-installer-linux-arm64" {
+			mode = 0700
+		}
+		if err := os.WriteFile(filepath.Join(stage, asset), raw, mode); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := server.cmd.Process.Signal(syscall.SIGSTOP); err != nil {
+		t.Fatal(err)
+	}
+	defer server.cmd.Process.Signal(syscall.SIGCONT)
+	interrupted := exec.CommandContext(t.Context(), filepath.Join(stage, "xkeen-entware-installer-linux-arm64"),
+		"update-stage", stage, crashTag, sums[crashTag])
+	if err := interrupted.Start(); err != nil {
+		t.Fatal(err)
+	}
+	defer interrupted.Process.Kill()
+	deadline := time.Now().Add(4 * time.Second)
+	seen := false
+	for !time.Now().After(deadline) {
+		raw, _ := os.ReadFile(processReceipt)
+		var pending struct {
+			PID     int
+			Pending bool
+		}
+		if generation() == "generations/"+crashTag && json.Unmarshal(raw, &pending) == nil && pending.PID > 1 && pending.Pending {
+			seen = true
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if !seen {
+		t.Fatal("candidate launch did not persist its process identity before readiness")
+	}
+	if err := interrupted.Process.Kill(); err != nil {
+		t.Fatal(err)
+	}
+	if err := interrupted.Wait(); err == nil {
+		t.Fatal("interrupted updater exited successfully")
+	}
+	if err := server.cmd.Process.Signal(syscall.SIGCONT); err != nil {
+		t.Fatal(err)
+	}
+	invoke("start")
+	if generation() != "generations/"+nextTag {
+		t.Fatal("startup did not restore prior generation")
+	}
+	invoke("status")
 	invoke("stop")
 	if got := readState(); got != first {
-		t.Fatal("restart changed the saved working identity")
+		t.Fatal("update and rollback changed saved identity")
 	}
+
 	identity, err := credentials.Identity(t.Context(), first.Key)
 	if err != nil || identity.Generation != 1 || identity.RouterID != first.RouterID {
 		t.Fatal("install or init.d restart created another registration")
