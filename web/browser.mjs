@@ -1,4 +1,5 @@
 import { checkTemplateVariables } from './template-variables-browser.mjs';
+import { checkRouterEnrollment } from './router-enrollment-browser.mjs';
 import { checkTemplateEditor } from './template-editor-browser.mjs';
 import { checkExternalAccess } from './external-access-browser.mjs';
 import assert from 'node:assert/strict';
@@ -41,7 +42,7 @@ try {
   const host = `127.0.0.1:${port}`;
   const origin = `https://${host}`;
   const serverArgs = ['--listen', host, '--tls-cert', cert, '--tls-key', key,
-    '--db-path', database, '--web-origin', origin];
+    '--db-path', database, '--web-origin', origin, '--agent-origin', origin];
   if (workerSocket) serverArgs.push('--validator-socket', workerSocket);
   server = spawn(binary, serverArgs, {stdio: ['ignore', 'ignore', 'pipe']});
   let log = '';
@@ -353,6 +354,7 @@ try {
     await page.getByRole('heading',{name:'Роутер подготовлен'}).waitFor();
     await page.getByText('Желаемая ревизия 1',{exact:true}).waitFor();
     assert.equal(post.length,beforeLookup);
+    await checkRouterEnrollment(page, {origin, dir, cert, post});
   } else {
     await page.getByText('Проверка Xray сейчас недоступна.',{exact:true}).waitFor();
     assert.equal(await duration.inputValue(),'9007199254740993');
@@ -405,7 +407,7 @@ try {
     await page.locator('form[aria-busy="false"]').waitFor();
   }
   await page.getByText('Слишком много попыток входа. Повторите позже.').waitFor();
-  console.log('F04–F09 real HTTPS browser scenarios passed');
+  console.log('F04–F10 real HTTPS browser scenarios passed');
 } finally {
   if (browser) await browser.close();
   if (server && server.exitCode === null) {

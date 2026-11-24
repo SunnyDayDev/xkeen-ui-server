@@ -83,6 +83,10 @@ var migrations = []string{
 	createWebAdminStorage,
 	createExternalAccess,
 	createRouterVisibility,
+	`CREATE TABLE agent_invitation_epochs (
+		router_id TEXT PRIMARY KEY NOT NULL COLLATE BINARY,
+		epoch INTEGER NOT NULL CHECK (typeof(epoch) = 'integer' AND epoch > 0)
+	)`,
 }
 
 func Open(ctx context.Context, path string) (*sql.DB, error) {

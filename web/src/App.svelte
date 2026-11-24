@@ -7,11 +7,13 @@
   import TemplateCreate from './TemplateCreate.svelte';
   import TemplateEditor from './TemplateEditor.svelte';
   import RouterPreparation from './RouterPreparation.svelte';
+  import RouterEnrollment from './RouterEnrollment.svelte';
 
-  type Section = 'overview' | 'templates' | 'settings' | 'template-editor' | 'router-connect';
+  type Section = 'overview' | 'templates' | 'settings' | 'template-editor' | 'router-connect' | 'router-enroll';
 
   function sectionForPath(): Section {
     if (location.pathname === '/ui/templates/item') return 'template-editor';
+    if (location.pathname === '/ui/routers/enroll') return 'router-enroll';
     if (location.pathname === '/ui/routers/connect') return 'router-connect';
     if (location.pathname === '/ui/settings') return 'settings';
     return location.pathname === '/ui/templates' ? 'templates' : 'overview';
@@ -19,6 +21,7 @@
 
   let section = $state<Section>(sectionForPath());
   let editorID = $state(new URLSearchParams(location.search).get('templateId') ?? '');
+  let routerID = $state(new URLSearchParams(location.search).get('routerId') ?? '');
 
   let view = $state<'initial' | 'setup_required' | 'signed_out' | 'active' | 'unavailable'>('initial');
   let message = $state('');
@@ -53,6 +56,7 @@
     event.preventDefault();
     if (location.pathname + location.search !== path) history.pushState({}, '', path);
     editorID = new URLSearchParams(location.search).get('templateId') ?? '';
+    routerID = new URLSearchParams(location.search).get('routerId') ?? '';
     section = destination;
     void focusWorkspace();
   }
@@ -161,6 +165,7 @@
     const locationChanged = () => {
       section = sectionForPath();
       editorID = new URLSearchParams(location.search).get('templateId') ?? '';
+    routerID = new URLSearchParams(location.search).get('routerId') ?? '';
       if (view === 'active') void focusWorkspace();
     };
     window.addEventListener('popstate', locationChanged);
@@ -207,7 +212,15 @@
         {#if view === 'active'}{#key csrf}<ExternalSettings {csrf} refreshSession={refresh} />{/key}{/if}
       {:else if section === 'router-connect'}
         <RouterPreparation canSubmit={view === 'active' && !busy} sessionEpoch={mutation} {csrf}
-          signedOut={() => { void endAccess('signed_out'); }} refreshSession={() => { void refresh(); }} />
+          signedOut={() => { void endAccess('signed_out'); }} refreshSession={() => { void refresh(); }}
+          openEnrollment={(event,path) => navigate(event,path,'router-enroll')} />
+      {:else if section === 'router-enroll'}
+        {#if view === 'active' && !busy}
+          {#key routerID + ':' + mutation}
+            <RouterEnrollment id={routerID} {csrf}
+              signedOut={() => { void endAccess('signed_out'); }} refreshSession={() => { void refresh(); }} />
+          {/key}
+        {/if}
       {:else}
         <h1>Обзор</h1>
         <a class="overview-action" href="/ui/routers/connect"

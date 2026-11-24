@@ -43,17 +43,27 @@ func (s *AgentCredentials) Issue(ctx context.Context, routerID string, purpose a
 	if !registration.permits(purpose) {
 		return agentcredentials.ErrInvalidTransition
 	}
-	if _, err := tx.ExecContext(ctx, `DELETE FROM agent_invitations
-		WHERE router_id = ? AND redeemed_generation IS NULL`, routerID); err != nil {
-		return credentialDatabaseError(ctx)
-	}
-	expires := now().Add(agentcredentials.InvitationLifetime).UnixNano()
-	if err := writeCredential(ctx, tx, `INSERT INTO agent_invitations
-		(selector, router_id, purpose, expires_ns, secret_digest, expected_generation)
-		VALUES (?, ?, ?, ?, ?, ?)`, proof.Selector[:], routerID, purpose, expires, proof.Digest[:], registration.generation); err != nil {
+	if _, err := issueCredential(ctx, tx, routerID, purpose, proof, registration, now()); err != nil {
 		return err
 	}
 	return commitCredentials(ctx, tx)
+}
+
+func issueCredential(ctx context.Context, tx *sql.Tx, routerID string, purpose agentcredentials.Purpose, proof agentcredential.Proof, registration credentialRegistration, now time.Time) (time.Time, error) {
+	if _, err := tx.ExecContext(ctx, `DELETE FROM agent_invitations
+		WHERE router_id = ? AND redeemed_generation IS NULL`, routerID); err != nil {
+		return time.Time{}, credentialDatabaseError(ctx)
+	}
+	expires := now.Add(agentcredentials.InvitationLifetime).UTC()
+	if err := writeCredential(ctx, tx, `INSERT INTO agent_invitations
+		(selector, router_id, purpose, expires_ns, secret_digest, expected_generation)
+		VALUES (?, ?, ?, ?, ?, ?)`, proof.Selector[:], routerID, purpose, expires.UnixNano(), proof.Digest[:], registration.generation); err != nil {
+		return time.Time{}, err
+	}
+	if err := advanceInvitationEpoch(ctx, tx, routerID); err != nil {
+		return time.Time{}, err
+	}
+	return expires, nil
 }
 
 type credentialInvitation struct {
@@ -93,6 +103,9 @@ func (s *AgentCredentials) Redeem(ctx context.Context, invitation, working agent
 
 	id, err := redeemNewCredential(ctx, tx, invitation, working, record)
 	if err != nil {
+		return agentcredentials.Identity{}, err
+	}
+	if err := advanceInvitationEpoch(ctx, tx, id.RouterID); err != nil {
 		return agentcredentials.Identity{}, err
 	}
 	if err := commitCredentials(ctx, tx); err != nil {
@@ -187,12 +200,24 @@ func (s *AgentCredentials) Revoke(ctx context.Context, routerID string) error {
 		return credentialDatabaseError(ctx)
 	}
 	defer tx.Rollback()
-	if _, err := tx.ExecContext(ctx, `UPDATE agent_registrations SET active = 0 WHERE router_id = ?`, routerID); err != nil {
+	disable, err := tx.ExecContext(ctx, `UPDATE agent_registrations SET active = 0 WHERE router_id = ? AND active = 1`, routerID)
+	if err != nil {
 		return credentialDatabaseError(ctx)
 	}
-	if _, err := tx.ExecContext(ctx, `DELETE FROM agent_invitations
-		WHERE router_id = ? AND redeemed_generation IS NULL`, routerID); err != nil {
+	remove, err := tx.ExecContext(ctx, `DELETE FROM agent_invitations
+		WHERE router_id = ? AND redeemed_generation IS NULL`, routerID)
+	if err != nil {
 		return credentialDatabaseError(ctx)
+	}
+	disabled, disableErr := disable.RowsAffected()
+	removed, removeErr := remove.RowsAffected()
+	if disableErr != nil || removeErr != nil {
+		return credentialDatabaseError(ctx)
+	}
+	if disabled > 0 || removed > 0 {
+		if err := advanceInvitationEpoch(ctx, tx, routerID); err != nil {
+			return err
+		}
 	}
 	var outstanding bool
 	err = tx.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM agent_registrations
@@ -262,4 +287,9 @@ func credentialDatabaseError(ctx context.Context) error {
 		return err
 	}
 	return agentcredentials.ErrUnavailable
+}
+
+func advanceInvitationEpoch(ctx context.Context, tx *sql.Tx, id string) error {
+	return writeCredential(ctx, tx, `INSERT INTO agent_invitation_epochs (router_id, epoch)
+		VALUES (?, 1) ON CONFLICT(router_id) DO UPDATE SET epoch = epoch + 1`, id)
 }
