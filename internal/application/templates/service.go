@@ -56,6 +56,12 @@ func (s Service) Get(ctx context.Context, id string) (*Snapshot, error) {
 	if err != nil {
 		return nil, err
 	}
+	return RestoreSnapshot(id, snapshot)
+}
+
+// RestoreSnapshot validates and isolates a repository read, including reads
+// performed under a channel's transaction-bound authorization check.
+func RestoreSnapshot(id string, snapshot *Snapshot) (*Snapshot, error) {
 	if snapshot == nil || snapshot.ID != id || snapshot.Version < 1 {
 		return nil, ErrCorrupt
 	}

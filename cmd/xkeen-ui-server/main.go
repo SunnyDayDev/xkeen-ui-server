@@ -84,7 +84,8 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 		handler = server.NewWebTemplatesHandler(cfg.webOrigin, webadmin.NewTemplateLister(sqlite.NewWebTemplates(db), time.Now), handler)
 		handler = server.NewWebAdminHandler(cfg.webOrigin, webadmin.New(sqlite.NewWebAdmin(db), time.Now), handler)
 	}
-	handler = server.NewExternalAccessHandler(cfg.webOrigin, sqlite.NewExternalAccess(db, time.Now), nil, handler)
+	external := sqlite.NewExternalAccess(db, time.Now)
+	handler = server.NewExternalAccessHandler(cfg.webOrigin, external, server.NewExternalTemplates(external), handler)
 	if err := json.NewEncoder(stderr).Encode(struct {
 		Event   string `json:"event"`
 		Address string `json:"address"`
