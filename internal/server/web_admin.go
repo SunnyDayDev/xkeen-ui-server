@@ -89,12 +89,16 @@ func NewWebAdminHandler(origin WebOrigin, sessions *webadmin.Service, next http.
 }
 
 func allowWebRequest(w http.ResponseWriter, r *http.Request, origin WebOrigin, methods ...string) bool {
+	return allowWebEndpoint(w, r, origin, false, methods...)
+}
+
+func allowWebEndpoint(w http.ResponseWriter, r *http.Request, origin WebOrigin, hasQuery bool, methods ...string) bool {
 	w.Header().Set("Cache-Control", "no-store")
 	if err := http.NewResponseController(w).SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil && !errors.Is(err, http.ErrNotSupported) {
 		webResult(w, http.StatusServiceUnavailable, "unavailable", "")
 		return false
 	}
-	if r.URL.RawQuery != "" || r.URL.ForceQuery {
+	if !hasQuery && (r.URL.RawQuery != "" || r.URL.ForceQuery) {
 		webResult(w, http.StatusBadRequest, "invalid_request", "")
 		return false
 	}

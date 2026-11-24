@@ -80,9 +80,12 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 		handler = server.NewAgentHandler(credentials, publications, sqlite.NewContacts(db, time.Now), watch)
 	}
 	if cfg.webOrigin != "" {
+		webStore := sqlite.NewWebTemplates(db)
+		sessions := webadmin.New(sqlite.NewWebAdmin(db), time.Now)
 		handler = server.NewWebShellHandler(cfg.webOrigin, handler)
-		handler = server.NewWebTemplatesHandler(cfg.webOrigin, webadmin.NewTemplates(sqlite.NewWebTemplates(db), time.Now), handler)
-		handler = server.NewWebAdminHandler(cfg.webOrigin, webadmin.New(sqlite.NewWebAdmin(db), time.Now), handler)
+		handler = server.NewWebTemplatesHandler(cfg.webOrigin, webadmin.NewTemplates(webStore, time.Now), handler)
+		handler = server.NewWebTemplateEditorHandler(cfg.webOrigin, webadmin.NewTemplateEditor(webStore, time.Now), sessions, handler)
+		handler = server.NewWebAdminHandler(cfg.webOrigin, sessions, handler)
 	}
 	external := sqlite.NewExternalAccess(db, time.Now)
 	handler = server.NewExternalAccessHandler(cfg.webOrigin, external, server.NewExternalTemplates(external), handler)

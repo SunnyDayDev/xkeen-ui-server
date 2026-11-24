@@ -3,7 +3,7 @@
 
   type Summary = { id: string; version: string };
 
-  let { active, refreshKey, signedOut }: { active: boolean; refreshKey: number; signedOut: () => void } = $props();
+  let { active, refreshKey, signedOut, openTemplate }: { active: boolean; refreshKey: number; signedOut: () => void; openTemplate: (event: MouseEvent, path: string) => void } = $props();
   let view = $state<'loading' | 'ready' | 'unavailable'>('loading');
   let templates = $state<Summary[]>([]);
   let pending: AbortController | undefined;
@@ -60,7 +60,8 @@
     <ul aria-label="Сохранённые шаблоны">
       {#each templates as template (template.id)}
         <li>
-          <bdi>{template.id}</bdi>
+          <a href={'/ui/templates/item?' + new URLSearchParams({templateId:template.id}).toString()}
+            onclick={(event) => openTemplate(event, event.currentTarget.pathname + event.currentTarget.search)}><bdi>{template.id}</bdi></a>
           <span>Версия {template.version}</span>
         </li>
       {/each}
@@ -82,6 +83,7 @@
   }
   ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
   li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; padding: 8px 0; font-size: .92rem; }
+  a { min-width:0; max-width:100%; overflow-wrap:anywhere; }
   bdi { min-width: 0; max-width: 100%; font-weight: 600; white-space: pre-wrap; overflow-wrap: anywhere; }
   li span { color: var(--muted); }
   button { margin-top: 12px; }
