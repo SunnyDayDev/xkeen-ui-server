@@ -13,7 +13,7 @@
 
 ## Повтор проверки
 
-Запускайте команды из корня проекта в оболочке POSIX на хосте с Go 1.27.1, Docker и возможностью исполнять linux/amd64.
+Запускайте команды из отдельного checkout коммита, указанного выше, в оболочке POSIX на хосте с Go 1.27.1, Docker и возможностью исполнять linux/amd64. Результат с другой ревизией фиксируется отдельно.
 
 ```sh
 docker buildx build --platform linux/amd64 --load -t xkeen-entware-x64-proof:local lab
@@ -32,8 +32,13 @@ docker run --rm --platform linux/amd64 --network none --cap-drop=ALL \
   --entrypoint /opt/bin/sh xkeen-entware-x64-proof:local -ec '
     uname -smr
     test -x /opt/etc/init.d/rc.unslung
-    /opt/sbin/xray version | head -2
-    if /proof/installer version; then exit 1; fi
+    xray_version=$(/opt/sbin/xray version)
+    printf "%s\n" "$xray_version" | head -2
+    status=0
+    refusal=$(/proof/installer version 2>&1) || status=$?
+    test "$status" -eq 1
+    test "$refusal" = "Entware installation requires Linux ARM64"
+    printf "%s\n" "$refusal"
     /proof/process-test -test.v -test.run "^(TestProcessRouterAgentEnrollRestartAndRecover|TestProcessWebAdministratorLifecycle|TestProcessStorageRestoreAuthorityAndReturnToNewerDatabase)$"
   '
 ```
