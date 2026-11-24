@@ -135,10 +135,9 @@ func fixtureEnrollment(t *testing.T, path string) (string, *agentcredentials.Ser
 	version := int64(1)
 	if _, err := sqlite.NewPublications(db).Commit(ctx, publication.CommitPlan{
 		FirstConfirmation: true, AcceptInitialTemplate: true,
-		Expected: publication.Expectations{RouterID: "router-example", TemplateID: "template-example", TemplateDraftVersion: &version},
-		Settings: routersettings.Draft{ID: "router-example", TemplateID: "template-example"},
-		NewRevision: &publication.VerifiedFiles{Profile: configuration.XrayIdentityVersion,
-			Files: []configuration.CatalogFile{{Name: "01_log.json", Content: []byte("{}\n")}}},
+		Expected:    publication.Expectations{RouterID: "router-example", TemplateID: "template-example", TemplateDraftVersion: &version},
+		Settings:    routersettings.Draft{ID: "router-example", TemplateID: "template-example"},
+		NewRevision: fixtureDesiredCatalog("{}\n"),
 	}); err != nil {
 		t.Fatal(err)
 	}
