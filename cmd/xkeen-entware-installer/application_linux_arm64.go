@@ -89,6 +89,9 @@ func installApplication(args []string) error {
 	if _, err := os.Lstat(profilePath); !errors.Is(err, os.ErrNotExist) {
 		return errors.New("managed application profile requires an independent installation")
 	}
+	if _, err := os.Lstat(applicationRemovalPath); !errors.Is(err, os.ErrNotExist) {
+		return errApplication
+	}
 	if _, err := os.Lstat(applicationInit); !errors.Is(err, os.ErrNotExist) {
 		return errInstalled
 	}
@@ -241,6 +244,9 @@ func applicationService(action string) error {
 		return err
 	}
 	defer lock.Close()
+	if _, err := os.Lstat(applicationRemovalPath); !errors.Is(err, os.ErrNotExist) {
+		return errApplication
+	}
 	if err := rootDirs(false, applicationConfigDir, applicationBase); err != nil {
 		return err
 	}
@@ -256,7 +262,11 @@ func (p applicationProfileRecord) control(action string, first bool) error {
 	if err != nil || target != "generations/"+p.Agent.Version {
 		return errApplication
 	}
-	dir := filepath.Join(applicationBase, target)
+	return p.controlGeneration(action, first)
+}
+
+func (p applicationProfileRecord) controlGeneration(action string, first bool) error {
+	dir := filepath.Join(applicationBase, "generations", p.Agent.Version)
 	supervisor := managedProcess{binary: filepath.Join(dir, supervisorAsset), receipt: applicationSupervisorReceipt,
 		arguments:    []string{"--config", p.LocalPath, "--application-config", p.ApplicationPath},
 		useReadyPipe: true, noNewPrivileges: true, notReady: errApplication,
@@ -276,17 +286,8 @@ func (p applicationProfileRecord) control(action string, first bool) error {
 		}
 		return supervisor.control("stop")
 	}
-	sources, err := readApplicationSources(p.LocalPath, p.ApplicationPath)
-	cfg, app := sources.local, sources.app
-	if err != nil || p.RouterID != cfg.Scope.RouterID || p.Verifier != cfg.Scope.VerifierID || p.Agent.Origin != cfg.Scope.Origin ||
-		p.Agent.UID != cfg.AgentUID || p.Agent.GID != cfg.AgentGID ||
-		p.WorkerUID != cfg.WorkerUID || p.WorkerGID != cfg.WorkerGID || p.RuntimeUID != app.RuntimeUID || p.RuntimeGID != app.RuntimeGID || app.Socket != p.Socket || digest(sources.localRaw) != p.LocalDigest ||
-		digest(sources.appRaw) != p.ApplicationDigest || digest(sources.ca) != p.Agent.CADigest {
-		return errApplication
-	}
-	copied, err := readProtected(applicationCA, 0644, 1<<20)
-	if err != nil || digest(copied) != p.Agent.CADigest {
-		return errApplication
+	if err := p.verifySources(); err != nil {
+		return err
 	}
 	if action == "status" {
 		if err := supervisor.control("status"); err != nil {
@@ -304,6 +305,22 @@ func (p applicationProfileRecord) control(action string, first bool) error {
 		return err
 	}
 	return p.checkBinding()
+}
+
+func (p applicationProfileRecord) verifySources() error {
+	sources, err := readApplicationSources(p.LocalPath, p.ApplicationPath)
+	cfg, app := sources.local, sources.app
+	if err != nil || p.RouterID != cfg.Scope.RouterID || p.Verifier != cfg.Scope.VerifierID || p.Agent.Origin != cfg.Scope.Origin ||
+		p.Agent.UID != cfg.AgentUID || p.Agent.GID != cfg.AgentGID ||
+		p.WorkerUID != cfg.WorkerUID || p.WorkerGID != cfg.WorkerGID || p.RuntimeUID != app.RuntimeUID || p.RuntimeGID != app.RuntimeGID || app.Socket != p.Socket || digest(sources.localRaw) != p.LocalDigest ||
+		digest(sources.appRaw) != p.ApplicationDigest || digest(sources.ca) != p.Agent.CADigest {
+		return errApplication
+	}
+	copied, err := readProtected(applicationCA, 0644, 1<<20)
+	if err != nil || digest(copied) != p.Agent.CADigest {
+		return errApplication
+	}
+	return nil
 }
 
 func recoverOwnedChild(child managedProcess) error {

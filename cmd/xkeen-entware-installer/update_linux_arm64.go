@@ -121,6 +121,9 @@ func update(stage, version, manifest string) error {
 }
 
 func installedLifecycle(action string, base profile) error {
+	if _, err := os.Lstat(transportRemovalPath); !errors.Is(err, os.ErrNotExist) {
+		return errRemoval
+	}
 	switch action {
 	case "start":
 		if err := recoverUpdate(base); err != nil {
