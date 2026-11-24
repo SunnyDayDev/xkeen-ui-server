@@ -10588,47 +10588,10 @@
                           "fill": "$muted",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "Укажите токен в настройках внешнего приложения.",
+                          "content": "Токен выпущен. Чтобы получить новое значение, замените его.",
                           "fontFamily": "$font",
                           "fontSize": 13,
                           "fontWeight": "normal"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "GSFil",
-                          "name": "Token and action",
-                          "width": "fill_container",
-                          "gap": 12,
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "id": "Q6Gdt",
-                              "type": "ref",
-                              "ref": "c6oVjT",
-                              "name": "Masked API token",
-                              "width": "fill_container",
-                              "descendants": {
-                                "VdSCq": {
-                                  "content": "••••••••••••••••••••••••"
-                                }
-                              }
-                            },
-                            {
-                              "id": "o3iRXs",
-                              "type": "ref",
-                              "ref": "ARxJx",
-                              "name": "Скопировать",
-                              "fill": "$surface",
-                              "stroke": "$line",
-                              "strokeWidth": 1,
-                              "descendants": {
-                                "GyrRR": {
-                                  "content": "Скопировать",
-                                  "fill": "$ink"
-                                }
-                              }
-                            }
-                          ]
                         },
                         {
                           "id": "m6mAz",
@@ -10665,7 +10628,7 @@
                           "fill": "$muted",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "После замены обновите токен у внешних клиентов.",
+                          "content": "При замене старый токен сразу перестанет работать у всех клиентов.",
                           "fontFamily": "$font",
                           "fontSize": 12,
                           "fontWeight": "normal"
@@ -14627,95 +14590,431 @@
     },
     {
       "type": "frame",
-      "id": "Q5UW7",
-      "x": 0,
-      "y": 10890,
-      "name": "20 / Консоль / Широкий экран",
-      "width": 1080,
-      "height": 660,
+      "id": "I1HG8x",
+      "x": 9500,
+      "y": 0,
+      "name": "14a / Настройки / Однократная выдача",
+      "clip": true,
+      "width": 1500,
+      "height": 1030,
       "fill": "$bg",
-      "layout": "vertical",
       "children": [
         {
-          "type": "frame",
-          "id": "o9MBQ2",
-          "name": "Шапка и навигация",
-          "width": "fill_container",
-          "fill": "$ink",
-          "gap": 24,
-          "padding": [
-            16,
-            24
-          ],
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "text",
-              "id": "d1f1FT",
-              "name": "Имя продукта",
-              "fill": "#FFFFFF",
-              "content": "XKeen Console",
-              "fontFamily": "$font",
-              "fontSize": 16,
-              "fontWeight": "semibold"
+          "id": "b1JZR",
+          "type": "ref",
+          "ref": "XKSrZ",
+          "name": "Sidebar",
+          "width": 206,
+          "height": "fill_container",
+          "descendants": {
+            "WL8zi": {
+              "fill": "$ink"
             },
-            {
-              "id": "GJltp",
-              "type": "ref",
-              "ref": "oQHGq",
-              "name": "Текущий раздел",
-              "width": 120,
-              "fill": "#273446",
-              "descendants": {
-                "uzKPJ": {
-                  "icon": "layout-dashboard",
-                  "fill": "#FFFFFF"
-                },
-                "G2nPu4": {
-                  "content": "Обзор",
-                  "fill": "#FFFFFF"
-                }
-              }
+            "WL8zi/G2nPu4": {
+              "fill": "#ACBAC9"
             },
-            {
-              "type": "frame",
-              "id": "oFNr4",
-              "name": "Свободное место",
-              "width": "fill_container",
-              "height": 1
+            "d1esl": {
+              "fill": "$ink"
             },
-            {
-              "id": "QtVjH",
-              "type": "ref",
-              "ref": "ARxJx",
-              "name": "Завершить сессию",
-              "fill": "$accent",
-              "descendants": {
-                "GyrRR": {
-                  "content": "Выйти"
-                }
-              }
+            "d1esl/G2nPu4": {
+              "fill": "#ACBAC9"
+            },
+            "zxib9": {
+              "fill": "$ink"
+            },
+            "zxib9/G2nPu4": {
+              "fill": "#ACBAC9"
+            },
+            "uoBOu": {
+              "fill": "#30435C"
+            },
+            "uoBOu/G2nPu4": {
+              "fill": "#FFFFFF"
             }
-          ]
+          }
         },
         {
           "type": "frame",
-          "id": "AOvgT",
-          "name": "Главная область",
+          "id": "l2hMd",
+          "name": "Main",
           "width": "fill_container",
+          "height": "fill_container",
           "layout": "vertical",
-          "gap": 16,
-          "padding": 24,
+          "gap": 24,
+          "padding": 32,
           "children": [
             {
-              "type": "text",
-              "id": "muT50",
-              "name": "Заголовок экрана",
-              "fill": "$ink",
-              "content": "Обзор",
-              "fontFamily": "$font",
-              "fontSize": 28,
-              "fontWeight": "semibold"
+              "type": "frame",
+              "id": "YBIhG",
+              "name": "Breadcrumb",
+              "width": "fill_container",
+              "gap": 16,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "dju0n",
+                  "name": "Path",
+                  "fill": "$muted",
+                  "content": "Настройки",
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "id": "EOQir",
+                  "type": "ref",
+                  "ref": "idKcX",
+                  "name": "Концепт · данные для примера",
+                  "fill": "$warn-soft",
+                  "descendants": {
+                    "eMbtm": {
+                      "fill": "$warn",
+                      "content": "Концепт · данные для примера"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "W0G1hI",
+              "name": "Page heading",
+              "width": "fill_container",
+              "gap": 20,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "S20qt",
+                  "name": "Identity",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "UeA7x",
+                      "name": "Title",
+                      "fill": "$ink",
+                      "content": "Настройки",
+                      "fontFamily": "$font",
+                      "fontSize": 30,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "JwbYi",
+                      "name": "Subtitle",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Доступ внешних приложений к управлению сервисом",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "id": "z3IzxT",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Сохранить настройки",
+                  "fill": "$accent",
+                  "stroke": "$accent",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "fill": "#FFFFFF",
+                      "content": "Сохранить настройки"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "hDgnW",
+              "name": "API settings and information",
+              "width": "fill_container",
+              "gap": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "mwCBm",
+                  "name": "API settings",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 20,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Lf4wm",
+                      "name": "API controls",
+                      "width": "fill_container",
+                      "fill": "$surface",
+                      "cornerRadius": 6,
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "children": [
+                        {
+                          "id": "i5SxVa",
+                          "type": "ref",
+                          "ref": "QUgVu",
+                          "name": "Enable management API",
+                          "width": "fill_container",
+                          "descendants": {
+                            "SlQsa": {
+                              "content": "Внешний API"
+                            },
+                            "qVhhx": {
+                              "content": "Разрешить управление шаблонами, роутерами и конфигурациями через API."
+                            }
+                          }
+                        },
+                        {
+                          "id": "jbvzI",
+                          "type": "ref",
+                          "ref": "QUgVu",
+                          "name": "Enable API authorization",
+                          "width": "fill_container",
+                          "descendants": {
+                            "SlQsa": {
+                              "content": "Авторизация API"
+                            },
+                            "qVhhx": {
+                              "content": "Требовать токен для запросов внешних приложений."
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "xpFms",
+                      "name": "Токен API",
+                      "width": "fill_container",
+                      "fill": "$surface",
+                      "cornerRadius": 6,
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 18,
+                      "padding": 24,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "PiZ8I",
+                          "name": "Title",
+                          "fill": "$ink",
+                          "content": "Токен API",
+                          "fontFamily": "$font",
+                          "fontSize": 20,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "oLUUz",
+                          "name": "Token description",
+                          "fill": "$muted",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Скопируйте токен сейчас. После закрытия он больше не показывается.",
+                          "fontFamily": "$font",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "kRSWO",
+                          "name": "Token and action",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "id": "lGc1z",
+                              "type": "ref",
+                              "ref": "c6oVjT",
+                              "name": "Masked API token",
+                              "width": "fill_container",
+                              "descendants": {
+                                "VdSCq": {
+                                  "content": "<только что выпущенный токен>"
+                                }
+                              }
+                            },
+                            {
+                              "id": "V0sqy",
+                              "type": "ref",
+                              "ref": "ARxJx",
+                              "name": "Скопировать",
+                              "fill": "$surface",
+                              "stroke": "$line",
+                              "strokeWidth": 1,
+                              "descendants": {
+                                "GyrRR": {
+                                  "fill": "$ink",
+                                  "content": "Скопировать"
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "id": "tQsfp",
+                          "type": "ref",
+                          "ref": "XyQQc",
+                          "name": "Authorization header example",
+                          "width": "fill_container",
+                          "descendants": {
+                            "FrJzT": {
+                              "content": "Authorization: Bearer <token>",
+                              "fontSize": 13
+                            }
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "id": "ADalf",
+                          "name": "Rotation note",
+                          "fill": "$muted",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Сохраните токен в защищённых настройках клиента.",
+                          "fontFamily": "$font",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "kpckc",
+                  "name": "Внешний доступ",
+                  "width": 340,
+                  "fill": "$surface",
+                  "cornerRadius": 6,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 18,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "P8358a",
+                      "name": "Title",
+                      "fill": "$ink",
+                      "content": "Внешний доступ",
+                      "fontFamily": "$font",
+                      "fontSize": 20,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "id": "Ry4kx",
+                      "type": "ref",
+                      "ref": "idKcX",
+                      "name": "Авторизация включена",
+                      "fill": "$success-soft",
+                      "descendants": {
+                        "eMbtm": {
+                          "fill": "$success",
+                          "content": "Авторизация включена"
+                        }
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "id": "blmmt",
+                      "name": "Optional authorization",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Авторизация опциональна. В приватном контуре можно отключить проверку токена.",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "e3sOhe",
+                      "name": "Without auth meaning",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Без авторизации управление доступно всем, кто имеет сетевой доступ к API.",
+                      "fontFamily": "$font",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "aaigc",
+                      "name": "Agent channel",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Настройки внешнего API не отключают веб-интерфейс и синхронизацию роутеров.",
+                      "fontFamily": "$font",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ubTFb",
+                      "name": "API docs",
+                      "fill": "$accent",
+                      "content": "Документация API →",
+                      "fontFamily": "$font",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "YZHAL",
+              "name": "Server address",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "gap": 20,
+              "padding": 20,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Mac3E",
+                  "name": "Label",
+                  "fill": "$ink",
+                  "content": "Адрес сервера",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "F3jza",
+                  "name": "URL",
+                  "fill": "$muted",
+                  "content": "https://xkeen.example",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
             }
           ]
         }
@@ -14723,105 +15022,838 @@
     },
     {
       "type": "frame",
-      "id": "QXIyh",
-      "x": 0,
-      "y": 11620,
-      "name": "20 / Консоль / Узкий экран",
-      "width": 360,
-      "height": 620,
+      "id": "j3BSK",
+      "x": 11100,
+      "y": 0,
+      "name": "14b / Настройки / API выключен, токена нет",
+      "clip": true,
+      "width": 1500,
+      "height": 1030,
       "fill": "$bg",
-      "layout": "vertical",
       "children": [
         {
+          "id": "yCi0S",
+          "type": "ref",
+          "ref": "XKSrZ",
+          "name": "Sidebar",
+          "width": 206,
+          "height": "fill_container",
+          "descendants": {
+            "WL8zi": {
+              "fill": "$ink"
+            },
+            "WL8zi/G2nPu4": {
+              "fill": "#ACBAC9"
+            },
+            "d1esl": {
+              "fill": "$ink"
+            },
+            "d1esl/G2nPu4": {
+              "fill": "#ACBAC9"
+            },
+            "zxib9": {
+              "fill": "$ink"
+            },
+            "zxib9/G2nPu4": {
+              "fill": "#ACBAC9"
+            },
+            "uoBOu": {
+              "fill": "#30435C"
+            },
+            "uoBOu/G2nPu4": {
+              "fill": "#FFFFFF"
+            }
+          }
+        },
+        {
           "type": "frame",
-          "id": "y6Su0y",
-          "name": "Шапка и навигация",
+          "id": "QhZsS",
+          "name": "Main",
           "width": "fill_container",
-          "fill": "$ink",
+          "height": "fill_container",
           "layout": "vertical",
-          "gap": 12,
-          "padding": [
-            14,
-            16
-          ],
+          "gap": 24,
+          "padding": 32,
           "children": [
             {
-              "type": "text",
-              "id": "rq4Y6",
-              "name": "Имя продукта",
-              "fill": "#FFFFFF",
-              "content": "XKeen Console",
-              "fontFamily": "$font",
-              "fontSize": 16,
-              "fontWeight": "semibold"
-            },
-            {
               "type": "frame",
-              "id": "E2mUM",
-              "name": "Действия консоли",
+              "id": "lWh8v",
+              "name": "Breadcrumb",
               "width": "fill_container",
-              "gap": 12,
+              "gap": 16,
+              "justifyContent": "space_between",
               "alignItems": "center",
               "children": [
                 {
-                  "id": "ka9e6",
-                  "type": "ref",
-                  "ref": "oQHGq",
-                  "name": "Текущий раздел",
-                  "width": 120,
-                  "fill": "#273446",
-                  "descendants": {
-                    "uzKPJ": {
-                      "icon": "layout-dashboard",
-                      "fill": "#FFFFFF"
-                    },
-                    "G2nPu4": {
-                      "content": "Обзор",
-                      "fill": "#FFFFFF"
-                    }
-                  }
+                  "type": "text",
+                  "id": "PkS5W",
+                  "name": "Path",
+                  "fill": "$muted",
+                  "content": "Настройки",
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
                 },
                 {
-                  "type": "frame",
-                  "id": "UmSOM",
-                  "name": "Свободное место",
-                  "width": "fill_container",
-                  "height": 1
-                },
-                {
-                  "id": "tyOxc",
+                  "id": "N1Tm3",
                   "type": "ref",
-                  "ref": "ARxJx",
-                  "name": "Завершить сессию",
-                  "fill": "$accent",
+                  "ref": "idKcX",
+                  "name": "Концепт · данные для примера",
+                  "fill": "$warn-soft",
                   "descendants": {
-                    "GyrRR": {
-                      "content": "Выйти"
+                    "eMbtm": {
+                      "fill": "$warn",
+                      "content": "Концепт · данные для примера"
                     }
                   }
                 }
               ]
+            },
+            {
+              "type": "frame",
+              "id": "X73Je",
+              "name": "Page heading",
+              "width": "fill_container",
+              "gap": 20,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "djpP9",
+                  "name": "Identity",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "d2M8j4",
+                      "name": "Title",
+                      "fill": "$ink",
+                      "content": "Настройки",
+                      "fontFamily": "$font",
+                      "fontSize": 30,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ISFDK",
+                      "name": "Subtitle",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Доступ внешних приложений к управлению сервисом",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "id": "M9wz6b",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Сохранить настройки",
+                  "fill": "$accent",
+                  "stroke": "$accent",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "fill": "#FFFFFF",
+                      "content": "Сохранить настройки"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "qXQbn",
+              "name": "API settings and information",
+              "width": "fill_container",
+              "gap": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "ArsJD",
+                  "name": "API settings",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 20,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Bg7UL",
+                      "name": "API controls",
+                      "width": "fill_container",
+                      "fill": "$surface",
+                      "cornerRadius": 6,
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "children": [
+                        {
+                          "id": "e9ZYZG",
+                          "type": "ref",
+                          "ref": "QUgVu",
+                          "name": "Enable management API",
+                          "width": "fill_container",
+                          "descendants": {
+                            "SlQsa": {
+                              "content": "Внешний API"
+                            },
+                            "qVhhx": {
+                              "content": "Разрешить управление шаблонами, роутерами и конфигурациями через API."
+                            },
+                            "Y5KSZc": {
+                              "fill": "$line",
+                              "justifyContent": "start"
+                            }
+                          }
+                        },
+                        {
+                          "id": "A2nbD9",
+                          "type": "ref",
+                          "ref": "QUgVu",
+                          "name": "Enable API authorization",
+                          "width": "fill_container",
+                          "descendants": {
+                            "SlQsa": {
+                              "content": "Авторизация API"
+                            },
+                            "qVhhx": {
+                              "content": "Требовать токен для запросов внешних приложений."
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "cgM6y",
+                      "name": "Токен API",
+                      "width": "fill_container",
+                      "fill": "$surface",
+                      "cornerRadius": 6,
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 18,
+                      "padding": 24,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "ZS5l7",
+                          "name": "Title",
+                          "fill": "$ink",
+                          "content": "Токен API",
+                          "fontFamily": "$font",
+                          "fontSize": 20,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "qtVmZ",
+                          "name": "Token description",
+                          "fill": "$muted",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Токен ещё не выпущен. При включённой авторизации внешним клиентам нужен токен.",
+                          "fontFamily": "$font",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "id": "i0NnIc",
+                          "type": "ref",
+                          "ref": "XyQQc",
+                          "name": "Authorization header example",
+                          "width": "fill_container",
+                          "descendants": {
+                            "FrJzT": {
+                              "content": "Authorization: Bearer <token>",
+                              "fontSize": 13
+                            }
+                          }
+                        },
+                        {
+                          "id": "dsTpp",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Заменить токен",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "fill": "$ink",
+                              "content": "Выпустить токен"
+                            }
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "id": "jgyH2",
+                          "name": "Rotation note",
+                          "fill": "$muted",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Выпуск токена не включает API.",
+                          "fontFamily": "$font",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "GTSEl",
+                  "name": "Внешний доступ",
+                  "width": 340,
+                  "fill": "$surface",
+                  "cornerRadius": 6,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 18,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "RRTJf",
+                      "name": "Title",
+                      "fill": "$ink",
+                      "content": "Внешний доступ",
+                      "fontFamily": "$font",
+                      "fontSize": 20,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "id": "kA1KF",
+                      "type": "ref",
+                      "ref": "idKcX",
+                      "name": "Авторизация включена",
+                      "fill": "$success-soft",
+                      "descendants": {
+                        "eMbtm": {
+                          "fill": "$success",
+                          "content": "Авторизация включена"
+                        }
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "id": "HIWqA",
+                      "name": "Optional authorization",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Авторизация опциональна. В приватном контуре можно отключить проверку токена.",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "l92w6",
+                      "name": "Without auth meaning",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Без авторизации управление доступно всем, кто имеет сетевой доступ к API.",
+                      "fontFamily": "$font",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "sGYef",
+                      "name": "Agent channel",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Настройки внешнего API не отключают веб-интерфейс и синхронизацию роутеров.",
+                      "fontFamily": "$font",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "NeosP",
+                      "name": "API docs",
+                      "fill": "$accent",
+                      "content": "Документация API →",
+                      "fontFamily": "$font",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "K22fN",
+              "name": "Server address",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "gap": 20,
+              "padding": 20,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "sgJzp",
+                  "name": "Label",
+                  "fill": "$ink",
+                  "content": "Адрес сервера",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "kydiK",
+                  "name": "URL",
+                  "fill": "$muted",
+                  "content": "https://xkeen.example",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
             }
           ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "CwSS7",
+      "x": 12700,
+      "y": 0,
+      "name": "14c / Настройки / Подтверждение замены",
+      "clip": true,
+      "width": 1500,
+      "height": 1030,
+      "fill": "$bg",
+      "children": [
+        {
+          "id": "WVoIB",
+          "type": "ref",
+          "ref": "XKSrZ",
+          "name": "Sidebar",
+          "width": 206,
+          "height": "fill_container",
+          "descendants": {
+            "WL8zi": {
+              "fill": "$ink"
+            },
+            "WL8zi/G2nPu4": {
+              "fill": "#ACBAC9"
+            },
+            "d1esl": {
+              "fill": "$ink"
+            },
+            "d1esl/G2nPu4": {
+              "fill": "#ACBAC9"
+            },
+            "zxib9": {
+              "fill": "$ink"
+            },
+            "zxib9/G2nPu4": {
+              "fill": "#ACBAC9"
+            },
+            "uoBOu": {
+              "fill": "#30435C"
+            },
+            "uoBOu/G2nPu4": {
+              "fill": "#FFFFFF"
+            }
+          }
         },
         {
           "type": "frame",
-          "id": "NXHSE",
-          "name": "Главная область",
+          "id": "pwPQd",
+          "name": "Main",
           "width": "fill_container",
+          "height": "fill_container",
           "layout": "vertical",
-          "gap": 16,
-          "padding": 16,
+          "gap": 24,
+          "padding": 32,
           "children": [
             {
-              "type": "text",
-              "id": "W6g95",
-              "name": "Заголовок экрана",
-              "fill": "$ink",
-              "content": "Обзор",
-              "fontFamily": "$font",
-              "fontSize": 24,
-              "fontWeight": "semibold"
+              "type": "frame",
+              "id": "d3DJaz",
+              "name": "Breadcrumb",
+              "width": "fill_container",
+              "gap": 16,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "YN7gk",
+                  "name": "Path",
+                  "fill": "$muted",
+                  "content": "Настройки",
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "id": "riXhq",
+                  "type": "ref",
+                  "ref": "idKcX",
+                  "name": "Концепт · данные для примера",
+                  "fill": "$warn-soft",
+                  "descendants": {
+                    "eMbtm": {
+                      "fill": "$warn",
+                      "content": "Концепт · данные для примера"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "yGKxO",
+              "name": "Page heading",
+              "width": "fill_container",
+              "gap": 20,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "RKHOc",
+                  "name": "Identity",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "wtowI",
+                      "name": "Title",
+                      "fill": "$ink",
+                      "content": "Настройки",
+                      "fontFamily": "$font",
+                      "fontSize": 30,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "pHmoa",
+                      "name": "Subtitle",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Доступ внешних приложений к управлению сервисом",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "id": "ibP2N",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Сохранить настройки",
+                  "fill": "$accent",
+                  "stroke": "$accent",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "fill": "#FFFFFF",
+                      "content": "Сохранить настройки"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "iTMgo",
+              "name": "API settings and information",
+              "width": "fill_container",
+              "gap": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "b7vyN",
+                  "name": "API settings",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 20,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "cmF3z",
+                      "name": "API controls",
+                      "width": "fill_container",
+                      "fill": "$surface",
+                      "cornerRadius": 6,
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "children": [
+                        {
+                          "id": "BE4Zt",
+                          "type": "ref",
+                          "ref": "QUgVu",
+                          "name": "Enable management API",
+                          "width": "fill_container",
+                          "descendants": {
+                            "SlQsa": {
+                              "content": "Внешний API"
+                            },
+                            "qVhhx": {
+                              "content": "Разрешить управление шаблонами, роутерами и конфигурациями через API."
+                            }
+                          }
+                        },
+                        {
+                          "id": "eu2QR",
+                          "type": "ref",
+                          "ref": "QUgVu",
+                          "name": "Enable API authorization",
+                          "width": "fill_container",
+                          "descendants": {
+                            "SlQsa": {
+                              "content": "Авторизация API"
+                            },
+                            "qVhhx": {
+                              "content": "Требовать токен для запросов внешних приложений."
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "vNDpx",
+                      "name": "Токен API",
+                      "width": "fill_container",
+                      "fill": "$surface",
+                      "cornerRadius": 6,
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 18,
+                      "padding": 24,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "vNnLh",
+                          "name": "Title",
+                          "fill": "$ink",
+                          "content": "Токен API",
+                          "fontFamily": "$font",
+                          "fontSize": 20,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "pdN9Q",
+                          "name": "Token description",
+                          "fill": "$muted",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Заменить общий токен? Все клиенты со старым токеном сразу потеряют доступ.",
+                          "fontFamily": "$font",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "id": "h5ea1g",
+                          "type": "ref",
+                          "ref": "XyQQc",
+                          "name": "Authorization header example",
+                          "width": "fill_container",
+                          "descendants": {
+                            "FrJzT": {
+                              "content": "Authorization: Bearer <token>",
+                              "fontSize": 13
+                            }
+                          }
+                        },
+                        {
+                          "id": "TYv8I",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Заменить токен",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "fill": "$ink",
+                              "content": "Заменить токен"
+                            }
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "id": "dDHKo",
+                          "name": "Rotation note",
+                          "fill": "$muted",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Новый токен будет показан один раз.",
+                          "fontFamily": "$font",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "id": "qNEDH",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Отмена",
+                          "fill": "$surface",
+                          "stroke": "$line",
+                          "strokeWidth": 1,
+                          "descendants": {
+                            "GyrRR": {
+                              "fill": "$ink",
+                              "content": "Отмена"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "qQGG4",
+                  "name": "Внешний доступ",
+                  "width": 340,
+                  "fill": "$surface",
+                  "cornerRadius": 6,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 18,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "SjI0r",
+                      "name": "Title",
+                      "fill": "$ink",
+                      "content": "Внешний доступ",
+                      "fontFamily": "$font",
+                      "fontSize": 20,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "id": "p47Ow",
+                      "type": "ref",
+                      "ref": "idKcX",
+                      "name": "Авторизация включена",
+                      "fill": "$success-soft",
+                      "descendants": {
+                        "eMbtm": {
+                          "fill": "$success",
+                          "content": "Авторизация включена"
+                        }
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "id": "wdeu6",
+                      "name": "Optional authorization",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Авторизация опциональна. В приватном контуре можно отключить проверку токена.",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "zdbM5",
+                      "name": "Without auth meaning",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Без авторизации управление доступно всем, кто имеет сетевой доступ к API.",
+                      "fontFamily": "$font",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ksI6V",
+                      "name": "Agent channel",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Настройки внешнего API не отключают веб-интерфейс и синхронизацию роутеров.",
+                      "fontFamily": "$font",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ReELG",
+                      "name": "API docs",
+                      "fill": "$accent",
+                      "content": "Документация API →",
+                      "fontFamily": "$font",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "N7Wpe",
+              "name": "Server address",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "gap": 20,
+              "padding": 20,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "AyBoN",
+                  "name": "Label",
+                  "fill": "$ink",
+                  "content": "Адрес сервера",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "XKTfV",
+                  "name": "URL",
+                  "fill": "$muted",
+                  "content": "https://xkeen.example",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
             }
           ]
         }
