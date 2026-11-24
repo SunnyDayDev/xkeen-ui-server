@@ -68,10 +68,19 @@ func TestWebTemplatePublicationReceiptIsBoundAndExpires(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	before, err := service.Current(ctx, token, draft.ID)
+	if err != nil || before.Version != 1 || before.AcceptedVersion != 0 || len(before.Routers) != 0 {
+		t.Fatalf("current state before confirmation: %+v %v", before, err)
+	}
 	confirmed, err := service.Confirm(ctx, token, csrf, draft.ID, refreshed.Receipt)
 	if err != nil || confirmed.Version != 1 || len(confirmed.Routers) != 0 {
 		t.Fatalf("confirmed %+v %v", confirmed, err)
 	}
+	after, err := service.Current(ctx, token, draft.ID)
+	if err != nil || after.Version != 1 || after.AcceptedVersion != 1 || len(after.Routers) != 0 {
+		t.Fatalf("current state after confirmation: %+v %v", after, err)
+	}
+
 }
 
 func TestWebTemplatePublicationIncludesHiddenOfflineActiveAssignment(t *testing.T) {
