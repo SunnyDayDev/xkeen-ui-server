@@ -1,5 +1,5 @@
 {
-  "version": "2.19",
+  "version": "2.25",
   "children": [
     {
       "type": "frame",
@@ -13615,6 +13615,996 @@
               "fontFamily": "$font",
               "fontSize": 12,
               "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "AfRPu",
+      "x": 3500,
+      "y": 0,
+      "name": "Molecules / Вход администратора",
+      "reusable": true,
+      "width": 368,
+      "layout": "vertical",
+      "gap": 16,
+      "children": [
+        {
+          "id": "e2zlh",
+          "type": "ref",
+          "ref": "BmmQR",
+          "name": "Поле пароля администратора",
+          "width": "fill_container",
+          "descendants": {
+            "uFzxP": {
+              "content": "Пароль администратора"
+            },
+            "hN1cU/VdSCq": {
+              "content": "Введите пароль",
+              "fill": "$muted"
+            },
+            "GDH1i": {
+              "enabled": false
+            }
+          }
+        },
+        {
+          "id": "j7MsK",
+          "type": "ref",
+          "ref": "ARxJx",
+          "name": "Действие входа",
+          "width": "fill_container",
+          "justifyContent": "center",
+          "descendants": {
+            "GyrRR": {
+              "content": "Войти"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "QAYZb",
+      "x": 0,
+      "y": 8000,
+      "name": "17 / Вход / Фокус пароля",
+      "clip": true,
+      "width": 1080,
+      "height": 660,
+      "fill": "$bg",
+      "layout": "vertical",
+      "padding": 24,
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "NYjad",
+          "name": "Панель доступа",
+          "width": 440,
+          "fill": "$surface",
+          "cornerRadius": "$radius",
+          "stroke": "$line",
+          "strokeWidth": 1,
+          "layout": "vertical",
+          "gap": 20,
+          "padding": 28,
+          "children": [
+            {
+              "type": "text",
+              "id": "J6vs3S",
+              "name": "Продукт",
+              "fill": "$accent",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "d6zszF",
+              "name": "Заголовок",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Вход в консоль",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "PNxZm",
+              "name": "Описание",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Используйте пароль администратора этой установки.",
+              "fontFamily": "$font",
+              "fontSize": 14
+            },
+            {
+              "id": "CD5aS",
+              "type": "ref",
+              "ref": "AfRPu",
+              "name": "Форма входа",
+              "width": "fill_container",
+              "descendants": {
+                "e2zlh/hN1cU": {
+                  "stroke": "$accent",
+                  "strokeWidth": 2
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "QIylS",
+      "x": 1160,
+      "y": 8000,
+      "name": "18 / Вход / Требуется настройка",
+      "clip": true,
+      "width": 1080,
+      "height": 660,
+      "fill": "$bg",
+      "layout": "vertical",
+      "padding": 24,
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "c94pMa",
+          "name": "Панель доступа",
+          "width": 440,
+          "fill": "$surface",
+          "cornerRadius": "$radius",
+          "stroke": "$line",
+          "strokeWidth": 1,
+          "layout": "vertical",
+          "gap": 20,
+          "padding": 28,
+          "children": [
+            {
+              "type": "text",
+              "id": "mo0Vx",
+              "name": "Продукт",
+              "fill": "$accent",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "CSvJN",
+              "name": "Заголовок",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Доступ ещё не настроен",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "TYd4E",
+              "name": "Описание",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Настройте пароль администратора на сервере через терминал или приватный файл.",
+              "fontFamily": "$font",
+              "fontSize": 14
+            },
+            {
+              "type": "frame",
+              "id": "zCrcP",
+              "name": "Локальная настройка",
+              "width": "fill_container",
+              "fill": "$accent-soft",
+              "cornerRadius": "$radius",
+              "layout": "vertical",
+              "padding": 12,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "OnmoQ",
+                  "name": "Локальная настройка — текст",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "После настройки обновите эту страницу и войдите.",
+                  "fontFamily": "$font",
+                  "fontSize": 14
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "D8sbkB",
+      "x": 2320,
+      "y": 8000,
+      "name": "17 / Вход / Неверный пароль",
+      "clip": true,
+      "width": 1080,
+      "height": 660,
+      "fill": "$bg",
+      "layout": "vertical",
+      "padding": 24,
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "J3ponQ",
+          "name": "Панель доступа",
+          "width": 440,
+          "fill": "$surface",
+          "cornerRadius": "$radius",
+          "stroke": "$line",
+          "strokeWidth": 1,
+          "layout": "vertical",
+          "gap": 20,
+          "padding": 28,
+          "children": [
+            {
+              "type": "text",
+              "id": "LE6Qy",
+              "name": "Продукт",
+              "fill": "$accent",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "SOAee",
+              "name": "Заголовок",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Вход в консоль",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "dtqJW",
+              "name": "Описание",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Используйте пароль администратора этой установки.",
+              "fontFamily": "$font",
+              "fontSize": 14
+            },
+            {
+              "type": "frame",
+              "id": "vp8R6",
+              "name": "Ошибка входа",
+              "width": "fill_container",
+              "fill": "$error-soft",
+              "cornerRadius": "$radius",
+              "layout": "vertical",
+              "padding": 12,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "h8DYLL",
+                  "name": "Ошибка входа — текст",
+                  "fill": "$error",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Не удалось войти. Проверьте пароль и попробуйте ещё раз.",
+                  "fontFamily": "$font",
+                  "fontSize": 14
+                }
+              ]
+            },
+            {
+              "id": "ZjQDi",
+              "type": "ref",
+              "ref": "AfRPu",
+              "name": "Форма входа",
+              "width": "fill_container",
+              "descendants": {
+                "e2zlh/hN1cU": {
+                  "stroke": "$error",
+                  "strokeWidth": 2
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "s8V3kI",
+      "x": 0,
+      "y": 8720,
+      "name": "19 / Сессия / Повторный вход",
+      "clip": true,
+      "width": 1080,
+      "height": 660,
+      "fill": "$bg",
+      "layout": "vertical",
+      "padding": 24,
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "uQLAN",
+          "name": "Панель доступа",
+          "width": 440,
+          "fill": "$surface",
+          "cornerRadius": "$radius",
+          "stroke": "$line",
+          "strokeWidth": 1,
+          "layout": "vertical",
+          "gap": 20,
+          "padding": 28,
+          "children": [
+            {
+              "type": "text",
+              "id": "nSnhm",
+              "name": "Продукт",
+              "fill": "$accent",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "q4vcx",
+              "name": "Заголовок",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Сессия истекла",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "Lg6Za",
+              "name": "Описание",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Войдите снова, чтобы вернуться к редактированию.",
+              "fontFamily": "$font",
+              "fontSize": 14
+            },
+            {
+              "type": "frame",
+              "id": "QOgak",
+              "name": "Несохранённые изменения",
+              "width": "fill_container",
+              "fill": "$warn-soft",
+              "cornerRadius": "$radius",
+              "layout": "vertical",
+              "padding": 12,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Y6lkfb",
+                  "name": "Несохранённые изменения — текст",
+                  "fill": "$warn",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Черновик сохранён в этой вкладке. После входа вы сможете проверить и сохранить его вручную.",
+                  "fontFamily": "$font",
+                  "fontSize": 14
+                }
+              ]
+            },
+            {
+              "id": "TTtQh",
+              "type": "ref",
+              "ref": "AfRPu",
+              "name": "Форма входа",
+              "width": "fill_container",
+              "descendants": {
+                "e2zlh/hN1cU": {
+                  "stroke": "$accent",
+                  "strokeWidth": 2
+                },
+                "j7MsK/GyrRR": {
+                  "content": "Войти снова"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "WR9L7",
+      "x": 1160,
+      "y": 8720,
+      "name": "17 / Вход / Отправка",
+      "clip": true,
+      "width": 1080,
+      "height": 660,
+      "fill": "$bg",
+      "layout": "vertical",
+      "padding": 24,
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "PQscN",
+          "name": "Панель доступа",
+          "width": 440,
+          "fill": "$surface",
+          "cornerRadius": "$radius",
+          "stroke": "$line",
+          "strokeWidth": 1,
+          "layout": "vertical",
+          "gap": 20,
+          "padding": 28,
+          "children": [
+            {
+              "type": "text",
+              "id": "J4znub",
+              "name": "Продукт",
+              "fill": "$accent",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "dm5Tm",
+              "name": "Заголовок",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Вход в консоль",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "vrjis",
+              "name": "Описание",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Проверяем пароль.",
+              "fontFamily": "$font",
+              "fontSize": 14
+            },
+            {
+              "id": "ijALO",
+              "type": "ref",
+              "ref": "AfRPu",
+              "name": "Форма входа",
+              "width": "fill_container",
+              "descendants": {
+                "e2zlh/hN1cU/VdSCq": {
+                  "content": "••••••••••••",
+                  "fill": "$ink"
+                },
+                "j7MsK": {
+                  "fill": "$accent-soft"
+                },
+                "j7MsK/GyrRR": {
+                  "content": "Выполняется вход…",
+                  "fill": "$muted"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "kQu6M",
+      "x": 2320,
+      "y": 8720,
+      "name": "19 / Сессия / Узкий экран",
+      "clip": true,
+      "width": 390,
+      "height": 660,
+      "fill": "$bg",
+      "layout": "vertical",
+      "padding": 24,
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "j0dOx",
+          "name": "Панель доступа",
+          "width": "fill_container",
+          "fill": "$surface",
+          "cornerRadius": "$radius",
+          "stroke": "$line",
+          "strokeWidth": 1,
+          "layout": "vertical",
+          "gap": 20,
+          "padding": 28,
+          "children": [
+            {
+              "type": "text",
+              "id": "LWVGM",
+              "name": "Продукт",
+              "fill": "$accent",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "oMNwL",
+              "name": "Заголовок",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Сессия истекла",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "TIvTj",
+              "name": "Описание",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Войдите снова, чтобы вернуться к редактированию.",
+              "fontFamily": "$font",
+              "fontSize": 14
+            },
+            {
+              "type": "frame",
+              "id": "SW5EX",
+              "name": "Несохранённые изменения",
+              "width": "fill_container",
+              "fill": "$warn-soft",
+              "cornerRadius": "$radius",
+              "layout": "vertical",
+              "padding": 12,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "QXrin",
+                  "name": "Несохранённые изменения — текст",
+                  "fill": "$warn",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Черновик сохранён в этой вкладке. Сохраните изменения вручную после входа.",
+                  "fontFamily": "$font",
+                  "fontSize": 14
+                }
+              ]
+            },
+            {
+              "id": "Kmg4Z",
+              "type": "ref",
+              "ref": "AfRPu",
+              "name": "Форма входа",
+              "width": "fill_container",
+              "descendants": {
+                "j7MsK/GyrRR": {
+                  "content": "Войти снова"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "W9Ywe",
+      "x": 0,
+      "y": 9440,
+      "name": "17 / Вход / Слишком много попыток",
+      "clip": true,
+      "width": 1080,
+      "height": 660,
+      "fill": "$bg",
+      "layout": "vertical",
+      "padding": 24,
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "UGMIC",
+          "name": "Панель доступа",
+          "width": 440,
+          "fill": "$surface",
+          "cornerRadius": "$radius",
+          "stroke": "$line",
+          "strokeWidth": 1,
+          "layout": "vertical",
+          "gap": 20,
+          "padding": 28,
+          "children": [
+            {
+              "type": "text",
+              "id": "di5Pd",
+              "name": "Продукт",
+              "fill": "$accent",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "AIZ5k",
+              "name": "Заголовок",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Вход в консоль",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "i5V2J",
+              "name": "Описание",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Используйте пароль администратора этой установки.",
+              "fontFamily": "$font",
+              "fontSize": 14
+            },
+            {
+              "type": "frame",
+              "id": "DD5f5",
+              "name": "Ограничение попыток",
+              "width": "fill_container",
+              "fill": "$warn-soft",
+              "cornerRadius": "$radius",
+              "layout": "vertical",
+              "padding": 12,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Ib6Wl",
+                  "name": "Ограничение попыток — текст",
+                  "fill": "$warn",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Слишком много попыток входа. Повторите позже.",
+                  "fontFamily": "$font",
+                  "fontSize": 14
+                }
+              ]
+            },
+            {
+              "id": "u11Bx2",
+              "type": "ref",
+              "ref": "AfRPu",
+              "name": "Форма входа",
+              "width": "fill_container",
+              "descendants": {
+                "j7MsK": {
+                  "fill": "$accent-soft"
+                },
+                "j7MsK/GyrRR": {
+                  "content": "Войти",
+                  "fill": "$muted"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "h0Oj5q",
+      "x": 1160,
+      "y": 9440,
+      "name": "17 / Вход / Сервер недоступен",
+      "clip": true,
+      "width": 1080,
+      "height": 660,
+      "fill": "$bg",
+      "layout": "vertical",
+      "padding": 24,
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "eCHVD",
+          "name": "Панель доступа",
+          "width": 440,
+          "fill": "$surface",
+          "cornerRadius": "$radius",
+          "stroke": "$line",
+          "strokeWidth": 1,
+          "layout": "vertical",
+          "gap": 20,
+          "padding": 28,
+          "children": [
+            {
+              "type": "text",
+              "id": "aJ0Sp",
+              "name": "Продукт",
+              "fill": "$accent",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "PhFon",
+              "name": "Заголовок",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Вход в консоль",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "WaSJv",
+              "name": "Описание",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Используйте пароль администратора этой установки.",
+              "fontFamily": "$font",
+              "fontSize": 14
+            },
+            {
+              "type": "frame",
+              "id": "jyETE",
+              "name": "Ошибка подключения",
+              "width": "fill_container",
+              "fill": "$error-soft",
+              "cornerRadius": "$radius",
+              "layout": "vertical",
+              "padding": 12,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "E6AZS",
+                  "name": "Ошибка подключения — текст",
+                  "fill": "$error",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Сервер сейчас недоступен. Попробуйте ещё раз.",
+                  "fontFamily": "$font",
+                  "fontSize": 14
+                }
+              ]
+            },
+            {
+              "id": "pLIUz",
+              "type": "ref",
+              "ref": "AfRPu",
+              "name": "Форма входа",
+              "width": "fill_container"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "b3huic",
+      "x": 2320,
+      "y": 9440,
+      "name": "17 / Вход / Выход завершён",
+      "clip": true,
+      "width": 1080,
+      "height": 660,
+      "fill": "$bg",
+      "layout": "vertical",
+      "padding": 24,
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "k9CGO",
+          "name": "Панель доступа",
+          "width": 440,
+          "fill": "$surface",
+          "cornerRadius": "$radius",
+          "stroke": "$line",
+          "strokeWidth": 1,
+          "layout": "vertical",
+          "gap": 20,
+          "padding": 28,
+          "children": [
+            {
+              "type": "text",
+              "id": "C0T1z",
+              "name": "Продукт",
+              "fill": "$accent",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "IhMYa",
+              "name": "Заголовок",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Вход в консоль",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "x2L2K",
+              "name": "Описание",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Вы вышли из консоли.",
+              "fontFamily": "$font",
+              "fontSize": 14
+            },
+            {
+              "id": "ncMs2",
+              "type": "ref",
+              "ref": "AfRPu",
+              "name": "Форма входа",
+              "width": "fill_container"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "S3XAy",
+      "x": 0,
+      "y": 10160,
+      "name": "19 / Сессия / Редактирование восстановлено",
+      "clip": true,
+      "width": 1080,
+      "height": 660,
+      "fill": "$bg",
+      "layout": "vertical",
+      "padding": 24,
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "nqrw9",
+          "name": "Рабочий буфер",
+          "width": 540,
+          "fill": "$surface",
+          "cornerRadius": "$radius",
+          "stroke": "$line",
+          "strokeWidth": 1,
+          "layout": "vertical",
+          "gap": 18,
+          "padding": 28,
+          "children": [
+            {
+              "type": "text",
+              "id": "uDO4J",
+              "name": "Заголовок",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Изменения в шаблоне",
+              "fontFamily": "$font",
+              "fontSize": 27,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "GYKgr",
+              "name": "Статус после входа",
+              "fill": "$success",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Вход выполнен. Изменения ещё не отправлены.",
+              "fontFamily": "$font",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "CnkTK",
+              "name": "Несохранённый черновик",
+              "width": "fill_container",
+              "fill": "$bg",
+              "cornerRadius": "$radius",
+              "layout": "vertical",
+              "gap": 8,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "vxVLX",
+                  "name": "Метка черновика",
+                  "fill": "$muted",
+                  "content": "Несохранённый черновик",
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "hHYVl",
+                  "name": "Пример буфера",
+                  "fill": "$ink",
+                  "content": "{ \"tag\": \"example-route\" }",
+                  "fontFamily": "$mono",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "id": "Qry6q",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Явное сохранение",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Сохранить изменения"
+                }
+              }
             }
           ]
         }
