@@ -40,6 +40,16 @@ func TestExternalRouterNameUpdatesOwnerProjectionOnlyWhileAdmitted(t *testing.T)
 		t.Fatalf("old display name unavailable: %+v, %v", legacy, err)
 	}
 	const renamed = "Обновлённое имя"
+	if _, err := db.ExecContext(ctx, `CREATE TRIGGER fixture_skip_name BEFORE INSERT ON router_display_names
+		BEGIN SELECT RAISE(IGNORE); END`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ext.WriteExternalRouterName(ctx, permit, legacy, renamed); err == nil {
+		t.Fatal("suppressed SQL insert reported a renamed router")
+	}
+	if _, err := db.ExecContext(ctx, "DROP TRIGGER fixture_skip_name"); err != nil {
+		t.Fatal(err)
+	}
 	next, err := ext.WriteExternalRouterName(ctx, permit, legacy, renamed)
 	if err != nil || next.Version != 1 || next.ActiveGeneration != legacy.ActiveGeneration {
 		t.Fatalf("invalid display metadata commit: %+v, %v", next, err)

@@ -67,10 +67,13 @@ func (s *ExternalAccess) WriteExternalRouterName(ctx context.Context, permit ext
 	if current.Version == math.MaxInt64 {
 		return routersettings.DisplayNameSnapshot{}, externalaccess.ErrConflict
 	}
-	_, err = tx.ExecContext(ctx, `INSERT INTO router_display_names(router_id,name,version)
+	result, err := tx.ExecContext(ctx, `INSERT INTO router_display_names(router_id,name,version)
 		VALUES (?,?,1) ON CONFLICT(router_id) DO UPDATE SET name=excluded.name,version=version+1`, current.RouterID, name)
 	if err != nil {
 		return routersettings.DisplayNameSnapshot{}, err
+	}
+	if changed, err := result.RowsAffected(); err != nil || changed != 1 {
+		return routersettings.DisplayNameSnapshot{}, publication.ErrStoredState
 	}
 	if err := tx.Commit(); err != nil {
 		return routersettings.DisplayNameSnapshot{}, err
