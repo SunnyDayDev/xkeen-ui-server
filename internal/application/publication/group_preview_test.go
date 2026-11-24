@@ -82,3 +82,24 @@ func TestGroupChangeEstimatesOnlyActualRules(t *testing.T) {
 		}
 	}
 }
+
+func TestSharedPreviewBlocksUnsupportedG08Bypass(t *testing.T) {
+	input, request := sharedFixture(t, false)
+	input.Exclusions = &configuration.ExclusionSource{Text: "192.0.2.0/24\n"}
+	store := &groupStoreStub{inputs: input}
+	checks := 0
+	service := NewTemplateGroupService(store, catalogValidatorFunc(func(context.Context, string, []configuration.CatalogFile) error {
+		checks++
+		return nil
+	}))
+	if p, err := service.Preview(t.Context(), request.TemplateID, request.TemplateDraftVersion); p != nil || !errors.Is(err, ErrBypassUnavailable) {
+		t.Fatalf("unsupported preview %v %v", p, err)
+	}
+	if result, err := service.Publish(t.Context(), request); result != nil || !errors.Is(err, ErrBypassUnavailable) || len(store.commits) != 0 || checks != 0 {
+		t.Fatalf("unsupported confirmation %v %v, validated=%d", result, err, checks)
+	}
+	input.Members = nil
+	if p, err := service.Preview(t.Context(), request.TemplateID, request.TemplateDraftVersion); p == nil || err != nil || len(p.Members) != 0 {
+		t.Fatalf("empty membership preview %v %v", p, err)
+	}
+}
