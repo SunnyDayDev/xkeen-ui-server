@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/agentcredential"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/externalaccess"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/templates"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/storage/sqlite"
@@ -21,6 +23,12 @@ func TestProcessExternalPreparationKeepsAgentAuthoritySeparate(t *testing.T) {
 	ctx := t.Context()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "server.sqlite")
+	invitation, credentials := fixtureEnrollment(t, path)
+	working := agentcredential.Generate(agentcredential.Working).Encode()
+	enrolled, err := credentials.Enroll(ctx, invitation, working)
+	if err != nil {
+		t.Fatal(err)
+	}
 	db, err := sqlite.Open(ctx, path)
 	if err != nil {
 		t.Fatal(err)
@@ -60,6 +68,7 @@ func TestProcessExternalPreparationKeepsAgentAuthoritySeparate(t *testing.T) {
 	defer client.CloseIdleConnections()
 	query := url.Values{"routerId": {routerID}, "templateId": {templateID}}
 	route := "https://" + p.readyWithClient(t, client, "https") + "/api/v1/routers/preparation?" + query.Encode()
+	var bearer string
 	call := func(method, tag, body string, status int) ([]byte, string) {
 		t.Helper()
 		req, err := http.NewRequestWithContext(ctx, method, route, strings.NewReader(body))
@@ -69,6 +78,9 @@ func TestProcessExternalPreparationKeepsAgentAuthoritySeparate(t *testing.T) {
 		if method == http.MethodPost {
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Set("If-Match", tag)
+		}
+		if bearer != "" {
+			req.Header.Set("Authorization", "Bearer "+bearer)
 		}
 		res, err := client.Do(req)
 		if err != nil {
@@ -90,8 +102,12 @@ func TestProcessExternalPreparationKeepsAgentAuthoritySeparate(t *testing.T) {
 		var accessVersion, invitations, registrations int64
 		err := db.QueryRowContext(ctx, `SELECT (SELECT version FROM external_access),
 			(SELECT count(*) FROM agent_invitations),(SELECT count(*) FROM agent_registrations)`).Scan(&accessVersion, &invitations, &registrations)
-		if err != nil || accessVersion != 2 || invitations != 0 || registrations != 0 {
+		if err != nil || accessVersion != 2 || invitations != 1 || registrations != 1 {
 			t.Fatalf("preparation changed authority or invitation rows: %v", err)
+		}
+		current, err := credentials.Identity(ctx, working)
+		if err != nil || current != enrolled {
+			t.Fatal("preparation changed the existing agent identity")
 		}
 	}
 	raw, tag := call(http.MethodGet, "", "", 200)
@@ -127,5 +143,24 @@ func TestProcessExternalPreparationKeepsAgentAuthoritySeparate(t *testing.T) {
 	}
 	call(http.MethodPost, tag, body("freedom"), 412)
 	assertAuthority()
+	expired, expiredDigest, err := externalaccess.Issue()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.ExecContext(ctx, "UPDATE external_access SET protected=1, digest=?, version=3", expiredDigest[:]); err != nil {
+		t.Fatal(err)
+	}
+	bearer = expired
+	_, authenticatedTag := call(http.MethodGet, "", "", 200)
+	if _, err := db.ExecContext(ctx, "UPDATE external_access SET digest=NULL, version=4"); err != nil {
+		t.Fatal(err)
+	}
+	call(http.MethodGet, "", "", 401)
+	call(http.MethodPost, authenticatedTag, body("freedom"), 401)
+	after, err := sqlite.NewPublications(db).ReadDesired(ctx, routerID)
+	current, identityErr := credentials.Identity(ctx, working)
+	if err != nil || after == nil || after.Number != 1 || identityErr != nil || current != enrolled {
+		t.Fatal("revoked external authority changed the assignment or existing identity")
+	}
 	stopAgentProcess(t, p)
 }
