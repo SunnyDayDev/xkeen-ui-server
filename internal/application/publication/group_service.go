@@ -25,7 +25,8 @@ type SharedPublishRequest struct {
 	Source                                SharedSource
 	Candidate                             *configuration.TemplateDraft
 	// Nil means no prior preview. A non-nil empty slice expects no assignments.
-	PreviewMembers []GroupRouterExpectation
+	PreviewMembers     []GroupRouterExpectation
+	PreviewFingerprint *[32]byte
 }
 
 type TemplateGroupService struct {
@@ -39,54 +40,12 @@ func NewTemplateGroupService(store TemplateGroupStore, validator CatalogValidato
 
 // Publish validates every affected catalog before issuing a single group commit.
 func (s *TemplateGroupService) Publish(ctx context.Context, request SharedPublishRequest) (*TemplateGroupResult, error) {
-	if !validSharedRequest(request) {
-		return nil, ErrInvalidCommand
-	}
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	preview := slices.Clone(request.PreviewMembers)
-	edit, err := prepareSharedEdit(request)
+	plan, _, err := s.prepare(ctx, request, false)
 	if err != nil {
 		return nil, err
 	}
-	inputs, err := s.store.ReadTemplateGroup(ctx, request.TemplateID)
-	if err != nil {
-		if errors.Is(err, ErrSourceMissing) {
-			return nil, ErrSourceMissing
-		}
-		return nil, safeStoreError(err, ErrPublicationRead)
-	}
-	if inputs == nil || inputs.TemplateDraft == nil {
-		return nil, ErrPublicationRead
-	}
-	if !matchesSharedVersions(inputs, request) {
+	if request.PreviewFingerprint != nil && fingerprintGroupPlan(plan) != *request.PreviewFingerprint {
 		return nil, ErrConflict
-	}
-	members, expectations, err := sharedMembers(inputs, request.TemplateID)
-	if err != nil {
-		return nil, err
-	}
-	if preview != nil && !matchesGroupPreview(preview, expectations) {
-		return nil, ErrConflict
-	}
-
-	selected := inputs.TemplateDraft
-	if edit != nil {
-		selected = &templates.Snapshot{TemplateDraft: *edit, Version: request.TemplateDraftVersion + 1}
-	}
-	plan := TemplateGroupPlan{TemplateID: request.TemplateID, TemplateDraftVersion: request.TemplateDraftVersion,
-		AcceptedVersion: request.AcceptedVersion, Edit: edit, Members: make([]GroupRouterPlan, 0, len(members))}
-	for i, member := range members {
-		if err := checkXrayOnlyExclusions(inputs.Exclusions, member.Active.Draft); err != nil {
-			return nil, &GroupMemberError{RouterID: expectations[i].RouterID, Cause: err}
-		}
-		candidate, err := prepareGroupMember(ctx, s.validator, selected, member)
-		if err != nil {
-			return nil, &GroupMemberError{RouterID: expectations[i].RouterID, Cause: err}
-		}
-		candidate.Expected = expectations[i]
-		plan.Members = append(plan.Members, candidate)
 	}
 	result, err := s.store.CommitTemplateGroup(ctx, plan)
 	if err != nil {
@@ -97,9 +56,75 @@ func (s *TemplateGroupService) Publish(ctx context.Context, request SharedPublis
 	}
 	return result, nil
 }
+func (s *TemplateGroupService) prepare(ctx context.Context, request SharedPublishRequest, dryRun bool) (TemplateGroupPlan, []GroupMemberPreview, error) {
+	if !validSharedRequest(request) {
+		return TemplateGroupPlan{}, nil, ErrInvalidCommand
+	}
+	if err := ctx.Err(); err != nil {
+		return TemplateGroupPlan{}, nil, err
+	}
+	preview := slices.Clone(request.PreviewMembers)
+	edit, err := prepareSharedEdit(request)
+	if err != nil {
+		return TemplateGroupPlan{}, nil, err
+	}
+	inputs, err := s.store.ReadTemplateGroup(ctx, request.TemplateID)
+	if err != nil {
+		if errors.Is(err, ErrSourceMissing) {
+			return TemplateGroupPlan{}, nil, ErrSourceMissing
+		}
+		return TemplateGroupPlan{}, nil, safeStoreError(err, ErrPublicationRead)
+	}
+	if inputs == nil || inputs.TemplateDraft == nil {
+		return TemplateGroupPlan{}, nil, ErrPublicationRead
+	}
+	if dryRun && inputs.Accepted != nil {
+		request.AcceptedVersion = inputs.Accepted.Version
+	}
+	if !matchesSharedVersions(inputs, request) {
+		return TemplateGroupPlan{}, nil, ErrConflict
+	}
+	members, expectations, err := sharedMembers(inputs, request.TemplateID)
+	if err != nil {
+		return TemplateGroupPlan{}, nil, err
+	}
+	if preview != nil && !matchesGroupPreview(preview, expectations) {
+		return TemplateGroupPlan{}, nil, ErrConflict
+	}
+
+	selected := inputs.TemplateDraft
+	if edit != nil {
+		selected = &templates.Snapshot{TemplateDraft: *edit, Version: request.TemplateDraftVersion + 1}
+	}
+	plan := TemplateGroupPlan{TemplateID: request.TemplateID, TemplateDraftVersion: request.TemplateDraftVersion,
+		AcceptedVersion: request.AcceptedVersion, Edit: edit, Members: make([]GroupRouterPlan, 0, len(members))}
+	var views []GroupMemberPreview
+	if dryRun {
+		views = make([]GroupMemberPreview, 0, len(members))
+	}
+	for i, member := range members {
+		if err := checkXrayOnlyExclusions(inputs.Exclusions, member.Active.Draft); err != nil {
+			return TemplateGroupPlan{}, nil, &GroupMemberError{RouterID: expectations[i].RouterID, Cause: err}
+		}
+		candidate, err := prepareGroupMember(ctx, s.validator, selected, member)
+		if err != nil {
+			return TemplateGroupPlan{}, nil, &GroupMemberError{RouterID: expectations[i].RouterID, Cause: err}
+		}
+		candidate.Expected = expectations[i]
+		if candidate.NewRevision != nil && candidate.Expected.DesiredNumber == math.MaxInt64 {
+			return TemplateGroupPlan{}, nil, ErrVersionExhausted
+		}
+		plan.Members = append(plan.Members, candidate)
+		if dryRun {
+			views = append(views, previewGroupMember(member, candidate))
+		}
+	}
+	return plan, views, nil
+}
 
 func validSharedRequest(request SharedPublishRequest) bool {
 	if !validIdentity(request.TemplateID) || request.TemplateDraftVersion < 1 ||
+		(request.PreviewFingerprint != nil && request.Source != SourceSharedDraft) ||
 		request.AcceptedVersion < 0 || request.AcceptedVersion > request.TemplateDraftVersion {
 		return false
 	}
