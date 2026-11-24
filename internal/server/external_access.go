@@ -44,12 +44,12 @@ func NewExternalAccessHandler(origin WebOrigin, store ExternalAccessStore, opera
 			if r.Method != http.MethodGet && r.Method != http.MethodHead {
 				actual, err := ParseWebOrigin("https://" + r.Host)
 				if err != nil || !actual.allows(r, false) {
-					webResult(w, 403, "invalid_origin", "")
+					externalError(w, 403, "invalid_origin")
 					return
 				}
 			}
 			if operation == nil {
-				webResult(w, 404, "not_found", "")
+				externalError(w, 404, "not_found")
 				return
 			}
 			operation(w, r, permit)
@@ -62,14 +62,14 @@ func NewExternalAccessHandler(origin WebOrigin, store ExternalAccessStore, opera
 func externalFailure(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, externalaccess.ErrDisabled):
-		webResult(w, 404, "not_found", "")
+		externalError(w, 404, "not_found")
 	case errors.Is(err, externalaccess.ErrUnauthorized):
 		w.Header().Set("WWW-Authenticate", "Bearer")
-		webResult(w, 401, "unauthorized", "")
+		externalError(w, 401, "unauthorized")
 	case errors.Is(err, externalaccess.ErrConflict):
-		webResult(w, 409, "conflict", "")
+		externalError(w, 409, "conflict")
 	default:
-		webFailure(w, err)
+		externalError(w, 503, "unavailable")
 	}
 }
 
@@ -83,6 +83,14 @@ func readExternalJSON(w http.ResponseWriter, r *http.Request, max int64, out any
 		return false
 	}
 	return jsonv2.Unmarshal(raw, out, jsonv2.RejectUnknownMembers(true)) == nil
+}
+
+func externalError(w http.ResponseWriter, status int, code string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(struct {
+		Code string `json:"code"`
+	}{code})
 }
 
 func ownerExternalSettings(w http.ResponseWriter, r *http.Request, origin WebOrigin, store ExternalAccessStore) {
@@ -148,7 +156,11 @@ func ownerExternalSettings(w http.ResponseWriter, r *http.Request, origin WebOri
 	}
 	state, secret, err := store.Owner(r.Context(), digest, change)
 	if err != nil {
-		externalFailure(w, err)
+		if errors.Is(err, externalaccess.ErrConflict) {
+			webResult(w, 409, "conflict", "")
+		} else {
+			webFailure(w, err)
+		}
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

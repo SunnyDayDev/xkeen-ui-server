@@ -57,3 +57,11 @@ func TestExternalOriginAndOwnerScope(t *testing.T) {
 		t.Fatal("owner mutation without authority")
 	}
 }
+
+func TestExternalFailureUsesDocumentedErrorEnvelope(t *testing.T) {
+	w := httptest.NewRecorder()
+	externalFailure(w, externalaccess.ErrUnauthorized)
+	if !strings.Contains(w.Body.String(), `"code":"unauthorized"`) || w.Header().Get("WWW-Authenticate") != "Bearer" {
+		t.Fatal("management error envelope")
+	}
+}
