@@ -44115,6 +44115,2342 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "p5tDb",
+      "x": 40,
+      "y": 84000,
+      "name": "32 / Шаблоны / Исключения XKeen · Исходный список",
+      "width": 1080,
+      "height": 820,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "uq92U",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "xroh0",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "BQB0H",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "NltKP",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "T3UWvc",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "n8jaH",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "Li9Ak",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "h2GhY",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "mvAOQ",
+              "name": "Выбранный шаблон",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Шаблоны / example-profile",
+              "fontFamily": "$font",
+              "fontSize": 15,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "d7SPU",
+              "name": "Заголовок",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Исключения XKeen",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "c27AI",
+              "name": "Исходный текст",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "UW7PQ",
+                  "name": "Подпись",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Список IP и сетей",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "v87G0",
+                  "name": "Текст списка",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "192.0.2.4\n${bypass.network}",
+                  "fontFamily": "$mono",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "IZonG",
+              "name": "Строковые переменные",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "j5wc0p",
+                  "name": "Подпись",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Переменные",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "kojBy",
+                  "name": "Строковый параметр",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "bypass.network · 2001:db8::/32",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "aVuk2",
+              "name": "Предпросмотр файла",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "USJaH",
+                  "name": "Имя файла",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "ip_exclude.lst",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "F6FUjj",
+                  "name": "Результат",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "192.0.2.4\n2001:db8::/32",
+                  "fontFamily": "$mono",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "rN2Vy",
+              "name": "Действия",
+              "width": "fill_container",
+              "gap": 10,
+              "children": [
+                {
+                  "id": "VKXet",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Сохранить",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Сохранить"
+                    }
+                  }
+                },
+                {
+                  "id": "N4HKAN",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Проверить список",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Проверить список"
+                    }
+                  }
+                },
+                {
+                  "id": "w2l5TS",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "К шаблону",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "К шаблону"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "W7HQI",
+      "x": 1200,
+      "y": 84000,
+      "name": "32 / Шаблоны / Исключения XKeen · Новая настройка",
+      "width": 1080,
+      "height": 820,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "toUo8",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "pIXl2",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "apdbf",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "XzXQS",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "zggRg",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "BlgAi",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "g8Hmqg",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "gb9Go",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "ltbvi",
+              "name": "Выбранный шаблон",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Шаблоны / example-profile",
+              "fontFamily": "$font",
+              "fontSize": 15,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "J8Jiph",
+              "name": "Заголовок",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Исключения XKeen",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "KeFWZ",
+              "name": "Исходный текст",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "vpD0n",
+                  "name": "Подпись",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Список IP и сетей",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "sZ0JN",
+                  "name": "Текст списка",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "fontFamily": "$mono",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "hUDuH",
+              "name": "Строковые переменные",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "UV4Pn",
+                  "name": "Подпись",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Переменные",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "pY0CE",
+                  "name": "Строковый параметр",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Добавить переменную",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "buZr3",
+              "name": "Предпросмотр файла",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "u8QYKf",
+                  "name": "Имя файла",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "ip_exclude.lst",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "OENdV",
+                  "name": "Результат",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Настройка ещё не создана",
+                  "fontFamily": "$mono",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "aZcb7",
+              "name": "Действия",
+              "width": "fill_container",
+              "gap": 10,
+              "children": [
+                {
+                  "id": "p5n6jH",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Создать список",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Создать список"
+                    }
+                  }
+                },
+                {
+                  "id": "W770W",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Проверить список",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Проверить список"
+                    }
+                  }
+                },
+                {
+                  "id": "pZ5NW",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "К шаблону",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "К шаблону"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "ecM8R",
+      "x": 2360,
+      "y": 84000,
+      "name": "32 / Шаблоны / Исключения XKeen · Пустой файл",
+      "width": 1080,
+      "height": 820,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "X1SH7",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "PDJqP",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "n6DMI",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "H5nvzK",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "n5H73h",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "Bq3s1",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "oWoj0",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "DGViM",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "bZIzE",
+              "name": "Выбранный шаблон",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Шаблоны / example-profile",
+              "fontFamily": "$font",
+              "fontSize": 15,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "isTZe",
+              "name": "Заголовок",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Исключения XKeen",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "U80agH",
+              "name": "Исходный текст",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "BMIMg",
+                  "name": "Подпись",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Список IP и сетей",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "vHBo4",
+                  "name": "Текст списка",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "fontFamily": "$mono",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "d4zz0S",
+              "name": "Строковые переменные",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "X2e61",
+                  "name": "Подпись",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Переменные",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "xBgUN",
+                  "name": "Строковый параметр",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Добавить переменную",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "dflN1",
+              "name": "Предпросмотр файла",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "L5GFwG",
+                  "name": "Имя файла",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "ip_exclude.lst",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "u5Ts8f",
+                  "name": "Результат",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Пустой файл",
+                  "fontFamily": "$mono",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Fkeuo",
+              "name": "Действия",
+              "width": "fill_container",
+              "gap": 10,
+              "children": [
+                {
+                  "id": "yGYdR",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Сохранить",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Сохранить"
+                    }
+                  }
+                },
+                {
+                  "id": "WDj3k",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Проверить список",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Проверить список"
+                    }
+                  }
+                },
+                {
+                  "id": "r6FWNx",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "К шаблону",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "К шаблону"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "JHQbz",
+      "x": 3520,
+      "y": 84000,
+      "name": "32 / Шаблоны / Исключения XKeen · Обязательная переменная",
+      "width": 1080,
+      "height": 820,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "zo1Na",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "MiGrN",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "QH6sM",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "rjAQC",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "xVT7d",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "P0cqDR",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "H1wadL",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "uAX0t",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "R6kB3",
+              "name": "Выбранный шаблон",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Шаблоны / example-profile",
+              "fontFamily": "$font",
+              "fontSize": 15,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "IhMUJ",
+              "name": "Заголовок",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Исключения XKeen",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "PPgPH",
+              "name": "Исходный текст",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "CQOvS",
+                  "name": "Подпись",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Список IP и сетей",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "H2Iss",
+                  "name": "Текст списка",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "192.0.2.4\n${bypass.network}",
+                  "fontFamily": "$mono",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "AVxiG",
+              "name": "Строковые переменные",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Fx6EY",
+                  "name": "Подпись",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Переменные",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "mGoOS",
+                  "name": "Строковый параметр",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "bypass.network · без дефолта",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "pAOHU",
+              "name": "Предпросмотр файла",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "vtT0J",
+                  "name": "Имя файла",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "ip_exclude.lst",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "b1OAY",
+                  "name": "Результат",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Строка 2: нужно значение",
+                  "fontFamily": "$mono",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "wg1s6",
+              "name": "Действия",
+              "width": "fill_container",
+              "gap": 10,
+              "children": [
+                {
+                  "id": "vpGby",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Сохранить",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Сохранить"
+                    }
+                  }
+                },
+                {
+                  "id": "j2pvbV",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Проверить список",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Проверить список"
+                    }
+                  }
+                },
+                {
+                  "id": "fZ8jR",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "К шаблону",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "К шаблону"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "ZyWZs",
+      "x": 40,
+      "y": 84950,
+      "name": "32 / Шаблоны / Исключения XKeen · Ошибка строки",
+      "width": 1080,
+      "height": 820,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "OLvnz",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "Z21bk9",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "xanqj",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "zIZ1E",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "JVrea",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "Z36q0P",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "hqIBh",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "cJyQq",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "q6Z3BF",
+              "name": "Выбранный шаблон",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Шаблоны / example-profile",
+              "fontFamily": "$font",
+              "fontSize": 15,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "SlbMx",
+              "name": "Заголовок",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Исключения XKeen",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "wnBWq",
+              "name": "Исходный текст",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "N75uS",
+                  "name": "Подпись",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Список IP и сетей",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "zPfHz",
+                  "name": "Текст списка",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "192.0.2.4\nexample.net",
+                  "fontFamily": "$mono",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "zqpOd",
+              "name": "Строковые переменные",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "pqKzx",
+                  "name": "Подпись",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Переменные",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "NNMg0",
+                  "name": "Строковый параметр",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "bypass.network · 2001:db8::/32",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "A7IlpN",
+              "name": "Предпросмотр файла",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "D9k3Nm",
+                  "name": "Имя файла",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "ip_exclude.lst",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "P3vyuB",
+                  "name": "Результат",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Строка 2: неверный адрес",
+                  "fontFamily": "$mono",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Sa4jt",
+              "name": "Действия",
+              "width": "fill_container",
+              "gap": 10,
+              "children": [
+                {
+                  "id": "l33DH",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Сохранить",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Сохранить"
+                    }
+                  }
+                },
+                {
+                  "id": "v1WVwD",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Проверить список",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Проверить список"
+                    }
+                  }
+                },
+                {
+                  "id": "oIyyt",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "К шаблону",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "К шаблону"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Zaexi",
+      "x": 1200,
+      "y": 84950,
+      "name": "32 / Шаблоны / Исключения XKeen · Конфликт версий",
+      "width": 1080,
+      "height": 820,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "cycCR",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "f9jiJ",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "xjcML",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "t7TpN",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "J5Gw8",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "t7sEML",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "nvhqw",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "EAIiL",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "o0G06",
+              "name": "Выбранный шаблон",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Шаблоны / example-profile",
+              "fontFamily": "$font",
+              "fontSize": 15,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "whqV9",
+              "name": "Заголовок",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Исключения XKeen",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "DABX5",
+              "name": "Исходный текст",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "zTlDu",
+                  "name": "Подпись",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Список IP и сетей",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "VxNtd",
+                  "name": "Текст списка",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "192.0.2.4\n${bypass.network}",
+                  "fontFamily": "$mono",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "kcdbD",
+              "name": "Строковые переменные",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "k0fCU",
+                  "name": "Подпись",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Переменные",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "d8exi",
+                  "name": "Строковый параметр",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "bypass.network · 2001:db8::/32",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "p9Qjc",
+              "name": "Предпросмотр файла",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "lHW5n",
+                  "name": "Имя файла",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "ip_exclude.lst",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "ArTZ8",
+                  "name": "Результат",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "192.0.2.4\n2001:db8::/32",
+                  "fontFamily": "$mono",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "sS6iV",
+              "name": "Конфликт",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Настройки изменились. Ваш текст сохранён в форме.",
+              "fontFamily": "$font",
+              "fontSize": 15,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "fr46D",
+              "name": "Действия",
+              "width": "fill_container",
+              "gap": 10,
+              "children": [
+                {
+                  "id": "JOh1w",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Перечитать",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Перечитать"
+                    }
+                  }
+                },
+                {
+                  "id": "dF0Ay",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Проверить список",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Проверить список"
+                    }
+                  }
+                },
+                {
+                  "id": "Y31YCl",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "К шаблону",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "К шаблону"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "eYICT",
+      "x": 2360,
+      "y": 84950,
+      "name": "32 / Шаблоны / Исключения XKeen · Сессия завершена",
+      "width": 1080,
+      "height": 820,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "EOMtV",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "T0DGGq",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "y4MFWc",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "omNLf",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "Yv1Em",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "m3uMPg",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "ZvSK8",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "p2blTr",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "AAiKg",
+              "name": "Выбранный шаблон",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Шаблоны / example-profile",
+              "fontFamily": "$font",
+              "fontSize": 15,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "Eh01f",
+              "name": "Заголовок",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Исключения XKeen",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "mG2HY",
+              "name": "Состояние сессии",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Войдите, чтобы открыть настройки шаблона.",
+              "fontFamily": "$font",
+              "fontSize": 15,
+              "fontWeight": "normal"
+            },
+            {
+              "id": "WuIpZ",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Войти",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Войти"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "fESn2",
+      "x": 3520,
+      "y": 84950,
+      "name": "32 / Шаблоны / Исключения XKeen · Узкий экран",
+      "width": 390,
+      "height": 890,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "sn1oQ",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "layout": "vertical",
+          "gap": 12,
+          "padding": [
+            14,
+            16
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "RnbFd",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "iQwdN",
+              "name": "Действия консоли",
+              "width": "fill_container",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "N2RqS",
+                  "name": "Ссылки консоли",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "tRr8g",
+                      "name": "Первая строка навигации",
+                      "width": "fill_container",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "id": "WgJ7h",
+                          "type": "ref",
+                          "ref": "oQHGq",
+                          "name": "Текущий раздел",
+                          "width": 94,
+                          "fill": "$ink",
+                          "descendants": {
+                            "uzKPJ": {
+                              "fill": "#FFFFFF",
+                              "icon": "layout-dashboard"
+                            },
+                            "G2nPu4": {
+                              "fill": "#FFFFFF",
+                              "content": "Обзор"
+                            }
+                          }
+                        },
+                        {
+                          "id": "pVahw",
+                          "type": "ref",
+                          "ref": "oQHGq",
+                          "name": "Текущий раздел",
+                          "width": 108,
+                          "fill": "#273446",
+                          "descendants": {
+                            "uzKPJ": {
+                              "fill": "#FFFFFF",
+                              "icon": "layers"
+                            },
+                            "G2nPu4": {
+                              "fill": "#FFFFFF",
+                              "content": "Шаблоны"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "lYO3a",
+                      "type": "ref",
+                      "ref": "oQHGq",
+                      "name": "Настройки",
+                      "width": 112,
+                      "fill": "$ink",
+                      "descendants": {
+                        "uzKPJ": {
+                          "fill": "#FFFFFF",
+                          "icon": "settings"
+                        },
+                        "G2nPu4": {
+                          "fill": "#FFFFFF",
+                          "content": "Настройки"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "i9Vw1b",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Завершить сессию",
+                  "fill": "$accent",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Выйти"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "joMVX",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "uL3gu",
+              "name": "Выбранный шаблон",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Шаблоны / example-profile",
+              "fontFamily": "$font",
+              "fontSize": 15,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "RIOim",
+              "name": "Заголовок",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Исключения XKeen",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "t2O2Qy",
+              "name": "Исходный текст",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "uGbCZ",
+                  "name": "Подпись",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Список IP и сетей",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "JtE2N",
+                  "name": "Текст списка",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "192.0.2.4\n${bypass.network}",
+                  "fontFamily": "$mono",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Jnfjy",
+              "name": "Строковые переменные",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "T3S5wo",
+                  "name": "Подпись",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Переменные",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "QMr86",
+                  "name": "Строковый параметр",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "bypass.network · 2001:db8::/32",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "pjqEW",
+              "name": "Предпросмотр файла",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ZZ6P3",
+                  "name": "Имя файла",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "ip_exclude.lst",
+                  "fontFamily": "$font",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "o6zayH",
+                  "name": "Результат",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "192.0.2.4\n2001:db8::/32",
+                  "fontFamily": "$mono",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "IjgDK",
+              "name": "Действия",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "id": "SrQcN",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Сохранить",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Сохранить"
+                    }
+                  }
+                },
+                {
+                  "id": "hO99c",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Проверить список",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Проверить список"
+                    }
+                  }
+                },
+                {
+                  "id": "k1PN78",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "К шаблону",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "К шаблону"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "variables": {
