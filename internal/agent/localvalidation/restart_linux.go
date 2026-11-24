@@ -25,6 +25,9 @@ import (
 // RestartWorking manages a dedicated direct Xray service. The owning supervisor
 // holds the persistent scope lock for all supported starts and mutations.
 type RestartWorking struct {
+	hot            *HotConfig
+	guardedRuntime preparation.Runtime
+	guardedPolicy  string
 	scope          preparation.Scope
 	initial        Working
 	binary, bootID string
@@ -57,7 +60,7 @@ func NewRestartWorking(cfg Config, uid, gid uint32) (*RestartWorking, error) {
 		lease.Close()
 		return nil, restart.ErrBaseline
 	}
-	return &RestartWorking{scope: cfg.Scope, initial: cfg.Observer(), binary: cfg.Xray,
+	return &RestartWorking{hot: cfg.Hot, scope: cfg.Scope, initial: cfg.Observer(), binary: cfg.Xray,
 		bootID: strings.TrimSpace(string(raw)), uid: uid, gid: gid, directory: dir, lease: lease}, nil
 }
 
@@ -77,7 +80,11 @@ func (w *RestartWorking) Observe(ctx context.Context, current *restart.Confirmed
 		}
 		probe.Manifest = expected
 	}
-	return w.observe(ctx, probe)
+	observed, err := w.observe(ctx, probe)
+	if err == nil && current != nil && current.Hot != nil && !current.Hot.Matches(w.RuleEvidence(ctx, current)) {
+		return preparation.Baseline{}, restart.ErrBaseline
+	}
+	return observed, err
 }
 
 func (w *RestartWorking) observe(ctx context.Context, probe Working) (preparation.Baseline, error) {
@@ -176,19 +183,34 @@ func (w *RestartWorking) StartCommitted(ctx context.Context, journal restart.Jou
 			return restart.ErrBaseline
 		}
 	}
-	observed, err := w.launch(ctx, current.Baseline.Files, func(preparation.Runtime) error { return nil })
-	if err != nil {
-		return err
+	if current.Hot != nil && current.Hot.Rebound(w.policy(ctx)) == nil {
+		return restart.ErrBaseline
 	}
-	if record.Current != nil {
-		current.Baseline = observed
-	} else {
-		record.LocalBaseline = &observed
-	}
-	return journal.Save(record)
+	_, err = w.launchChecked(ctx, current.Baseline.Files, func(preparation.Runtime) error { return nil }, func(observed preparation.Baseline) error {
+		if record.Current != nil {
+			next := *current
+			next.Baseline = observed
+			next.Guard = w.LaunchGuard(observed.Runtime)
+			if current.Hot != nil {
+				next.Hot = current.Hot.Rebound(next.Guard)
+				if next.Hot == nil || !next.Hot.Matches(w.RuleEvidence(ctx, &next)) {
+					return restart.ErrBaseline
+				}
+			}
+			record.Current = &next
+		} else {
+			record.LocalBaseline = &observed
+		}
+		return journal.Save(record)
+	})
+	return err
 }
 
 func (w *RestartWorking) launch(ctx context.Context, files []preparation.BaselineFile, started func(preparation.Runtime) error) (preparation.Baseline, error) {
+	return w.launchChecked(ctx, files, started, nil)
+}
+
+func (w *RestartWorking) launchChecked(ctx context.Context, files []preparation.BaselineFile, started func(preparation.Runtime) error, finish func(preparation.Baseline) error) (preparation.Baseline, error) {
 	if ctx.Err() != nil || !w.exactFiles(files) {
 		return preparation.Baseline{}, restart.ErrEffects
 	}
@@ -202,6 +224,7 @@ func (w *RestartWorking) launch(ctx context.Context, files []preparation.Baselin
 	command.Env = []string{"PATH=/usr/bin:/bin", "XRAY_LOCATION_ASSET=/opt/etc/xray/dat"}
 	command.Dir = "/"
 	command.SysProcAttr = &syscall.SysProcAttr{Credential: &syscall.Credential{Uid: w.uid, Gid: w.gid}}
+	guard := w.policy(ctx)
 	if err := command.Start(); err != nil {
 		return preparation.Baseline{}, restart.ErrEffects
 	}
@@ -223,6 +246,7 @@ func (w *RestartWorking) launch(ctx context.Context, files []preparation.Baselin
 		return preparation.Baseline{}, restart.ErrEffects
 	}
 	runtime := w.fixedRuntime(command.Process.Pid, tick)
+	w.guardedRuntime, w.guardedPolicy = runtime, guard
 	if err := started(runtime); err != nil {
 		abort()
 		return preparation.Baseline{}, err
@@ -234,6 +258,12 @@ func (w *RestartWorking) launch(ctx context.Context, files []preparation.Baselin
 	defer cancel()
 	for {
 		if confirmed, err := w.observe(deadline, probe); err == nil && reflect.DeepEqual(confirmed.Files, files) {
+			if finish != nil {
+				if err := finish(confirmed); err != nil {
+					abort()
+					return preparation.Baseline{}, err
+				}
+			}
 			return confirmed, nil
 		}
 		select {

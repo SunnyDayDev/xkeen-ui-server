@@ -41,7 +41,10 @@ export XKEEN_TEST_AGENT_BINARY=/proof/xkeen-agent
 export XKEEN_TEST_PREPARATION_BINARY=/proof/xkeen-supervisor
 uname -smr
 grep -E "^(Xray|Entware)=" /usr/local/share/router-lab/versions.txt
-if [ "${XKEEN_TEST_APPLICATION:-0}" = "1" ]; then
+if [ "${XKEEN_TEST_HOT:-0}" = "1" ]; then
+  /opt/sbin/iptables -I OUTPUT 1 -d 127.0.0.1 -p tcp --dport 10085 -m owner ! --uid-owner 0 -j REJECT
+  /proof/process.test -test.run "^TestProcessAgentAppliesGuardedHotRules$" -test.v -test.timeout 2m
+elif [ "${XKEEN_TEST_APPLICATION:-0}" = "1" ]; then
   /proof/runner.test -test.run "^TestListenerMustBelongToAttestedPID$" -test.v
   /proof/restart.test -test.run "^TestStartup" -test.v
   /proof/process.test -test.run "^TestProcessAgent(AppliesTwoControlledGenerations|RollbackOutcomes|RollbackPreservesForeignWorkingData|RecoversInterruptedApplication)$" -test.v -test.timeout 2m
@@ -55,7 +58,9 @@ test "$(find /tmp/validation-cgroup/jobs -mindepth 1 -type d | wc -l)" = 0
 '
 }
 
-if [ "${XKEEN_LAB_APPLICATION:-0}" = "1" ]; then
+if [ "${XKEEN_LAB_HOT:-0}" = "1" ]; then
+  run_lab --read-only --cap-add=SYS_PTRACE --cap-add=NET_ADMIN --cap-add=NET_RAW --env XKEEN_TEST_HOT=1
+elif [ "${XKEEN_LAB_APPLICATION:-0}" = "1" ]; then
   run_lab --read-only --cap-add=SYS_PTRACE --env XKEEN_TEST_APPLICATION=1
 else
   run_lab --read-only

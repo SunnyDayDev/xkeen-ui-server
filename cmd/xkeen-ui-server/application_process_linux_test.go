@@ -16,6 +16,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -35,6 +36,12 @@ func TestProcessAgentAppliesTwoControlledGenerations(t *testing.T) {
 	checkControlledApplication(t, "apply")
 }
 
+func TestProcessAgentAppliesGuardedHotRules(t *testing.T) {
+	if os.Getenv("XKEEN_TEST_HOT") != "1" {
+		t.Skip("isolated hot application lab required")
+	}
+	checkControlledApplication(t, "hot")
+}
 func TestProcessAgentRollbackOutcomes(t *testing.T) {
 	checkControlledApplication(t, "rollback")
 }
@@ -96,9 +103,37 @@ func checkControlledApplication(t *testing.T, mode string) {
 		t.Fatal("cannot create private agent fixture")
 	}
 	var unavailable atomic.Bool
-	allow := faultableApplicationProbe(t, "allowed-fixture", &unavailable)
+	allow := faultableApplicationProbe(t, "allowed-fixture", unavailable.Load)
 	deny := localProbeEndpoint(t, "denied-fixture")
-	target := localProbeEndpoint(t, "target-fixture")
+	var failAfterReplacement, failHotProbe atomic.Bool
+	var crashOnReplacement atomic.Int32
+	target := faultableApplicationProbe(t, "target-fixture", func() bool {
+		if failHotProbe.Load() {
+			return true
+		}
+		if !failAfterReplacement.Load() {
+			return false
+		}
+		raw, err := exec.Command(xray, "api", "lsrules", "--server=127.0.0.1:10085", "--timeout=1").Output()
+		var list struct {
+			Rules []struct{ RuleTag, Tag string }
+		}
+		if err != nil || json.Unmarshal(raw, &list) != nil {
+			return false
+		}
+		for _, r := range list.Rules {
+			if r.RuleTag == "switch" && r.Tag == "block" {
+				if !failAfterReplacement.CompareAndSwap(true, false) {
+					return false
+				}
+				if pid := crashOnReplacement.Swap(0); pid > 0 {
+					_ = syscall.Kill(int(pid), syscall.SIGKILL)
+				}
+				return true
+			}
+		}
+		return false
+	})
 	_, deniedPort, _ := net.SplitHostPort(deny)
 	_, targetPort, _ := net.SplitHostPort(target)
 	free, err := net.Listen("tcp4", "127.0.0.1:0")
@@ -117,6 +152,17 @@ func checkControlledApplication(t *testing.T, mode string) {
 			ports += "," + targetPort
 		}
 		c.Files[4].Content = []byte(fmt.Sprintf(`{"routing":{"rules":[{"type":"field","port":%q,"outboundTag":"block"}]}}`, ports))
+		if mode == "hot" {
+			c.Files[0].Content = []byte(`{"log":{"loglevel":"warning"}}`)
+			c.Files[1].Content = []byte(`{"api":{"tag":"api","listen":"127.0.0.1:10085","services":["RoutingService","StatsService"]},"stats":{}}`)
+			c.Files[2].Content = []byte(fmt.Sprintf(`{"inbounds":[{"port":%s,"listen":"127.0.0.1","protocol":"socks","tag":"fixture-socks","settings":{"auth":"noauth","udp":false}}]}`, proxyPort))
+			out := "direct"
+			if denyTarget {
+				out = "block"
+			}
+			c.Files[4].Content = []byte(fmt.Sprintf(`{"routing":{"domainStrategy":"AsIs","rules":[{"type":"field","ruleTag":"health","inboundTag":["fixture-socks"],"port":%q,"outboundTag":"block"},{"type":"field","ruleTag":"switch","inboundTag":["fixture-socks"],"port":%q,"outboundTag":%q}]}}`, deniedPort, targetPort, out))
+			return c
+		}
 		if extra {
 			c.Files = append(c.Files, configuration.CatalogFile{Name: "06_extra.json", Content: []byte("{ \"stats\": {} }\n")})
 		}
@@ -149,6 +195,14 @@ func checkControlledApplication(t *testing.T, mode string) {
 		WorkerUID: workerUID, WorkerGID: workerUID, Xray: xray, XraySHA256: hex.EncodeToString(digest[:]),
 		WorkingDirectory: path("work"), WorkingManifest: manifest, WorkingPID: oldPID, WorkingStartTick: oldTick,
 		SOCKS: proxy, AllowURL: "http://" + allow, AllowMarker: "allowed-fixture", DenyURL: "http://" + deny, DenyMarker: "denied-fixture"}
+	if mode == "hot" {
+		filter, err := os.ReadFile("/opt/sbin/iptables")
+		if err != nil {
+			t.Fatal(err)
+		}
+		sum := sha256.Sum256(filter)
+		cfg.Hot = &localvalidation.HotConfig{API: "127.0.0.1:10085", ProbeURL: "http://" + target, ProbeMarker: "target-fixture", FirewallSHA256: hex.EncodeToString(sum[:])}
+	}
 	app := localvalidation.ApplicationConfig{Version: 1, Mode: "direct-xray-lab", Socket: path("socket/apply.sock"),
 		JournalDirectory: path("journal"), CA: path("trusted-ca.pem"), RuntimeUID: runtimeUID, RuntimeGID: runtimeUID}
 	writeConfig := func(name string, value any) {
@@ -264,6 +318,121 @@ func checkControlledApplication(t *testing.T, mode string) {
 	first, _ := committed()
 	if first.Number != 2 || first.Baseline.Runtime.PID == oldPID || first.Baseline.Runtime.BootID == "" {
 		t.Fatal("first restart did not commit a new runtime")
+	}
+	if mode == "hot" {
+		if first.Guard == "" {
+			t.Fatal("protected launcher did not prove guarded startup")
+		}
+		assertHotAPIGuard(t, xray, cfg.Hot.API, proxy, agentUID)
+		stop()
+		checkTraffic(target, "target-fixture", false)
+		candidate := catalog(false, false)
+		publish(candidate, 3)
+		stop2, out := launchAgent()
+		stop2()
+		next, _ := committed()
+		if next.Number != 3 || next.Hot == nil || next.Hot.Outcome != "direct" || next.Baseline.Runtime != first.Baseline.Runtime {
+			t.Fatalf("hot application failed number=%d hot=%t log=%s", next.Number, next.Hot != nil, out.String())
+		}
+		checkTraffic(target, "target-fixture", true)
+		checkTraffic(allow, "allowed-fixture", true)
+		checkTraffic(deny, "denied-fixture", false)
+		for _, file := range candidate.Files {
+			raw, err := os.ReadFile(path("work/" + file.Name))
+			if err != nil || string(raw) != string(file.Content) {
+				t.Fatal("target file mismatch")
+			}
+		}
+		stopRouterAgent(t, supervisor)
+		supervisor = startSupervisor()
+		stop3, out := launchAgent()
+		stop3()
+		replay, _ := committed()
+		if replay.AttemptID != next.AttemptID || replay.Baseline.Runtime != next.Baseline.Runtime || !strings.Contains(out.String(), "agent revision verified locally") {
+			t.Fatal("reopened hot receipt did not verify")
+		}
+		stopRouterAgent(t, supervisor)
+		if err := syscall.Kill(next.Baseline.Runtime.PID, syscall.SIGTERM); err != nil {
+			t.Fatal(err)
+		}
+		waitRecovery(t, 6*time.Second, "hot process did not terminate", func() bool { _, err := localvalidation.ProcessStartTick(next.Baseline.Runtime.PID); return err != nil })
+		// Model a protected receipt from an earlier boot/network namespace while
+		// retaining the same stable profile and exact committed bytes.
+		data, err := os.ReadFile(path("journal/application.json"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var oldEpoch restart.Record
+		if json.Unmarshal(data, &oldEpoch) != nil || oldEpoch.Current == nil || oldEpoch.Current.Hot == nil {
+			t.Fatal("missing old epoch")
+		}
+		stable, _, ok := strings.Cut(oldEpoch.Current.Guard, ":")
+		if !ok {
+			t.Fatal("receipt mixes stable profile and network incarnation")
+		}
+		oldEpoch.Current.Guard = stable + ":" + strings.Repeat("0", 64)
+		oldEpoch.Current.Hot.Guard = oldEpoch.Current.Guard
+		oldEpoch.Current.Baseline.Runtime.BootID = "11111111-1111-4111-8111-111111111111"
+		writeConfig("journal/application.json", oldEpoch)
+		failHotProbe.Store(true)
+		bad := startProcess(t, binary, "--config", path("profile.json"), "--application-config", path("application.json"))
+		if err := bad.wait(t); err == nil {
+			t.Fatal("cold launcher accepted missing third probe")
+		}
+		if conn, err := net.DialTimeout("tcp", proxy, time.Second); err == nil {
+			conn.Close()
+			t.Fatal("unrecorded working process survived failed proof")
+		}
+		failHotProbe.Store(false)
+		supervisor = startSupervisor()
+		revived, _ := committed()
+		if revived.Hot == nil || revived.AttemptID != next.AttemptID || revived.Baseline.Runtime == next.Baseline.Runtime {
+			t.Fatal("hot generation cold restart proof")
+		}
+		checkTraffic(target, "target-fixture", true)
+		checkTraffic(deny, "denied-fixture", false)
+		failAfterReplacement.Store(true)
+		publish(catalog(true, false), 4)
+		failed, output := launchAgent()
+		failed()
+		var record restart.Record
+		raw, err := os.ReadFile(path("journal/application.json"))
+		if err != nil || json.Unmarshal(raw, &record) != nil || failAfterReplacement.Load() || record.LastRollback == nil || record.LastRollback.FailedPhase != restart.HotDispatch || record.Current == nil || record.Current.AttemptID != revived.AttemptID || record.Current.Baseline.Runtime == revived.Baseline.Runtime || record.Pending != nil || !strings.Contains(output.String(), "previous runtime restored") {
+			t.Fatalf("hot post-command rollback failed, invoked=%t log=%s", !failAfterReplacement.Load(), output.String())
+		}
+		checkTraffic(target, "target-fixture", true)
+		for _, file := range candidate.Files {
+			raw, err := os.ReadFile(path("work/" + file.Name))
+			if err != nil || !bytes.Equal(raw, file.Content) {
+				t.Fatal("hot rollback lost previous bytes")
+			}
+		}
+		// Interrupt the actual supervisor after Xray exposes the new route and
+		// before it witnesses the command result. No synthetic journal is injected.
+		crashOnReplacement.Store(int32(supervisor.cmd.Process.Pid))
+		failAfterReplacement.Store(true)
+		publish(catalog(true, false), 5)
+		interrupted, _ := launchAgent()
+		interrupted()
+		if supervisor.wait(t) == nil || failAfterReplacement.Load() {
+			t.Fatal("supervisor was not interrupted during hot dispatch")
+		}
+		raw, err = os.ReadFile(path("journal/application.json"))
+		record = restart.Record{}
+		if err != nil || json.Unmarshal(raw, &record) != nil || record.Pending == nil || record.Pending.Phase != restart.HotDispatch || record.Pending.TargetFiles == nil {
+			t.Fatal("interrupted hot intent lost")
+		}
+		attempt := record.Pending.AttemptID
+		checkTraffic(target, "target-fixture", false)
+		supervisor = startSupervisor()
+		raw, err = os.ReadFile(path("journal/application.json"))
+		record = restart.Record{}
+		if err != nil || json.Unmarshal(raw, &record) != nil || record.Pending != nil || record.LastRollback == nil || record.LastRollback.AttemptID != attempt || record.Current == nil || record.Current.AttemptID != revived.AttemptID {
+			t.Fatal("relaunch failed to resolve hot intent")
+		}
+		checkTraffic(target, "target-fixture", true)
+		stopRouterAgent(t, supervisor)
+		return
 	}
 	extra, err := os.Stat(path("work/06_extra.json"))
 	if err != nil || extra.Mode().Perm() != 0640 || extra.Sys().(*syscall.Stat_t).Gid != runtimeUID {
@@ -561,14 +730,14 @@ func checkControlledApplication(t *testing.T, mode string) {
 	checkTraffic(target, "target-fixture", true)
 }
 
-func faultableApplicationProbe(t *testing.T, marker string, unavailable *atomic.Bool) string {
+func faultableApplicationProbe(t *testing.T, marker string, unavailable func() bool) string {
 	t.Helper()
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
 	}
 	server := &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		if unavailable.Load() {
+		if unavailable() {
 			w.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
@@ -577,4 +746,42 @@ func faultableApplicationProbe(t *testing.T, marker string, unavailable *atomic.
 	go server.Serve(listener)
 	t.Cleanup(func() { server.Close() })
 	return listener.Addr().String()
+}
+
+// The filter's packet counter distinguishes an actual rejected connection
+// from an unrelated parser, SOCKS handshake or client binary failure.
+func assertHotAPIGuard(t *testing.T, xray, api, socks string, uid uint32) {
+	t.Helper()
+	count := func() uint64 {
+		b, err := exec.Command("/opt/sbin/iptables", "-nvxL", "OUTPUT").Output()
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, line := range strings.Split(string(b), "\n") {
+			if strings.Contains(line, "REJECT") && strings.Contains(line, "dpt:10085") {
+				fields := strings.Fields(line)
+				c, err := strconv.ParseUint(fields[0], 10, 64)
+				if err == nil {
+					return c
+				}
+			}
+		}
+		t.Fatal("missing exact synthetic API counter")
+		return 0
+	}
+	before := count()
+	cmd := exec.Command(xray, "api", "lsrules", "--server="+api, "--timeout=1")
+	cmd.SysProcAttr = &syscall.SysProcAttr{Credential: &syscall.Credential{Uid: uid, Gid: uid}}
+	if err := cmd.Run(); err == nil || count() <= before {
+		t.Fatal("foreign UID was not rejected at API endpoint")
+	}
+	before = count()
+	client := http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(&url.URL{Scheme: "socks5", Host: socks}), DisableKeepAlives: true}, Timeout: 2 * time.Second}
+	resp, err := client.Get("http://" + api)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	if err == nil || count() <= before {
+		t.Fatal("proxied Xray UID was not rejected at API endpoint")
+	}
 }

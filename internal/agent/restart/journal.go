@@ -31,6 +31,7 @@ type storedRecord struct {
 }
 
 type storedIntent struct {
+	Hot         *HotReceipt `json:",omitempty"`
 	AttemptID   string
 	Previous    preparation.Baseline
 	Number      int64
@@ -45,7 +46,7 @@ func storeRecord(record Record) storedRecord {
 	stored := storedRecord{Version: record.Version, Scope: record.Scope, Current: record.Current, LocalBaseline: record.LocalBaseline, LastRollback: record.LastRollback}
 	if p := record.Pending; p != nil {
 		stored.Pending = &storedIntent{AttemptID: p.AttemptID, Previous: p.Previous, Number: p.Target.Snapshot.Number,
-			Tag: p.Target.Tag, TargetFiles: p.TargetFiles, Phase: p.Phase, Started: p.Started, Rollback: p.Rollback}
+			Tag: p.Target.Tag, TargetFiles: p.TargetFiles, Phase: p.Phase, Started: p.Started, Rollback: p.Rollback, Hot: p.Hot}
 	}
 	return stored
 }
@@ -57,7 +58,7 @@ func (stored storedRecord) restore() Record {
 		for _, file := range p.TargetFiles {
 			target.Snapshot.Files = append(target.Snapshot.Files, configuration.CatalogFile{Name: file.Name, Content: bytes.Clone(file.Content)})
 		}
-		record.Pending = &Intent{AttemptID: p.AttemptID, Previous: p.Previous, Target: target, TargetFiles: p.TargetFiles, Phase: p.Phase, Started: p.Started, Rollback: p.Rollback}
+		record.Pending = &Intent{AttemptID: p.AttemptID, Previous: p.Previous, Target: target, TargetFiles: p.TargetFiles, Phase: p.Phase, Started: p.Started, Rollback: p.Rollback, Hot: p.Hot}
 	}
 	return record
 }
@@ -187,7 +188,7 @@ func validRecord(scope preparation.Scope, record Record) bool {
 		return false
 	}
 	if current := record.Current; current != nil {
-		if !validAttemptID(current.AttemptID) || !validBaseline(scope, current.Baseline) {
+		if current.Guard != "" && !validGuard(current.Guard) || !current.Hot.agrees(current.Baseline.Files) || current.Hot != nil && current.Hot.Guard != current.Guard || !validAttemptID(current.AttemptID) || !validBaseline(scope, current.Baseline) {
 			return false
 		}
 		snapshot := agentrevision.Snapshot{Number: current.Number, Profile: scope.Profile}
@@ -212,6 +213,9 @@ func validRecord(scope preparation.Scope, record Record) bool {
 	}
 	pending := record.Pending
 	working := record.Working()
+	if pending != nil && pending.Hot != nil && (record.Current == nil || record.Current.Guard != pending.Hot.Guard || !reflect.DeepEqual(record.Current.Baseline, pending.Previous)) {
+		return false
+	}
 	return pending == nil || validAttemptID(pending.AttemptID) && validTarget(scope, pending.Target) &&
 		validBaseline(scope, pending.Previous) && validPending(scope, pending) &&
 		(working == nil || reflect.DeepEqual(pending.Previous.Files, working.Baseline.Files)) &&
@@ -232,6 +236,18 @@ func validPending(scope preparation.Scope, pending *Intent) bool {
 	if state := pending.Rollback; state != nil &&
 		((state.State != RollbackActive && state.State != RollbackFailed) ||
 			(state.Started != nil && !validRollbackRuntime(scope, *pending, *state.Started))) {
+		return false
+	}
+	if !pending.Hot.agrees(pending.TargetFiles) {
+		return false
+	}
+	if pending.Hot != nil {
+		switch pending.Phase {
+		case HotDispatch, HotVerified:
+			return pending.Started == nil
+		case HotFiles:
+			return pending.Started != nil && *pending.Started == pending.Previous.Runtime
+		}
 		return false
 	}
 	switch pending.Phase {

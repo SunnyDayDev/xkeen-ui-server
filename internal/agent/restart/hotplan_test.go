@@ -10,7 +10,8 @@ import (
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agentrevision"
 )
 
-func TestRuleClassification(t *testing.T) {
+func hotFixture(t *testing.T) ([]preparation.BaselineFile, RuleEvidence) {
+	t.Helper()
 	names := []string{"01_log.json", "02_api.json", "03_inbounds.json", "04_outbounds.json", "05_routing.json"}
 	var old []preparation.BaselineFile
 	for _, name := range names {
@@ -23,6 +24,11 @@ func TestRuleClassification(t *testing.T) {
 	old[4].Content = []byte(`{"routing":{"domainStrategy":"AsIs","rules":[{"ruleTag":"deny","type":"field","inboundTag":["lab-socks"],"port":"18082","outboundTag":"block"},{"ruleTag":"switch","type":"field","inboundTag":["lab-socks"],"port":"18080","outboundTag":"direct"}]}}`)
 	runtime := preparation.Runtime{PID: 42, StartTick: 7, VerifierID: "verified", BootID: "boot", DirectoryDevice: 1, DirectoryInode: 2}
 	evidence := RuleEvidence{Runtime: runtime, Controlled: true, SOCKS: "127.0.0.1:1080", API: "127.0.0.1:10085", AllowPort: 18081, DenyPort: 18082, ProbePort: 18080, Observed: []RuleRoute{{"deny", "block"}, {"switch", "direct"}}, ProbeOutcome: "direct"}
+	return old, evidence
+}
+func TestRuleClassification(t *testing.T) {
+	old, evidence := hotFixture(t)
+	runtime := evidence.Runtime
 	for _, tc := range []struct {
 		name     string
 		file     int

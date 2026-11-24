@@ -91,6 +91,17 @@ func RestorePending(ctx context.Context, journal Journal, working Restorer, expe
 		// failed sync. Recovery must reopen and resolve that evidence.
 		return RollbackResult{}, ErrJournal
 	}
+	guard := launchGuard(working, restored.Runtime)
+	if err == nil && record.Current != nil && record.Current.Hot != nil {
+		prior := *record.Current
+		prior.Baseline = restored
+		prior.Guard = guard
+		hot, ok := working.(hotWorking)
+		prior.Hot = prior.Hot.Rebound(guard)
+		if !ok || prior.Hot == nil || !prior.Hot.Matches(hot.RuleEvidence(ctx, &prior)) {
+			err = ErrRollbackFailed
+		}
+	}
 	if err != nil || ctx.Err() != nil || pending.Rollback.Started == nil ||
 		*pending.Rollback.Started != restored.Runtime || !validBaseline(record.Scope, restored) ||
 		!reflect.DeepEqual(restored.Files, pending.Previous.Files) {
@@ -109,6 +120,8 @@ func RestorePending(ctx context.Context, journal Journal, working Restorer, expe
 	} else {
 		current := *record.Current
 		current.Baseline = restored
+		current.Guard = guard
+		current.Hot = current.Hot.Rebound(guard)
 		record.Current = &current
 	}
 	record.Pending, record.LastRollback = nil, &result
@@ -144,7 +157,7 @@ func AllowRollbackRetry(journal Journal, expectedID string) error {
 
 func validOriginalPhase(phase Phase) bool {
 	switch phase {
-	case Planned, Stopped, FilesVerified, RuntimeStarted:
+	case Planned, Stopped, FilesVerified, RuntimeStarted, HotDispatch, HotVerified, HotFiles:
 		return true
 	}
 	return false
