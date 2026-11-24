@@ -22,10 +22,12 @@ const journalName = "application.json"
 const maxJournal = 4 * agentrevision.MaxBody
 
 type storedRecord struct {
-	Version int
-	Scope   preparation.Scope
-	Current *Confirmed
-	Pending *storedIntent
+	Version       int
+	Scope         preparation.Scope
+	Current       *Confirmed
+	LocalBaseline *preparation.Baseline `json:"LocalBaseline,omitempty"`
+	LastRollback  *RollbackResult       `json:"LastRollback,omitempty"`
+	Pending       *storedIntent
 }
 
 type storedIntent struct {
@@ -36,25 +38,26 @@ type storedIntent struct {
 	TargetFiles []preparation.BaselineFile
 	Phase       Phase
 	Started     *preparation.Runtime
+	Rollback    *RollbackProgress `json:"Rollback,omitempty"`
 }
 
 func storeRecord(record Record) storedRecord {
-	stored := storedRecord{Version: record.Version, Scope: record.Scope, Current: record.Current}
+	stored := storedRecord{Version: record.Version, Scope: record.Scope, Current: record.Current, LocalBaseline: record.LocalBaseline, LastRollback: record.LastRollback}
 	if p := record.Pending; p != nil {
 		stored.Pending = &storedIntent{AttemptID: p.AttemptID, Previous: p.Previous, Number: p.Target.Snapshot.Number,
-			Tag: p.Target.Tag, TargetFiles: p.TargetFiles, Phase: p.Phase, Started: p.Started}
+			Tag: p.Target.Tag, TargetFiles: p.TargetFiles, Phase: p.Phase, Started: p.Started, Rollback: p.Rollback}
 	}
 	return stored
 }
 
 func (stored storedRecord) restore() Record {
-	record := Record{Version: stored.Version, Scope: stored.Scope, Current: stored.Current}
+	record := Record{Version: stored.Version, Scope: stored.Scope, Current: stored.Current, LocalBaseline: stored.LocalBaseline, LastRollback: stored.LastRollback}
 	if p := stored.Pending; p != nil {
 		target := Desired{Tag: p.Tag, Snapshot: agentrevision.Snapshot{Number: p.Number, Profile: stored.Scope.Profile}}
 		for _, file := range p.TargetFiles {
 			target.Snapshot.Files = append(target.Snapshot.Files, configuration.CatalogFile{Name: file.Name, Content: bytes.Clone(file.Content)})
 		}
-		record.Pending = &Intent{AttemptID: p.AttemptID, Previous: p.Previous, Target: target, TargetFiles: p.TargetFiles, Phase: p.Phase, Started: p.Started}
+		record.Pending = &Intent{AttemptID: p.AttemptID, Previous: p.Previous, Target: target, TargetFiles: p.TargetFiles, Phase: p.Phase, Started: p.Started, Rollback: p.Rollback}
 	}
 	return record
 }
@@ -195,11 +198,24 @@ func validRecord(scope preparation.Scope, record Record) bool {
 			return false
 		}
 	}
+	if local := record.LocalBaseline; local != nil && (record.Current != nil || record.LastRollback == nil || !validBaseline(scope, *local)) {
+		return false
+	}
+	if result := record.LastRollback; result != nil {
+		if !validAttemptID(result.AttemptID) || !agentrevision.ValidTag(result.TargetTag) ||
+			result.TargetNumber < 1 || !validOriginalPhase(result.FailedPhase) ||
+			(result.RetryApproved && (record.Pending != nil || (record.Current != nil && record.Current.Number >= result.TargetNumber))) ||
+			(record.Current != nil && record.Current.AttemptID == result.AttemptID) ||
+			(record.Pending != nil && record.Pending.AttemptID == result.AttemptID) {
+			return false
+		}
+	}
 	pending := record.Pending
+	working := record.Working()
 	return pending == nil || validAttemptID(pending.AttemptID) && validTarget(scope, pending.Target) &&
-		validBaseline(scope, pending.Previous) && validPending(scope, pending) && (record.Current == nil ||
-		pending.AttemptID != record.Current.AttemptID && pending.Target.Snapshot.Number > record.Current.Number &&
-			reflect.DeepEqual(pending.Previous.Files, record.Current.Baseline.Files))
+		validBaseline(scope, pending.Previous) && validPending(scope, pending) &&
+		(working == nil || reflect.DeepEqual(pending.Previous.Files, working.Baseline.Files)) &&
+		(record.Current == nil || pending.AttemptID != record.Current.AttemptID && pending.Target.Snapshot.Number > record.Current.Number)
 }
 
 func validPending(scope preparation.Scope, pending *Intent) bool {
@@ -212,6 +228,11 @@ func validPending(scope preparation.Scope, pending *Intent) bool {
 		if file.Name != target.Name || !bytes.Equal(file.Content, target.Content) {
 			return false
 		}
+	}
+	if state := pending.Rollback; state != nil &&
+		((state.State != RollbackActive && state.State != RollbackFailed) ||
+			(state.Started != nil && !validRollbackRuntime(scope, *pending, *state.Started))) {
+		return false
 	}
 	switch pending.Phase {
 	case Planned, Stopped, FilesVerified:

@@ -54,6 +54,10 @@ func ApplicationHandler(scope preparation.Scope, apply Applier) http.Handler {
 		_, err := apply.Apply(ctx, req.Credential, req.Binding.Tag)
 		reply := applicationResponse{Binding: req.Binding, Outcome: "ok"}
 		switch {
+		case errors.Is(err, restart.ErrRolledBack):
+			reply.Outcome = "rolled_back"
+		case errors.Is(err, restart.ErrRollbackFailed):
+			reply.Outcome = "rollback_failed"
 		case errors.Is(err, restart.ErrPending):
 			reply.Outcome = "pending"
 		case errors.Is(err, restart.ErrDesired):
@@ -107,6 +111,10 @@ func ApplyCurrent(ctx context.Context, socket string, scope preparation.Scope, k
 	switch reply.Outcome {
 	case "ok":
 		return nil
+	case "rolled_back":
+		return restart.ErrRolledBack
+	case "rollback_failed":
+		return restart.ErrRollbackFailed
 	case "pending":
 		return restart.ErrPending
 	case "desired":

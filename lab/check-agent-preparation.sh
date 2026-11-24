@@ -40,7 +40,7 @@ uname -smr
 grep -E "^(Xray|Entware)=" /usr/local/share/router-lab/versions.txt
 if [ "${XKEEN_TEST_APPLICATION:-0}" = "1" ]; then
   /proof/runner.test -test.run "^TestListenerMustBelongToAttestedPID$" -test.v
-  /proof/process.test -test.run "^TestProcessAgentAppliesTwoControlledGenerations$" -test.v -test.timeout 2m
+  /proof/process.test -test.run "^TestProcessAgent(AppliesTwoControlledGenerations|RollbackOutcomes|RollbackPreservesForeignWorkingData)$" -test.v -test.timeout 2m
 else
   if [ "${XKEEN_TEST_PREPARATION_XKEEN:-0}" = "0" ]; then
     /proof/runner.test -test.v

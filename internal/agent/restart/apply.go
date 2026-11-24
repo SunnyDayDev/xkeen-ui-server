@@ -9,6 +9,7 @@ import (
 	"errors"
 	"reflect"
 	"sync"
+	"time"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/preparation"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agentrevision"
@@ -54,13 +55,29 @@ type Intent struct {
 	TargetFiles []preparation.BaselineFile
 	Phase       Phase
 	Started     *preparation.Runtime
+	Rollback    *RollbackProgress
 }
 
 type Record struct {
-	Version int
-	Scope   preparation.Scope
-	Current *Confirmed
-	Pending *Intent
+	Version       int
+	Scope         preparation.Scope
+	Current       *Confirmed
+	LocalBaseline *preparation.Baseline
+	LastRollback  *RollbackResult
+	Pending       *Intent
+}
+
+// Working returns the recorded baseline authority, including a restored local
+// initial generation. A pending attempt may make this history diverge from the
+// actual runtime. Callers must honor the pending barrier and reverify.
+func (r Record) Working() *Confirmed {
+	if r.Current != nil {
+		return r.Current
+	}
+	if r.LocalBaseline != nil {
+		return &Confirmed{Baseline: *r.LocalBaseline}
+	}
+	return nil
 }
 
 type Source interface {
@@ -73,6 +90,7 @@ type Journal interface {
 }
 
 type Working interface {
+	Restorer
 	Observe(context.Context, *Confirmed) (preparation.Baseline, error)
 	Preflight(context.Context, preparation.Baseline, Desired) ([]preparation.BaselineFile, error)
 	Install(context.Context, Intent, func(Phase, *preparation.Runtime) error) (preparation.Baseline, error)
@@ -101,15 +119,22 @@ func (s *Service) Apply(ctx context.Context, key, tag string) (Confirmed, error)
 		return Confirmed{}, ErrJournal
 	}
 	if record.Pending != nil {
+		if record.Pending.Rollback != nil && record.Pending.Rollback.State == RollbackFailed {
+			return Confirmed{}, ErrRollbackFailed
+		}
 		return Confirmed{}, ErrPending
 	}
 	candidate, err := s.read(ctx, key, tag)
 	if err != nil {
 		return Confirmed{}, err
 	}
-	before, err := s.working.Observe(ctx, record.Current)
+	if last := record.LastRollback; last != nil && last.TargetTag == tag && !last.RetryApproved {
+		return Confirmed{}, ErrRolledBack
+	}
+	working := record.Working()
+	before, err := s.working.Observe(ctx, working)
 	if err != nil || before.Runtime.VerifierID != s.scope.VerifierID || before.Runtime.PID < 1 || before.Runtime.StartTick == 0 ||
-		(record.Current != nil && !reflect.DeepEqual(before.Files, record.Current.Baseline.Files)) {
+		(working != nil && !reflect.DeepEqual(before.Files, working.Baseline.Files)) {
 		return Confirmed{}, ErrBaseline
 	}
 	if record.Current != nil {
@@ -139,6 +164,11 @@ func (s *Service) Apply(ctx context.Context, key, tag string) (Confirmed, error)
 	intent := Intent{AttemptID: hex.EncodeToString(id[:]), Previous: before, Target: fresh, TargetFiles: files, Phase: Planned}
 	// The restart-only adapter has no exclusive RoutingService writer.
 	// E07 supplies fresh rule evidence when that capability is installed.
+	if last := record.LastRollback; last != nil && last.RetryApproved {
+		next := *last
+		next.RetryApproved = false
+		record.LastRollback = &next
+	}
 	plan := intent.Plan(record.Current, RuleEvidence{})
 	if plan.Unchanged {
 		again, err := s.working.Observe(ctx, record.Current)
@@ -175,10 +205,15 @@ func (s *Service) Apply(ctx context.Context, key, tag string) (Confirmed, error)
 	})
 	if err != nil || ctx.Err() != nil || intent.Phase != RuntimeStarted || intent.Started == nil ||
 		*intent.Started != now.Runtime || !validInstallation(intent, now, s.scope.VerifierID) {
-		return Confirmed{}, ErrEffects
+		rollbackCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 25*time.Second)
+		defer cancel()
+		if _, err := RestorePending(rollbackCtx, s.journal, s.working, intent.AttemptID); err != nil {
+			return Confirmed{}, err
+		}
+		return Confirmed{}, ErrRolledBack
 	}
 	confirmed := Confirmed{AttemptID: intent.AttemptID, Number: fresh.Snapshot.Number, Tag: fresh.Tag, Baseline: now}
-	record.Current, record.Pending = &confirmed, nil
+	record.Current, record.Pending, record.LocalBaseline = &confirmed, nil, nil
 	if err := s.journal.Save(record); err != nil {
 		return Confirmed{}, ErrJournal
 	}

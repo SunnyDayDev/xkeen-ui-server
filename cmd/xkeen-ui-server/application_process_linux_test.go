@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"testing"
 	"time"
@@ -31,6 +32,19 @@ import (
 )
 
 func TestProcessAgentAppliesTwoControlledGenerations(t *testing.T) {
+	checkControlledApplication(t, "apply")
+}
+
+func TestProcessAgentRollbackOutcomes(t *testing.T) {
+	checkControlledApplication(t, "rollback")
+}
+
+func TestProcessAgentRollbackPreservesForeignWorkingData(t *testing.T) {
+	checkControlledApplication(t, "conflict")
+}
+
+func checkControlledApplication(t *testing.T, mode string) {
+	t.Helper()
 	binary, xray, cgroup := os.Getenv("XKEEN_TEST_PREPARATION_BINARY"), os.Getenv("XKEEN_TEST_XRAY"), os.Getenv("XKEEN_TEST_CGROUP")
 	if binary == "" || xray == "" || cgroup == "" || os.Geteuid() != 0 {
 		t.Skip("requires disposable delegated Entware application profile")
@@ -77,7 +91,8 @@ func TestProcessAgentAppliesTwoControlledGenerations(t *testing.T) {
 	if os.Chown(path("agent"), agentUID, agentUID) != nil || os.Chown(path("agent/invitation"), agentUID, agentUID) != nil {
 		t.Fatal("cannot create private agent fixture")
 	}
-	allow := localProbeEndpoint(t, "allowed-fixture")
+	var unavailable atomic.Bool
+	allow := faultableApplicationProbe(t, "allowed-fixture", &unavailable)
 	deny := localProbeEndpoint(t, "denied-fixture")
 	target := localProbeEndpoint(t, "target-fixture")
 	_, deniedPort, _ := net.SplitHostPort(deny)
@@ -194,7 +209,7 @@ func TestProcessAgentAppliesTwoControlledGenerations(t *testing.T) {
 			}
 		}
 		t.Cleanup(stop)
-		waitRecovery(t, 20*time.Second, "agent did not complete application", func() bool {
+		waitRecovery(t, 45*time.Second, "agent did not complete application", func() bool {
 			select {
 			case err := <-done:
 				t.Fatalf("agent stopped early: %v, %s", err, output.String())
@@ -252,6 +267,153 @@ func TestProcessAgentAppliesTwoControlledGenerations(t *testing.T) {
 	}
 	checkTraffic(target, "target-fixture", false)
 	checkTraffic(allow, "allowed-fixture", true)
+	if mode != "apply" {
+		stop()
+		readRollback := func() (restart.Record, []byte) {
+			t.Helper()
+			raw, err := os.ReadFile(path("journal/application.json"))
+			var record restart.Record
+			if err != nil || json.Unmarshal(raw, &record) != nil {
+				t.Fatalf("cannot read protected rollback diagnostics: %v", err)
+			}
+			return record, raw
+		}
+		if mode == "conflict" {
+			_, allowPort, _ := net.SplitHostPort(allow)
+			target := catalog(false, false)
+			target.Files[4].Content = []byte(fmt.Sprintf(`{"routing":{"rules":[{"type":"field","port":%q,"outboundTag":"block"}]}}`, deniedPort+","+allowPort))
+			publish(target, 3)
+			foreignPath := path("work/extra.toml")
+			foreign := []byte("# external fixture\n")
+			injected := make(chan error, 1)
+			go func() {
+				for until := time.Now().Add(8 * time.Second); time.Now().Before(until); {
+					raw, err := os.ReadFile(path("work/05_routing.json"))
+					if err == nil && bytes.Equal(raw, target.Files[4].Content) {
+						injected <- os.WriteFile(foreignPath, foreign, 0644)
+						return
+					}
+					time.Sleep(10 * time.Millisecond)
+				}
+				injected <- fmt.Errorf("candidate disk transition was not observed")
+			}()
+			stopConflict, output := launchAgent()
+			stopConflict()
+			if err := <-injected; err != nil {
+				t.Fatal(err)
+			}
+			record, _ := readRollback()
+			if !strings.Contains(output.String(), "rollback failed; current runtime unknown") ||
+				record.Pending == nil || record.Pending.Rollback == nil || record.Pending.Rollback.State != restart.RollbackFailed ||
+				record.Current == nil || record.Current.AttemptID != first.AttemptID {
+				t.Fatal("foreign content did not block rollback")
+			}
+			if raw, err := os.ReadFile(foreignPath); err != nil || !bytes.Equal(raw, foreign) {
+				t.Fatal("rollback modified foreign loaded file")
+			}
+			stopRouterAgent(t, supervisor)
+			return
+		}
+		// Xray's configuration test succeeds, but startup cannot bind this
+		// separate fixture HTTP listener. The target drops the optional file.
+		invalidStart := catalog(false, false)
+		_, allowPort, _ := net.SplitHostPort(allow)
+		invalidStart.Files[2].Content = bytes.ReplaceAll(invalidStart.Files[2].Content, []byte(proxyPort), []byte(allowPort))
+		publish(invalidStart, 3)
+		stopFailed, failedOutput := launchAgent()
+		stopFailed()
+		recovered, raw := readRollback()
+		if !strings.Contains(failedOutput.String(), "previous runtime restored") || recovered.Pending != nil ||
+			recovered.LastRollback == nil || recovered.LastRollback.TargetNumber != 3 || recovered.Current == nil ||
+			recovered.Current.Number != 2 || recovered.Current.AttemptID != first.AttemptID ||
+			recovered.Current.Baseline.Runtime == first.Baseline.Runtime ||
+			!reflect.DeepEqual(recovered.Current.Baseline.Files, first.Baseline.Files) {
+			t.Fatalf("failed start did not restore expected previous baseline: %s", failedOutput.String())
+		}
+		restored, err := os.Stat(path("work/06_extra.json"))
+		if err != nil || restored.Mode().Perm() != 0640 || restored.Sys().(*syscall.Stat_t).Gid != runtimeUID {
+			t.Fatal("previous optional file did not recover its metadata")
+		}
+		checkTraffic(allow, "allowed-fixture", true)
+		checkTraffic(target, "target-fixture", false)
+		stopReplay, _ := launchAgent()
+		stopReplay()
+		if _, again := readRollback(); !bytes.Equal(again, raw) {
+			t.Fatal("automatic cycle retried identical failed revision")
+		}
+
+		// Provision one retry via the same protected application supervisor.
+		id := recovered.LastRollback.AttemptID
+		stopRouterAgent(t, supervisor)
+		if out := commandLine(t, binary, "--config", path("profile.json"), "--application-config", path("application.json"), "--retry-rollback", id); out != "one local retry authorized" {
+			t.Fatal("local retry permit was not recorded")
+		}
+		supervisor = startSupervisor()
+		stopOnce, onceOutput := launchAgent()
+		stopOnce()
+		once, onceRaw := readRollback()
+		if !strings.Contains(onceOutput.String(), "previous runtime restored") || once.LastRollback == nil ||
+			once.LastRollback.AttemptID == id || once.LastRollback.RetryApproved || once.Current.Baseline.Runtime == recovered.Current.Baseline.Runtime {
+			t.Fatal("explicit retry did not execute exactly once")
+		}
+		checkTraffic(allow, "allowed-fixture", true)
+		stopRepeat, _ := launchAgent()
+		stopRepeat()
+		if _, again := readRollback(); !bytes.Equal(again, onceRaw) {
+			t.Fatal("one-shot retry was reused")
+		}
+
+		// A new desired revision is allowed. After it reaches the live disk,
+		// disable the independent allowed target so neither new runtime nor
+		// restored runtime can furnish proof. Rollback must keep uncertainty.
+		noControl := catalog(false, false)
+		noControl.Files[4].Content = []byte(fmt.Sprintf(`{"routing":{"rules":[{"type":"field","port":%q,"outboundTag":"block"}]}}`, deniedPort+","+allowPort))
+		publish(noControl, 4)
+		armed := make(chan bool, 1)
+		go func() {
+			for until := time.Now().Add(8 * time.Second); time.Now().Before(until); {
+				raw, err := os.ReadFile(path("work/05_routing.json"))
+				if err == nil && bytes.Equal(raw, noControl.Files[4].Content) {
+					unavailable.Store(true)
+					armed <- true
+					return
+				}
+				time.Sleep(10 * time.Millisecond)
+			}
+			armed <- false
+		}()
+		stopUnknown, unknownOutput := launchAgent()
+		stopUnknown()
+		unknown, unknownRaw := readRollback()
+		var wire struct{ Pending struct{ Number int64 } }
+		if json.Unmarshal(unknownRaw, &wire) != nil {
+			t.Fatal("cannot read protected failed target number")
+		}
+		if !<-armed || !strings.Contains(unknownOutput.String(), "rollback failed; current runtime unknown") ||
+			unknown.Current == nil || !reflect.DeepEqual(unknown.Current, once.Current) || unknown.Pending == nil ||
+			wire.Pending.Number != 4 || unknown.Pending.Rollback == nil || unknown.Pending.Rollback.State != restart.RollbackFailed {
+			t.Fatalf("rollback failure did not preserve the historical result and barrier: %s", unknownOutput.String())
+		}
+		stopBlocked, _ := launchAgent()
+		stopBlocked()
+		if _, again := readRollback(); !bytes.Equal(again, unknownRaw) {
+			t.Fatal("terminal rollback failure was retried")
+		}
+		stopRouterAgent(t, supervisor)
+		blocked := startProcess(t, binary, "--config", path("profile.json"), "--application-config", path("application.json"))
+		if err := blocked.wait(t); err == nil || !strings.Contains(blocked.output(), "rollback failed; current runtime unknown") {
+			t.Fatal("ordinary start bypassed retained rollback barrier")
+		}
+		if conn, err := net.DialTimeout("tcp", proxy, time.Second); err == nil {
+			conn.Close()
+			t.Fatal("unverified listener remained after rollback failure")
+		}
+		status := f.status(t)
+		if status.Applied != 0 || status.Last != nil {
+			t.Fatal("rollback was sent as an applied result to the server")
+		}
+		return
+	}
 	third := catalog(false, false)
 	publish(third, 3)
 	waitRecovery(t, 20*time.Second, "second publication did not use active agent watch", func() bool {
@@ -391,4 +553,22 @@ func TestProcessAgentAppliesTwoControlledGenerations(t *testing.T) {
 	if err != nil || !reflect.DeepEqual(saved, retained) {
 		t.Fatal("ordinary startup changed recovery evidence", err)
 	}
+}
+
+func faultableApplicationProbe(t *testing.T, marker string, unavailable *atomic.Bool) string {
+	t.Helper()
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if unavailable.Load() {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		fmt.Fprint(w, marker)
+	}), ReadHeaderTimeout: time.Second}
+	go server.Serve(listener)
+	t.Cleanup(func() { server.Close() })
+	return listener.Addr().String()
 }
