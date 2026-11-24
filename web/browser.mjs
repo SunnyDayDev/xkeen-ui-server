@@ -95,6 +95,9 @@ try {
       content:'{"protocol":"${protocol}","tag":"${label}"}',
       variables:[{name:'protocol',type:'string'},{name:'label',type:'string'},
         {name:'timeoutSeconds',type:'number',default:5}]
+    }}]}, {name:'inbounds',elements:[{disabled:true,record:{
+      id:'550e8400-e29b-41d4-a716-446655440004', content:'{"tag":"${inactiveLabel}"}',
+      variables:[{name:'inactiveLabel',type:'string'}]
     }}]}];
     sql.prepare('INSERT INTO templates(id, draft) VALUES (?,?)').run(routerTemplate,JSON.stringify(preparationFixture));
   } finally { sql.close(); }
@@ -291,6 +294,8 @@ try {
   await page.getByText('Черновик · версия 1',{exact:true}).waitFor();
   const prepare = page.getByRole('button',{name:'Проверить и подготовить'});
   const protocol = page.getByLabel('protocol',{exact:true});
+  const inactiveField = page.getByLabel('inactiveLabel',{exact:true});
+  assert.equal(await inactiveField.evaluate(input=>input.readOnly && !input.required),true);
   await page.getByLabel('label',{exact:true}).fill('example-direct');
   const beforeIncomplete = post.length;
   await prepare.click();

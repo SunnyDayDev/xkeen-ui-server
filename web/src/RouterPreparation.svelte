@@ -2,7 +2,7 @@
   import { onDestroy, untrack } from 'svelte';
 
   type Variable = {name: string; type: string; defaultSource?: string; required: boolean};
-  type Element = {section: string; elementId: string; variables: Variable[]};
+  type Element = {section: string; elementId: string; inactive?: boolean; variables: Variable[]};
   type Source = {routerId: string; templateId: string; source: 'accepted' | 'draft'; version: string; elements: Element[]};
   type Prepared = {routerId: string; name: string; templateId: string; revision: string};
   type ErrorState = {state?: string; code?: string; elementId?: string; variable?: string};
@@ -161,7 +161,7 @@
     if (!source || !canSubmit || pending || conflict || unknown) return;
     const payload = {
       routerId, name, templateId:source.templateId, source:source.source, version:source.version,
-      values:source.elements.flatMap(element => element.variables.flatMap(variable => {
+      values:source.elements.filter(element => !element.inactive).flatMap(element => element.variables.flatMap(variable => {
         const value = values.get(key(element,variable));
         return value === undefined || value === '' ? [] : [{
           elementId:element.elementId, name:variable.name, source:variable.type === 'string' ? JSON.stringify(value) : value
@@ -262,22 +262,22 @@
         {#each source.elements as element, elementIndex (element.elementId)}
           <div class="router-field" role="group" aria-labelledby={'router-element-' + elementIndex}>
             <p class="router-element-label" id={'router-element-' + elementIndex}>{element.section} · {element.elementId}</p>
-            {#each element.variables as variable, variableIndex (variable.name)}
+            {#each element.variables as variable, variableIndex}
               {@const field = 'router-value-' + elementIndex + '-' + variableIndex}
               {@const invalid = fieldError?.elementId === element.elementId && fieldError?.variable === variable.name}
               <label for={field}>{variable.name}</label>
               {#if variable.type === 'object' || variable.type === 'array'}
                 <textarea id={field} required={variable.required} value={values.get(key(element,variable)) ?? ''}
-                  placeholder={placeholder(variable)} readonly={work === 'confirm' || unknown}
+                  placeholder={placeholder(variable)} readonly={work === 'confirm' || unknown || element.inactive}
                   aria-describedby={field + '-hint'} aria-invalid={invalid}
                   oninput={event => assign(element,variable,event.currentTarget.value)}></textarea>
               {:else}
                 <input id={field} required={variable.required} value={values.get(key(element,variable)) ?? ''}
-                  placeholder={placeholder(variable)} readonly={work === 'confirm' || unknown}
+                  placeholder={placeholder(variable)} readonly={work === 'confirm' || unknown || element.inactive}
                   aria-describedby={field + '-hint'} aria-invalid={invalid}
                   oninput={event => assign(element,variable,event.currentTarget.value)} />
               {/if}
-              <p id={field + '-hint'}>{variableType[variable.type]} · {variable.required ? 'обязательное значение' : 'при пустом поле используется дефолт'}</p>
+              <p id={field + '-hint'}>{variableType[variable.type] ?? variable.type} · {element.inactive ? 'элемент отключён' : variable.required ? 'обязательное значение' : 'при пустом поле используется дефолт'}</p>
             {/each}
           </div>
         {/each}
@@ -313,6 +313,7 @@
     border-radius: var(--radius); min-height: 42px; min-width: 0; width: 100%; padding: 10px 12px;
   }
   .router-field textarea { resize: vertical; }
+  .router-field :where(input,textarea)[readonly] { background: #f3f5f7; }
   .router-field :where(select, textarea):focus-visible { outline: 2px solid #497de5; outline-offset: 3px; }
   .router-error { color: var(--error); }
   @media (max-width: 520px) { .router-card { padding: 14px; } }

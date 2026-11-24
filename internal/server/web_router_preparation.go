@@ -26,6 +26,7 @@ type preparationVariable struct {
 	Required      bool   `json:"required"`
 }
 type preparationElement struct {
+	Inactive  bool                  `json:"inactive,omitempty"`
 	Section   string                `json:"section"`
 	ElementID string                `json:"elementId"`
 	Variables []preparationVariable `json:"variables"`
@@ -106,7 +107,7 @@ func readWebPreparation(w http.ResponseWriter, r *http.Request, service webRoute
 		Elements: make([]preparationElement, len(form.Elements)),
 	}
 	for i, element := range form.Elements {
-		row := preparationElement{Section: element.Section, ElementID: element.ElementID, Variables: make([]preparationVariable, len(element.Variables))}
+		row := preparationElement{Section: element.Section, ElementID: element.ElementID, Inactive: element.Inactive, Variables: make([]preparationVariable, len(element.Variables))}
 		for j, variable := range element.Variables {
 			row.Variables[j] = preparationVariable(variable)
 		}

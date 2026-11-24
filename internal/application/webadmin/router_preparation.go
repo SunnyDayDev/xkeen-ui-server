@@ -157,6 +157,7 @@ func (e *PreparationInputError) Error() string { return ErrInvalidPreparation.Er
 func (e *PreparationInputError) Unwrap() error { return ErrInvalidPreparation }
 
 type PreparationElement struct {
+	Inactive           bool
 	Section, ElementID string
 	Variables          []PreparationVariable
 }
@@ -181,15 +182,20 @@ func describePreparation(snapshot *templates.Snapshot) ([]PreparationElement, er
 			if len(element.Variables) == 0 {
 				continue
 			}
-			group := PreparationElement{Section: section.Name, ElementID: element.ID, Variables: make([]PreparationVariable, 0, len(element.Variables))}
+			inactive := item.Disabled && publication.SupportsTemplateDisabling(section.Name)
+			group := PreparationElement{Section: section.Name, ElementID: element.ID, Inactive: inactive, Variables: make([]PreparationVariable, 0, len(element.Variables))}
 			names := make(map[string]bool, len(element.Variables))
 			for _, definition := range element.Variables {
+				variable := PreparationVariable{Name: definition.Name, Type: definition.Type, DefaultSource: string(definition.Default)}
+				if inactive {
+					group.Variables = append(group.Variables, variable)
+					continue
+				}
 				if names[definition.Name] {
 					return nil, &PreparationInputError{Code: "duplicate_variable", ElementID: element.ID, Variable: definition.Name}
 				}
 				names[definition.Name] = true
 				_, issues := configuration.PrepareValues(element.ID, []configuration.VariableDefinition{definition}, nil)
-				variable := PreparationVariable{Name: definition.Name, Type: definition.Type, DefaultSource: string(definition.Default)}
 				if len(issues) != 0 {
 					if issues[0].Code != "missing_value" {
 						return nil, preparationValueError(issues[0])
@@ -230,6 +236,12 @@ func prepareRouterSettings(snapshot *templates.Snapshot, id, name string, person
 			element := item.Element
 			assigned := values[element.ID]
 			delete(values, element.ID)
+			if item.Disabled && publication.SupportsTemplateDisabling(section.Name) {
+				if len(assigned) != 0 {
+					return routersettings.Draft{}, &PreparationInputError{Code: "inactive_element", ElementID: element.ID}
+				}
+				continue
+			}
 			if _, issues := configuration.PrepareValues(element.ID, element.Variables, assigned); len(issues) != 0 {
 				return routersettings.Draft{}, preparationValueError(issues[0])
 			}

@@ -74,3 +74,24 @@ func TestPreparationValuesAreScopedAndLossless(t *testing.T) {
 		})
 	}
 }
+
+func TestPreparationLeavesSupportedDisabledDefinitionsInactive(t *testing.T) {
+	for _, section := range []string{"inbounds", "rules"} {
+		t.Run(section, func(t *testing.T) {
+			snapshot := &templates.Snapshot{Version: 1, TemplateDraft: configuration.TemplateDraft{ID: "template-demo", Sections: []configuration.TemplateSection{{
+				Name: section, Elements: []configuration.TemplateElement{{Disabled: true, Element: configuration.Element{
+					ID: firstPreparationElement, Content: `{"tag":"${label}"}`,
+					Variables: []configuration.VariableDefinition{{Name: "label", Type: "string"}},
+				}}},
+			}}}}
+			fields, err := describePreparation(snapshot)
+			if err != nil || len(fields) != 1 || !fields[0].Inactive || len(fields[0].Variables) != 1 || fields[0].Variables[0].Required {
+				t.Fatalf("disabled field should be visible without blocking onboarding: %#v %v", fields, err)
+			}
+			draft, err := prepareRouterSettings(snapshot, preparationRouter, "Филиал", nil)
+			if err != nil || len(draft.Groups) != 0 {
+				t.Fatalf("disabled element still required input: %#v %v", draft, err)
+			}
+		})
+	}
+}
