@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/netip"
 	"strings"
 	"sync"
 	"testing"
@@ -26,6 +27,11 @@ type installedAgentLink struct {
 
 func newInstalledAgentLink(t *testing.T, target string) *installedAgentLink {
 	t.Helper()
+	endpoint, err := netip.ParseAddrPort(target)
+	if err != nil || !endpoint.Addr().IsLoopback() || endpoint.Port() == 0 {
+		t.Fatal("installed agent link needs a fixed loopback test peer")
+	}
+
 	listener, err := net.Listen("tcp4", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
@@ -118,7 +124,7 @@ func TestInstalledAgentLinkDropsOnlyItsLiveHTTPSConnections(t *testing.T) {
 	}
 	central.TLS = &tls.Config{Certificates: []tls.Certificate{pair}, MinVersion: tls.VersionTLS12}
 	central.StartTLS()
-	defer central.Close()
+	t.Cleanup(central.Close)
 	link := newInstalledAgentLink(t, strings.TrimPrefix(central.URL, "https://"))
 	transport := &http.Transport{TLSClientConfig: &tls.Config{RootCAs: roots, MinVersion: tls.VersionTLS12}}
 	client := &http.Client{Transport: transport, Timeout: 3 * time.Second}
