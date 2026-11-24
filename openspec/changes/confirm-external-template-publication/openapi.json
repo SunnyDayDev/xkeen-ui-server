@@ -1,0 +1,234 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "XKeen external publication confirmation",
+    "version": "1"
+  },
+  "paths": {
+    "/api/v1/templates/publication": {
+      "get": {
+        "operationId": "readTemplatePublication",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "templateId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "security": [
+          {
+            "externalBearer": []
+          },
+          {}
+        ],
+        "responses": {
+          "200": {
+            "description": "Existing group publication numbers, no application claim",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "state",
+                    "templateId",
+                    "acceptedVersion",
+                    "members",
+                    "version"
+                  ],
+                  "properties": {
+                    "state": {
+                      "const": "current"
+                    },
+                    "templateId": {
+                      "type": "string"
+                    },
+                    "acceptedVersion": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9][0-9]*)$"
+                    },
+                    "members": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "routerId",
+                          "desiredRevision"
+                        ],
+                        "properties": {
+                          "routerId": {
+                            "type": "string"
+                          },
+                          "desiredRevision": {
+                            "type": "string",
+                            "pattern": "^[1-9][0-9]*$"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "version": {
+                      "type": "string",
+                      "pattern": "^[1-9][0-9]*$"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid scope"
+          },
+          "401": {
+            "description": "Current external bearer required"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "503": {
+            "description": "Service unavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/templates/publication/confirm": {
+      "post": {
+        "operationId": "confirmTemplatePublication",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "templateId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "security": [
+          {
+            "externalBearer": []
+          },
+          {}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "receipt"
+                ],
+                "properties": {
+                  "receipt": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "One committed C07 result, no application claim",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "state",
+                    "templateId",
+                    "acceptedVersion",
+                    "members"
+                  ],
+                  "properties": {
+                    "state": {
+                      "const": "published"
+                    },
+                    "templateId": {
+                      "type": "string"
+                    },
+                    "acceptedVersion": {
+                      "type": "string",
+                      "pattern": "^[1-9][0-9]*$"
+                    },
+                    "members": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "routerId",
+                          "desiredRevision",
+                          "changed"
+                        ],
+                        "properties": {
+                          "routerId": {
+                            "type": "string"
+                          },
+                          "desiredRevision": {
+                            "type": "string",
+                            "pattern": "^[1-9][0-9]*$"
+                          },
+                          "changed": {
+                            "type": "boolean"
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid scope or body"
+          },
+          "401": {
+            "description": "Current external bearer required"
+          },
+          "403": {
+            "description": "Request origin refused"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Preview changed or receipt invalid"
+          },
+          "413": {
+            "description": "Oversized body"
+          },
+          "415": {
+            "description": "Expected application/json"
+          },
+          "422": {
+            "description": "One group candidate rejected"
+          },
+          "503": {
+            "description": "Service or validator unavailable"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "externalBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

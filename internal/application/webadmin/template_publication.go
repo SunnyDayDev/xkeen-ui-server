@@ -82,45 +82,13 @@ func templatePublicationError(err error) error {
 	}
 }
 
-type TemplatePublicationCurrent struct {
-	TemplateID               string
-	Version, AcceptedVersion int64
-	Routers                  []TemplatePublicationRouter
-}
+type TemplatePublicationCurrent = publication.TemplateGroupCurrent
 
-type TemplatePublicationRouter struct {
-	RouterID string
-	Name     string
-	Desired  int64
-}
-
-// Current reports the latest state after an uncertain response. It neither
-// identifies the writer of that state nor repeats the requested publication.
 func (s TemplatePublication) Current(ctx context.Context, token, id string) (*TemplatePublicationCurrent, error) {
 	digest, _, err := SessionProof(token, "", false)
 	if err != nil {
 		return nil, err
 	}
-	snapshot, err := s.store.ForTemplateGroup(digest, s.now, time.Time{}).ReadTemplateGroup(ctx, id)
-	if err != nil {
-		return nil, templatePublicationError(err)
-	}
-	if snapshot == nil || snapshot.TemplateDraft == nil || snapshot.TemplateDraft.ID != id {
-		return nil, publication.ErrStoredState
-	}
-	current := &TemplatePublicationCurrent{TemplateID: id, Version: snapshot.TemplateDraft.Version,
-		Routers: make([]TemplatePublicationRouter, 0, len(snapshot.Members))}
-	if snapshot.Accepted != nil {
-		current.AcceptedVersion = snapshot.Accepted.Version
-	}
-	for _, member := range snapshot.Members {
-		name := member.Active.Draft.Name
-		if name == "" {
-			name = member.Active.Draft.ID
-		}
-		current.Routers = append(current.Routers, TemplatePublicationRouter{
-			RouterID: member.Active.Draft.ID, Name: name, Desired: member.Desired.Number,
-		})
-	}
-	return current, nil
+	current, err := publication.ReadTemplateGroupCurrent(ctx, s.store.ForTemplateGroup(digest, s.now, time.Time{}), id)
+	return current, templatePublicationError(err)
 }
