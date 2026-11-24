@@ -54,6 +54,7 @@ type ActiveSettings struct {
 type VersionedRouterDraft struct {
 	Draft      routersettings.Draft
 	Generation int64
+	OrderBasis *OrderBasis
 }
 
 type Revision struct {

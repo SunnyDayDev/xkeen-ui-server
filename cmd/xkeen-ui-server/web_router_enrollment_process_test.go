@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"net"
@@ -206,6 +207,28 @@ func TestProcessWebRouterEnrollment(t *testing.T) {
 	body, _ = request(http.MethodGet, variablePath, nil, http.StatusOK)
 	if bytes.Contains(body, []byte(`"personalSource"`)) {
 		t.Fatal("full reset retained the personal value")
+	}
+	const rulePath = "/ui/v1/routers/rules?routerId=router-example"
+	body, _ = request(http.MethodGet, rulePath, nil, http.StatusOK)
+	if !bytes.Contains(body, []byte(`"rules":[]`)) {
+		t.Fatal("empty full rule order did not round-trip")
+	}
+	ruleSource := " \r\n{\"ruleTag\":\"new-rule\",\"weight\":9007199254740993}\n"
+	insertRule, _ := json.Marshal(map[string]string{"templateId": "template-example", "activeGeneration": "1", "acceptedVersion": "1",
+		"draftGeneration": "6", "afterId": "", "source": ruleSource})
+	body, _ = request(http.MethodPost, rulePath, insertRule, http.StatusOK)
+	var ordered struct {
+		DraftGeneration string
+		Rules           []struct{ ID, Origin string }
+	}
+	if json.Unmarshal(body, &ordered) != nil || ordered.DraftGeneration != "7" || len(ordered.Rules) != 1 || ordered.Rules[0].Origin != "local" {
+		t.Fatal("first local rule did not appear in the full order")
+	}
+	request(http.MethodPost, rulePath, insertRule, http.StatusConflict)
+	var ruleBlob []byte
+	if err := db.QueryRowContext(t.Context(), "SELECT snapshot FROM router_settings").Scan(&ruleBlob); err != nil ||
+		!bytes.Contains(ruleBlob, []byte(base64.StdEncoding.EncodeToString([]byte(ruleSource)))) {
+		t.Fatal("stored rule did not retain exact bytes")
 	}
 	var desired int
 	if err := db.QueryRowContext(t.Context(), "SELECT max(revision) FROM desired_router_revisions").Scan(&desired); err != nil || desired != 1 {

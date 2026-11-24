@@ -88,6 +88,7 @@ var migrations = []string{
 		epoch INTEGER NOT NULL CHECK (typeof(epoch) = 'integer' AND epoch > 0)
 	)`,
 	createSharedExclusions,
+	`ALTER TABLE router_settings ADD COLUMN order_basis BLOB`,
 }
 
 func Open(ctx context.Context, path string) (*sql.DB, error) {

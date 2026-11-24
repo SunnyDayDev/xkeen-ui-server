@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/publication"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/templates"
 )
@@ -22,10 +23,11 @@ type RouterDraftBasis struct {
 }
 
 type RouterDraftSnapshot struct {
-	Basis    RouterDraftBasis
-	Name     string
-	Accepted *templates.Snapshot
-	Editable routersettings.Draft // Existing C04 draft, or active settings as the initial source.
+	Basis      RouterDraftBasis
+	Name       string
+	Accepted   *templates.Snapshot
+	OrderBasis *publication.OrderBasis
+	Editable   routersettings.Draft // Existing C04 draft, or active settings as the initial source.
 }
 
 type RouterDraftStore interface {

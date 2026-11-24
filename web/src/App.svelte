@@ -13,13 +13,15 @@
   import RouterOverview from './RouterOverview.svelte';
   import RouterVariables from './RouterVariables.svelte';
   import RouterReplacement from './RouterReplacement.svelte';
+  import RouterRules from './RouterRules.svelte';
 
-  type Section = 'template-exclusions' | 'overview' | 'templates' | 'settings' | 'template-editor' | 'template-copy' | 'router-connect' | 'router-enroll' | 'router-variables' | 'router-replacement';
+  type Section = 'template-exclusions' | 'overview' | 'templates' | 'settings' | 'template-editor' | 'template-copy' | 'router-connect' | 'router-enroll' | 'router-variables' | 'router-replacement' | 'router-rules';
 
   function sectionForPath(): Section {
     if (location.pathname === '/ui/templates/copy') return 'template-copy';
     if (location.pathname === '/ui/templates/exclusions') return 'template-exclusions';
     if (location.pathname === '/ui/templates/item') return 'template-editor';
+    if (location.pathname === '/ui/routers/rules') return 'router-rules';
     if (location.pathname === '/ui/routers/replacement') return 'router-replacement';
     if (location.pathname === '/ui/routers/variables') return 'router-variables';
     if (location.pathname === '/ui/routers/enroll') return 'router-enroll';
@@ -209,7 +211,7 @@
     <header class="console-header">
       <strong>XKeen Console</strong>
       <nav aria-label="Основная навигация">
-        <a href="/ui/" aria-current={section === 'overview' || section === 'router-variables' || section === 'router-replacement' ? 'page' : undefined}
+        <a href="/ui/" aria-current={section === 'overview' || section === 'router-variables' || section === 'router-replacement' || section === 'router-rules' ? 'page' : undefined}
           onclick={(event) => navigate(event, '/ui/', 'overview')}>Обзор</a>
         <a href="/ui/templates" aria-current={section === 'templates' || section === 'template-editor' || section === 'template-copy' || section === 'template-exclusions' ? 'page' : undefined}
           onclick={(event) => navigate(event, '/ui/templates', 'templates')}>Шаблоны</a>
@@ -243,6 +245,12 @@
         <RouterPreparation canSubmit={view === 'active' && !busy} sessionEpoch={mutation} {csrf}
           signedOut={() => { void endAccess('signed_out'); }} refreshSession={() => { void refresh(); }}
           openEnrollment={(event,path) => navigate(event,path,'router-enroll')} />
+      {:else if section === 'router-rules'}
+        {#key routerID}
+          <RouterRules id={routerID} active={view === 'active' && !busy} sessionEpoch={mutation} {csrf}
+            signedOut={() => { void endAccess('signed_out'); }} refreshSession={() => { void refresh(); }}
+            back={(event,path) => navigate(event,path,'overview')} />
+        {/key}
       {:else if section === 'router-replacement'}
         {#key JSON.stringify([routerID,routerElementID])}
           <RouterReplacement id={routerID} elementId={routerElementID} active={view === 'active' && !busy} sessionEpoch={mutation} {csrf}
@@ -273,6 +281,7 @@
               openRouter={(event,path) => navigate(event,path,'overview')} closeRouter={closeRouterDetail}
               openVariables={(event,path) => navigate(event,path,'router-variables')}
               openEnrollment={(event,path) => navigate(event,path,'router-enroll')}
+              openRules={(event,path) => navigate(event,path,'router-rules')}
               signedOut={() => { void endAccess('signed_out'); }} />
           {/key}
         {/if}

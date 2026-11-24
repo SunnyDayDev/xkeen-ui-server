@@ -58,7 +58,7 @@ func (w WebRouterDrafts) Read(ctx context.Context, digest [32]byte, clock func()
 	if draft != nil {
 		editable = draft.Draft
 	}
-	return webadmin.RouterDraftSnapshot{Basis: basis, Name: name, Accepted: accepted, Editable: editable}, nil
+	return webadmin.RouterDraftSnapshot{Basis: basis, Name: name, Accepted: accepted, Editable: editable, OrderBasis: publication.EditableRuleOrderBasis(draft, active)}, nil
 }
 
 func readVisibleRouterDraftBasis(ctx context.Context, tx *sql.Tx, id string) (webadmin.RouterDraftBasis, error) {
@@ -81,6 +81,17 @@ func readVisibleRouterDraftBasis(ctx context.Context, tx *sql.Tx, id string) (we
 }
 
 func (w WebRouterDrafts) Write(ctx context.Context, digest [32]byte, clock func() time.Time, expected webadmin.RouterDraftBasis, draft routersettings.Draft) (int64, error) {
+	return w.write(ctx, digest, clock, expected, draft, nil)
+}
+
+func (w WebRouterDrafts) WriteOrder(ctx context.Context, digest [32]byte, clock func() time.Time, expected webadmin.RouterDraftBasis, draft routersettings.Draft, basis *publication.OrderBasis) (int64, error) {
+	if basis == nil || !validStoredBasis(draft, basis) {
+		return 0, routersettings.ErrInvalidDraft
+	}
+	return w.write(ctx, digest, clock, expected, draft, basis)
+}
+
+func (w WebRouterDrafts) write(ctx context.Context, digest [32]byte, clock func() time.Time, expected webadmin.RouterDraftBasis, draft routersettings.Draft, basis *publication.OrderBasis) (int64, error) {
 	if draft.ID != expected.RouterID || draft.TemplateID != expected.TemplateID {
 		return 0, webadmin.ErrRouterDraftConflict
 	}
@@ -90,6 +101,13 @@ func (w WebRouterDrafts) Write(ctx context.Context, digest [32]byte, clock func(
 	raw, err := json.Marshal(encodeRouterDraft(draft))
 	if err != nil {
 		return 0, err
+	}
+	var rawBasis []byte
+	if basis != nil {
+		rawBasis, err = json.Marshal(basis)
+		if err != nil {
+			return 0, err
+		}
 	}
 	tx, err := w.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -107,14 +125,26 @@ func (w WebRouterDrafts) Write(ctx context.Context, digest [32]byte, clock func(
 	if current != expected || current.DraftGeneration == math.MaxInt64 {
 		return 0, webadmin.ErrRouterDraftConflict
 	}
+	if basis != nil {
+		accepted, err := readPublicationTemplate(ctx, tx, readAcceptedTemplate, current.TemplateID)
+		if err != nil {
+			return 0, err
+		}
+		if !basisMatchesTemplate(basis, accepted) {
+			return 0, webadmin.ErrRouterDraftConflict
+		}
+	}
 	if current.DraftGeneration == 0 {
-		err = writePublicationRow(ctx, tx, `INSERT INTO router_settings (id, snapshot) VALUES (?, ?)`, draft.ID, raw)
+		err = writePublicationRow(ctx, tx, `INSERT INTO router_settings (id, snapshot, order_basis)
+			VALUES (?, ?, coalesce(?, (SELECT order_basis FROM active_router_publications WHERE router_id = ?)))`,
+			draft.ID, raw, rawBasis, draft.ID)
 	} else {
 		var n int64
 		var result sql.Result
-		result, err = tx.ExecContext(ctx, `UPDATE router_settings SET snapshot = ?, generation = generation + 1
+		result, err = tx.ExecContext(ctx, `UPDATE router_settings
+			SET snapshot = ?, generation = generation + 1, order_basis = coalesce(?, order_basis)
 			WHERE id = ? AND generation = ? AND json_extract(CAST(snapshot AS TEXT), '$.TemplateID') = ?`,
-			raw, draft.ID, current.DraftGeneration, current.TemplateID)
+			raw, rawBasis, draft.ID, current.DraftGeneration, current.TemplateID)
 		if err == nil {
 			n, err = result.RowsAffected()
 			if err == nil && n != 1 {
