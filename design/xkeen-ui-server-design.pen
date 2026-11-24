@@ -38972,6 +38972,1385 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "afOIm",
+      "x": 0,
+      "y": 68650,
+      "name": "33 / Копирование шаблона / Действие",
+      "width": 1080,
+      "height": 680,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "ON3H3",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "O7K42a",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "bZ8ub",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "fy8LF",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "L2A0j",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "icon": "settings",
+                  "fill": "#FFFFFF"
+                },
+                "G2nPu4": {
+                  "content": "Настройки",
+                  "fill": "#FFFFFF"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "YaUga",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "Z5fT3",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "r4oqHl",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "h7625",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Копирование шаблона",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "C94pw",
+              "name": "Состояние",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "aKvK8",
+                  "name": "Исходный шаблон: edge-example · версия 4",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Исходный шаблон: edge-example · версия 4",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "YbTld",
+                  "name": "Действия",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "xUjUY",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Копировать шаблон",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Копировать шаблон"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "fHN2w",
+      "x": 0,
+      "y": 69400,
+      "name": "33 / Копирование шаблона / Новый ID",
+      "width": 1080,
+      "height": 680,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "Q9bOI",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "RF0H8",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "a23rq",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "JjfhG",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "hNhhy",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "icon": "settings",
+                  "fill": "#FFFFFF"
+                },
+                "G2nPu4": {
+                  "content": "Настройки",
+                  "fill": "#FFFFFF"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "K3CjGh",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "QfM7E",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "q6TNJq",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "sq28m",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Копирование шаблона",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "lZIz9",
+              "name": "Состояние",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "FUrS1",
+                  "name": "Исходный шаблон: edge-example · версия 4",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Исходный шаблон: edge-example · версия 4",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "id": "upg5B",
+                  "type": "ref",
+                  "ref": "BmmQR",
+                  "name": "Идентификатор копии",
+                  "width": "fill_container",
+                  "descendants": {
+                    "uFzxP": {
+                      "content": "Идентификатор копии"
+                    },
+                    "hN1cU/VdSCq": {
+                      "content": "Например, edge-next"
+                    },
+                    "GDH1i": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "HT3IT",
+                  "name": "Действия",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "nvUi5",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Создать копию",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Создать копию"
+                        }
+                      }
+                    },
+                    {
+                      "id": "Ds0sP",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Отмена",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Отмена"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "EOA0a",
+      "x": 0,
+      "y": 70150,
+      "name": "33 / Копирование шаблона / Конфликт",
+      "width": 1080,
+      "height": 680,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "KCABT",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "wMWtC",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "cieBO",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "JNYJx",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "e2TnrF",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "icon": "settings",
+                  "fill": "#FFFFFF"
+                },
+                "G2nPu4": {
+                  "content": "Настройки",
+                  "fill": "#FFFFFF"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "vYh9v",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "ygRzk",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "dIZbH",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "pnCZ6",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Копирование шаблона",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "F4qBN",
+              "name": "Состояние",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Yc4Cu",
+                  "name": "Идентификатор копии: edge-next",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Идентификатор копии: edge-next",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "zgDfp",
+                  "name": "Этот ID уже занят.",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Этот ID уже занят.",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "zaUJY",
+                  "name": "Действия",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "GHaV9",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Создать копию",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Создать копию"
+                        }
+                      }
+                    },
+                    {
+                      "id": "cxguE",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Отмена",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Отмена"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "WFs7f",
+      "x": 0,
+      "y": 70900,
+      "name": "33 / Копирование шаблона / Источник изменился",
+      "width": 1080,
+      "height": 680,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "Y8s6v",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "DiCBy",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "gjPFH",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "kJ8Ya",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "sxmgq",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "icon": "settings",
+                  "fill": "#FFFFFF"
+                },
+                "G2nPu4": {
+                  "content": "Настройки",
+                  "fill": "#FFFFFF"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "FhRRT",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "V6xsJ",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "h5gfP",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "ohT8D",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Копирование шаблона",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "qYiHE",
+              "name": "Состояние",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "EX20d",
+                  "name": "Исходный шаблон изменился. Перечитайте текущую версию.",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Исходный шаблон изменился. Перечитайте текущую версию.",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "PS44v",
+                  "name": "Действия",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "McpuY",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Перечитать",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Перечитать"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "F4KP7",
+      "x": 0,
+      "y": 71650,
+      "name": "33 / Копирование шаблона / Результат неизвестен",
+      "width": 1080,
+      "height": 680,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "xvHOH",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "cnw2i",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "z24cJM",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "r1mCF",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "hnH48",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "icon": "settings",
+                  "fill": "#FFFFFF"
+                },
+                "G2nPu4": {
+                  "content": "Настройки",
+                  "fill": "#FFFFFF"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "ZoyfR",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "WDK34",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "mAEPr",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "z2WLDI",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Копирование шаблона",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "lcMaE",
+              "name": "Состояние",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "chpRq",
+                  "name": "Не удалось подтвердить создание копии.",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Не удалось подтвердить создание копии.",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "E9TjRG",
+                  "name": "Действия",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "o9UHKP",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Проверить список",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Проверить список"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "b2UnW",
+      "x": 0,
+      "y": 72400,
+      "name": "33 / Копирование шаблона / Копия сохранена",
+      "width": 1080,
+      "height": 680,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "O3ILd",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "LH2pT",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "D90hu",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "oA7D5",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "EhPI9",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "icon": "settings",
+                  "fill": "#FFFFFF"
+                },
+                "G2nPu4": {
+                  "content": "Настройки",
+                  "fill": "#FFFFFF"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "X9DZNg",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "hV3ba",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "CqmXI",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "YED2n",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Копирование шаблона",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "E6Iwf",
+              "name": "Состояние",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "c7p1w7",
+                  "name": "Шаблон edge-next · версия 1",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Шаблон edge-next · версия 1",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "m8LnoO",
+                  "name": "Копию можно редактировать независимо.",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Копию можно редактировать независимо.",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "TR5ry",
+                  "name": "Действия",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "GBTFv",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть шаблон",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Открыть шаблон"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "CFkUc",
+      "x": 0,
+      "y": 73150,
+      "name": "33 / Копирование шаблона / Узкий экран",
+      "width": 390,
+      "height": 730,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "o4AgC",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "layout": "vertical",
+          "gap": 12,
+          "padding": [
+            14,
+            16
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "kYj2x",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "loe8B",
+              "name": "Действия консоли",
+              "width": "fill_container",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "P0LMO9",
+                  "name": "Ссылки консоли",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "b2OaA",
+                      "name": "Первая строка навигации",
+                      "width": "fill_container",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "id": "C6RFS",
+                          "type": "ref",
+                          "ref": "oQHGq",
+                          "name": "Текущий раздел",
+                          "width": 94,
+                          "fill": "$ink",
+                          "descendants": {
+                            "uzKPJ": {
+                              "fill": "#FFFFFF",
+                              "icon": "layout-dashboard"
+                            },
+                            "G2nPu4": {
+                              "fill": "#FFFFFF",
+                              "content": "Обзор"
+                            }
+                          }
+                        },
+                        {
+                          "id": "AHfed",
+                          "type": "ref",
+                          "ref": "oQHGq",
+                          "name": "Текущий раздел",
+                          "width": 108,
+                          "fill": "#273446",
+                          "descendants": {
+                            "uzKPJ": {
+                              "fill": "#FFFFFF",
+                              "icon": "layers"
+                            },
+                            "G2nPu4": {
+                              "fill": "#FFFFFF",
+                              "content": "Шаблоны"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "fjEc7",
+                      "type": "ref",
+                      "ref": "oQHGq",
+                      "name": "Настройки",
+                      "width": 112,
+                      "fill": "$ink",
+                      "descendants": {
+                        "uzKPJ": {
+                          "icon": "settings",
+                          "fill": "#FFFFFF"
+                        },
+                        "G2nPu4": {
+                          "content": "Настройки",
+                          "fill": "#FFFFFF"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "EtwA0",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Завершить сессию",
+                  "fill": "$accent",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Выйти"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Iy0vO",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "JsK3B",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Копирование шаблона",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "bjcUw",
+              "name": "Состояние",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "smjN7",
+                  "name": "Исходный шаблон: edge-example · версия 4",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Исходный шаблон: edge-example · версия 4",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "id": "BkcY9",
+                  "type": "ref",
+                  "ref": "BmmQR",
+                  "name": "Идентификатор копии",
+                  "width": "fill_container",
+                  "descendants": {
+                    "uFzxP": {
+                      "content": "Идентификатор копии"
+                    },
+                    "hN1cU/VdSCq": {
+                      "content": "Например, edge-next"
+                    },
+                    "GDH1i": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "X7NmE",
+                  "name": "Действия",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "G9O4a",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Создать копию",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Создать копию"
+                        }
+                      }
+                    },
+                    {
+                      "id": "Qn1TH",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Отмена",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Отмена"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "variables": {
