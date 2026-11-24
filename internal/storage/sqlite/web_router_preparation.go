@@ -29,6 +29,10 @@ func (w WebRouterPreparation) ReadSource(ctx context.Context, digest [32]byte, c
 	if err := requireActiveWebSession(ctx, tx, activeWebSessionArgs(digest, clock())); err != nil {
 		return webadmin.PreparationSource{}, err
 	}
+	return readPreparationSource(ctx, tx, id)
+}
+
+func readPreparationSource(ctx context.Context, tx *sql.Tx, id string) (webadmin.PreparationSource, error) {
 	accepted, err := readPublicationTemplate(ctx, tx, readAcceptedTemplate, id)
 	if err != nil {
 		return webadmin.PreparationSource{}, err
