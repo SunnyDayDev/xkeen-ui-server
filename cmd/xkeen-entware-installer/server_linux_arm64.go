@@ -276,8 +276,22 @@ func serverService(args []string) error {
 		if len(args) != 1 {
 			return errUsage
 		}
+		if args[0] == "start" {
+			if err := recoverServerUpdate(p); err != nil {
+				return err
+			}
+			p, err = loadServerProfile()
+			if err != nil {
+				return err
+			}
+		} else if _, err := os.Lstat(serverUpdatePath); !errors.Is(err, os.ErrNotExist) {
+			return errServerMaintenance
+		}
 		return p.control(args[0])
 	case "admin":
+		if _, err := os.Lstat(serverUpdatePath); !errors.Is(err, os.ErrNotExist) {
+			return errServerMaintenance
+		}
 		return p.admin(args[1:])
 	default:
 		return errUsage
@@ -302,6 +316,10 @@ func (p serverProfile) control(action string) error {
 	if err != nil {
 		return err
 	}
+	return p.controlBinary(action, binary)
+}
+
+func (p serverProfile) controlBinary(action, binary string) error {
 	process := managedProcess{binary: binary, receipt: serverReceipt, uid: p.UID, gid: p.GID, notReady: errServerReady,
 		arguments: []string{"--listen", p.Listen, "--db-path", serverDB, "--tls-cert", serverCertPath, "--tls-key", serverKeyPath, "--web-origin", p.Origin}}
 	if p.AgentOrigin != "" {

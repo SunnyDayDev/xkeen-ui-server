@@ -17,6 +17,7 @@ var errServerMaintenance = errors.New("server maintenance requires local recover
 type serverRemoval struct {
 	Release release
 	Phase   string
+	Owned   []release
 }
 
 func uninstallServer() error {
@@ -32,6 +33,9 @@ func uninstallServer() error {
 	if err != nil {
 		return err
 	}
+	if _, err := os.Lstat(serverUpdatePath); !errors.Is(err, os.ErrNotExist) {
+		return errServerMaintenance
+	}
 	record, err := loadServerRemoval(p)
 	if err != nil {
 		return err
@@ -44,29 +48,46 @@ func uninstallServer() error {
 			}
 			return errServerMaintenance
 		}
-		if initErr != nil || (string(init) != serverInitScript && string(init) != heldServerInit) {
+		if initErr != nil || (string(init) != serverInitScript && string(init) != serverRecoveryInit && string(init) != heldServerInit) {
 			return errServerMaintenance
 		}
 		if err := p.control("status"); err != nil && !errors.Is(err, errStopped) {
 			return err
 		}
-		if err := cleanServerBinaries(p, false); err != nil {
+		owned, err := knownServerReleases(p)
+		if err != nil {
 			return err
 		}
-		if err := writeFile(serverInit, []byte(heldServerInit), 0755, 0, 0); err != nil {
-			return errServerMaintenance
+		if err := cleanServerBinaries(p, owned, false); err != nil {
+			return err
 		}
-		record = serverRemoval{Release: p.Release, Phase: "stop"}
+		record = serverRemoval{Release: p.Release, Phase: "hold", Owned: owned}
 		if err := saveServerRemoval(record); err != nil {
 			return err
 		}
 	} else if initErr != nil && !(record.Phase == "remove" && errors.Is(initErr, os.ErrNotExist)) {
 		return errServerMaintenance
+	}
+	if record.Phase == "hold" {
+		if string(init) != serverInitScript && string(init) != serverRecoveryInit && string(init) != heldServerInit {
+			return errServerMaintenance
+		}
+		target, err := os.Readlink(serverCurrent)
+		if (err != nil && !errors.Is(err, os.ErrNotExist)) || (err == nil && target != "generations/"+p.Release.Version) {
+			return errServerMaintenance
+		}
+		if removePublished(serverCurrent) != nil || writeFile(serverInit, []byte(heldServerInit), 0755, 0, 0) != nil {
+			return errServerMaintenance
+		}
+		record.Phase = "stop"
+		if err := saveServerRemoval(record); err != nil {
+			return err
+		}
 	} else if initErr == nil && string(init) != heldServerInit {
 		return errServerMaintenance
 	}
 	if record.Phase == "stop" {
-		if err := p.control("stop"); err != nil {
+		if err := p.controlBinary("stop", serverGenerationBinary(p)); err != nil {
 			return err
 		}
 		record.Phase = "remove"
@@ -74,7 +95,7 @@ func uninstallServer() error {
 			return err
 		}
 	}
-	if err := cleanServerBinaries(p, true); err != nil {
+	if err := cleanServerBinaries(p, record.Owned, true); err != nil {
 		return err
 	}
 	if syncDir(filepath.Dir(serverBase)) != nil || removePublished(serverInit) != nil ||
@@ -92,7 +113,17 @@ func loadServerRemoval(p serverProfile) (serverRemoval, error) {
 	}
 	var record serverRemoval
 	if err != nil || jsonv2.Unmarshal(raw, &record, jsonv2.RejectUnknownMembers(true)) != nil ||
-		record.Release != p.Release || (record.Phase != "stop" && record.Phase != "remove") {
+		record.Release != p.Release || (record.Phase != "hold" && record.Phase != "stop" && record.Phase != "remove") {
+		return record, errServerMaintenance
+	}
+	seen := map[string]bool{}
+	for _, release := range record.Owned {
+		if !validRelease(release) || seen[release.Version] {
+			return record, errServerMaintenance
+		}
+		seen[release.Version] = true
+	}
+	if !seen[p.Release.Version] {
 		return record, errServerMaintenance
 	}
 	return record, nil
@@ -106,14 +137,17 @@ func saveServerRemoval(record serverRemoval) error {
 	return nil
 }
 
-func cleanServerBinaries(p serverProfile, remove bool) error {
-	generations := filepath.Join(serverBase, "generations")
-	active := filepath.Join(generations, p.Release.Version)
-	allowed := map[string]map[string]os.FileMode{
-		serverBase:  {"current": os.ModeSymlink, "generations": os.ModeDir},
-		generations: {p.Release.Version: os.ModeDir},
-		active:      {installerAsset: 0755, serverAsset: 0755},
+func cleanServerBinaries(p serverProfile, releases []release, remove bool) error {
+	known := map[string]bool{}
+	for _, release := range releases {
+		known[release.Version] = true
 	}
+	generations := filepath.Join(serverBase, "generations")
+	allowed := map[string]map[string]os.FileMode{
+		serverBase:        {"current": os.ModeSymlink, "generations": os.ModeDir, "control": os.ModeDir},
+		serverRecoveryDir: {installerAsset: 0755},
+	}
+	generationFiles := map[string]os.FileMode{installerAsset: 0755, serverAsset: 0755, "release.json": 0600}
 	var entries, directories []string
 	var inspect func(string) error
 	inspect = func(dir string) error {
@@ -127,6 +161,12 @@ func cleanServerBinaries(p serverProfile, remove bool) error {
 		for _, item := range items {
 			file := filepath.Join(dir, item.Name())
 			mode, valid := allowed[dir][item.Name()]
+			if dir == generations && known[item.Name()] {
+				mode, valid = os.ModeDir, true
+			}
+			if filepath.Dir(dir) == generations {
+				mode, valid = generationFiles[item.Name()]
+			}
 			if !valid {
 				return errServerMaintenance
 			}
@@ -162,4 +202,31 @@ func cleanServerBinaries(p serverProfile, remove bool) error {
 		}
 	}
 	return nil
+}
+
+func knownServerReleases(p serverProfile) ([]release, error) {
+	base := filepath.Join(serverBase, "generations")
+	entries, err := os.ReadDir(base)
+	if err != nil {
+		return nil, errServerMaintenance
+	}
+	var releases []release
+	for _, entry := range entries {
+		tag := entry.Name()
+		if tag == p.Release.Version {
+			releases = append(releases, p.Release)
+			continue
+		}
+		dir := filepath.Join(base, tag)
+		if len(tag) > 40 || !tagPattern.MatchString(tag) || rootDirs(false, dir) != nil {
+			return nil, errServerMaintenance
+		}
+		raw, err := readProtected(filepath.Join(dir, "release.json"), 0600, 4096)
+		var proof release
+		if err != nil || jsonv2.Unmarshal(raw, &proof, jsonv2.RejectUnknownMembers(true)) != nil || !validRelease(proof) || proof.Version != tag {
+			return nil, errServerMaintenance
+		}
+		releases = append(releases, proof)
+	}
+	return releases, nil
 }

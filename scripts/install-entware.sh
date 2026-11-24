@@ -77,6 +77,10 @@ case "$action:$role" in
   update:agent-transport)
     [ -z "$run_as$server$server_ca$invite$listen$web_origin$tls_cert$tls_key$local_cfg$app_cfg" ] ||
       refuse 'update uses the installed service profile' ;;
+  update:server)
+    [ -z "$run_as$server$server_ca$invite$listen$web_origin$tls_cert$tls_key$local_cfg$app_cfg$agent_origin$validator_origin$validator_ca$validator_cert$validator_key" ] ||
+      refuse 'update uses the installed server profile' ;;
+
   install:server)
     [ -n "$run_as" ] && [ -n "$listen" ] && [ -n "$web_origin" ] && [ -n "$tls_cert" ] &&
       [ -n "$tls_key" ] && [ -z "$server$server_ca$invite$local_cfg$app_cfg" ] ||
@@ -172,6 +176,8 @@ if [ "$action" = uninstall ]; then
     agent-application) "$stage/$helper" uninstall-application remove-service ;;
     server) "$stage/$helper" uninstall-server remove-service ;;
   esac
+elif [ "$action" = update ] && [ "$role" = server ]; then
+  "$stage/$helper" update-server-stage "$stage" "$version" "$manifest"
 elif [ "$action" = update ]; then
   format=agent-state-format.txt
   if /opt/bin/awk -v name="$format" '$2 == name { found=1 } END { exit !found }' "$stage/SHA256SUMS"; then

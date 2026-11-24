@@ -14,6 +14,15 @@ import (
 
 func runStorage(args []string, stdout, stderr io.Writer) int {
 	const usage = "Usage: xkeen-ui-server storage backup --db-path SOURCE --output FILE | storage restore --backup SOURCE --output FILE"
+	if len(args) == 3 && args[0] == "compatibility" && args[1] == "--db-path" {
+		format, err := sqlite.MaintenanceCompatibility(context.Background(), args[2])
+		if err != nil {
+			fmt.Fprintln(stderr, err)
+			return 1
+		}
+		fmt.Fprintln(stdout, format)
+		return 0
+	}
 	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
 		fmt.Fprintln(stdout, usage)
 		return 0

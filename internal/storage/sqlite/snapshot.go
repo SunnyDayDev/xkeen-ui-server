@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -27,6 +28,24 @@ func Backup(ctx context.Context, source, output string) error {
 // Restore prepares and migrates a new file without activating it.
 func Restore(ctx context.Context, source, output string) error {
 	return snapshot(ctx, source, output, true)
+}
+
+// MaintenanceCompatibility identifies the active schema and the server data
+// contract. Change the epoch when rolling back would misinterpret persisted
+// data even at the same schema version.
+func MaintenanceCompatibility(ctx context.Context, source string) (string, error) {
+	path, err := snapshotPath(source)
+	if err != nil {
+		return "", err
+	}
+	info, err := os.Lstat(path)
+	if err != nil || !snapshotFile(info) {
+		return "", errSnapshotPath
+	}
+	if err := verifySnapshotFile(ctx, path, true); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("central-sqlite-v1/%d", len(migrations)), nil
 }
 
 func snapshot(ctx context.Context, source, output string, restore bool) error {
