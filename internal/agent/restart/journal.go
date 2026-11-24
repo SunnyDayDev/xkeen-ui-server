@@ -1,6 +1,7 @@
 package restart
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -20,10 +21,49 @@ import (
 const journalName = "application.json"
 const maxJournal = 4 * agentrevision.MaxBody
 
+type storedRecord struct {
+	Version int
+	Scope   preparation.Scope
+	Current *Confirmed
+	Pending *storedIntent
+}
+
+type storedIntent struct {
+	AttemptID   string
+	Previous    preparation.Baseline
+	Number      int64
+	Tag         string
+	TargetFiles []preparation.BaselineFile
+	Phase       Phase
+	Started     *preparation.Runtime
+}
+
+func storeRecord(record Record) storedRecord {
+	stored := storedRecord{Version: record.Version, Scope: record.Scope, Current: record.Current}
+	if p := record.Pending; p != nil {
+		stored.Pending = &storedIntent{AttemptID: p.AttemptID, Previous: p.Previous, Number: p.Target.Snapshot.Number,
+			Tag: p.Target.Tag, TargetFiles: p.TargetFiles, Phase: p.Phase, Started: p.Started}
+	}
+	return stored
+}
+
+func (stored storedRecord) restore() Record {
+	record := Record{Version: stored.Version, Scope: stored.Scope, Current: stored.Current}
+	if p := stored.Pending; p != nil {
+		target := Desired{Tag: p.Tag, Snapshot: agentrevision.Snapshot{Number: p.Number, Profile: stored.Scope.Profile}}
+		for _, file := range p.TargetFiles {
+			target.Snapshot.Files = append(target.Snapshot.Files, configuration.CatalogFile{Name: file.Name, Content: bytes.Clone(file.Content)})
+		}
+		record.Pending = &Intent{AttemptID: p.AttemptID, Previous: p.Previous, Target: target, TargetFiles: p.TargetFiles, Phase: p.Phase, Started: p.Started}
+	}
+	return record
+}
+
 // DiskJournal holds the exclusive scope lock for application or recovery.
 type DiskJournal struct {
 	dir, lock *os.File
 	scope     preparation.Scope
+	syncDir   func() error
 }
 
 func OpenJournal(path string, scope preparation.Scope) (*DiskJournal, error) {
@@ -50,7 +90,16 @@ func OpenJournal(path string, scope preparation.Scope) (*DiskJournal, error) {
 		dir.Close()
 		return nil, ErrPending
 	}
-	return &DiskJournal{dir: dir, lock: lock, scope: scope}, nil
+	parent, parentErr := os.Open(filepath.Dir(path))
+	if parentErr == nil {
+		parentErr = errors.Join(parent.Sync(), parent.Close())
+	}
+	if parentErr != nil {
+		lock.Close()
+		dir.Close()
+		return nil, ErrJournal
+	}
+	return &DiskJournal{dir: dir, lock: lock, scope: scope, syncDir: dir.Sync}, nil
 }
 
 func (j *DiskJournal) Close() error {
@@ -67,9 +116,12 @@ func (j *DiskJournal) Load() (Record, error) {
 	}
 	defer f.Close()
 	raw, err := io.ReadAll(io.LimitReader(f, maxJournal+1))
-	var result Record
-	if err != nil || len(raw) > maxJournal || jsonv2.Unmarshal(raw, &result, jsonv2.RejectUnknownMembers(true)) != nil ||
-		!validRecord(j.scope, result) || f.Sync() != nil || j.syncDirectory() != nil {
+	var stored storedRecord
+	if err != nil || len(raw) > maxJournal || jsonv2.Unmarshal(raw, &stored, jsonv2.RejectUnknownMembers(true)) != nil {
+		return Record{}, ErrJournal
+	}
+	result := stored.restore()
+	if !validRecord(j.scope, result) || f.Sync() != nil || j.syncDirectory() != nil {
 		return Record{}, ErrJournal
 	}
 	return result, nil
@@ -79,7 +131,7 @@ func (j *DiskJournal) Save(record Record) error {
 	if !validRecord(j.scope, record) {
 		return ErrJournal
 	}
-	raw, err := json.Marshal(record)
+	raw, err := json.Marshal(storeRecord(record))
 	if err != nil || len(raw) > maxJournal {
 		return ErrJournal
 	}
@@ -102,7 +154,7 @@ func (j *DiskJournal) Save(record Record) error {
 }
 
 func (j *DiskJournal) syncDirectory() error {
-	if j.dir.Sync() != nil {
+	if j.syncDir() != nil {
 		return ErrJournal
 	}
 	return nil
@@ -144,9 +196,30 @@ func validRecord(scope preparation.Scope, record Record) bool {
 	}
 	pending := record.Pending
 	return pending == nil || validAttemptID(pending.AttemptID) && validTarget(scope, pending.Target) &&
-		validBaseline(scope, pending.Previous) && (record.Current == nil ||
+		validBaseline(scope, pending.Previous) && validPending(scope, pending) && (record.Current == nil ||
 		pending.AttemptID != record.Current.AttemptID && pending.Target.Snapshot.Number > record.Current.Number &&
 			reflect.DeepEqual(pending.Previous.Files, record.Current.Baseline.Files))
+}
+
+func validPending(scope preparation.Scope, pending *Intent) bool {
+	baseline := preparation.Baseline{Runtime: pending.Previous.Runtime, Files: pending.TargetFiles}
+	if !validBaseline(scope, baseline) || len(pending.TargetFiles) != len(pending.Target.Snapshot.Files) {
+		return false
+	}
+	for i, file := range pending.TargetFiles {
+		target := pending.Target.Snapshot.Files[i]
+		if file.Name != target.Name || !bytes.Equal(file.Content, target.Content) {
+			return false
+		}
+	}
+	switch pending.Phase {
+	case Planned, Stopped, FilesVerified:
+		return pending.Started == nil
+	case RuntimeStarted:
+		return pending.Started != nil && pending.Started.PID > 0 && pending.Started.StartTick > 0 &&
+			pending.Started.VerifierID == scope.VerifierID && *pending.Started != pending.Previous.Runtime
+	}
+	return false
 }
 
 func validTarget(scope preparation.Scope, target Desired) bool {

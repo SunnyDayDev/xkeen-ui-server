@@ -29,9 +29,11 @@ type Scope struct {
 }
 
 type Runtime struct {
-	PID        int
-	StartTick  uint64
-	VerifierID string
+	PID                             int
+	StartTick                       uint64
+	VerifierID                      string
+	BootID                          string
+	DirectoryDevice, DirectoryInode uint64
 }
 
 type BaselineFile struct {

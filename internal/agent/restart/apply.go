@@ -38,10 +38,22 @@ type Confirmed struct {
 
 // Intent contains everything needed to resolve interrupted changes without
 // network authority or agent-owned cache.
+type Phase string
+
+const (
+	Planned        Phase = "planned"
+	Stopped        Phase = "stopped"
+	FilesVerified  Phase = "files_verified"
+	RuntimeStarted Phase = "runtime_started"
+)
+
 type Intent struct {
-	AttemptID string
-	Previous  preparation.Baseline
-	Target    Desired
+	AttemptID   string
+	Previous    preparation.Baseline
+	Target      Desired
+	TargetFiles []preparation.BaselineFile
+	Phase       Phase
+	Started     *preparation.Runtime
 }
 
 type Record struct {
@@ -62,8 +74,8 @@ type Journal interface {
 
 type Working interface {
 	Observe(context.Context, *Confirmed) (preparation.Baseline, error)
-	Preflight(context.Context, preparation.Baseline, Desired) error
-	Install(context.Context, Intent) (preparation.Baseline, error)
+	Preflight(context.Context, preparation.Baseline, Desired) ([]preparation.BaselineFile, error)
+	Install(context.Context, Intent, func(Phase, *preparation.Runtime) error) (preparation.Baseline, error)
 }
 
 type Service struct {
@@ -108,7 +120,8 @@ func (s *Service) Apply(ctx context.Context, key, tag string) (Confirmed, error)
 			return Confirmed{}, ErrDesired
 		}
 	}
-	if err := s.working.Preflight(ctx, before, candidate); err != nil {
+	files, err := s.working.Preflight(ctx, before, candidate)
+	if err != nil {
 		return Confirmed{}, err
 	}
 	if err := s.validator.Check(ctx, s.scope, candidate.Snapshot); err != nil {
@@ -123,13 +136,30 @@ func (s *Service) Apply(ctx context.Context, key, tag string) (Confirmed, error)
 	}
 	var id [16]byte
 	rand.Read(id[:])
-	intent := Intent{AttemptID: hex.EncodeToString(id[:]), Previous: before, Target: fresh}
+	intent := Intent{AttemptID: hex.EncodeToString(id[:]), Previous: before, Target: fresh, TargetFiles: files, Phase: Planned}
 	record.Pending = &intent
 	if err := s.journal.Save(record); err != nil {
 		return Confirmed{}, ErrJournal
 	}
-	now, err := s.working.Install(ctx, intent)
-	if err != nil || ctx.Err() != nil || !validInstallation(intent, now, s.scope.VerifierID) {
+	now, err := s.working.Install(ctx, intent, func(phase Phase, runtime *preparation.Runtime) error {
+		switch {
+		case intent.Phase == Planned && phase == Stopped && runtime == nil:
+		case intent.Phase == Stopped && phase == FilesVerified && runtime == nil:
+		case intent.Phase == FilesVerified && phase == RuntimeStarted && runtime != nil:
+		default:
+			return ErrJournal
+		}
+		next := intent
+		next.Phase, next.Started = phase, runtime
+		record.Pending = &next
+		if err := s.journal.Save(record); err != nil {
+			return err
+		}
+		intent = next
+		return nil
+	})
+	if err != nil || ctx.Err() != nil || intent.Phase != RuntimeStarted || intent.Started == nil ||
+		*intent.Started != now.Runtime || !validInstallation(intent, now, s.scope.VerifierID) {
 		return Confirmed{}, ErrEffects
 	}
 	confirmed := Confirmed{AttemptID: intent.AttemptID, Number: fresh.Snapshot.Number, Tag: fresh.Tag, Baseline: now}
@@ -154,7 +184,7 @@ func (s *Service) read(ctx context.Context, key, tag string) (Desired, error) {
 
 func validInstallation(intent Intent, actual preparation.Baseline, verifier string) bool {
 	if actual.Runtime == intent.Previous.Runtime || actual.Runtime.VerifierID != verifier || actual.Runtime.PID < 1 ||
-		actual.Runtime.StartTick == 0 || len(actual.Files) != len(intent.Target.Snapshot.Files) {
+		actual.Runtime.StartTick == 0 || !reflect.DeepEqual(actual.Files, intent.TargetFiles) {
 		return false
 	}
 	for i, file := range intent.Target.Snapshot.Files {

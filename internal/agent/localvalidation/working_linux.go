@@ -89,12 +89,17 @@ func workingFiles(path string) ([]preparation.BaselineFile, string, error) {
 		return nil, "", preparation.ErrBaseline
 	}
 	slices.SortFunc(files, func(a, b preparation.BaselineFile) int { return strings.Compare(a.Name, b.Name) })
+	manifest, err := workingManifest(files)
+	return files, manifest, err
+}
+
+func workingManifest(files []preparation.BaselineFile) (string, error) {
 	manifest, err := json.Marshal(files)
 	if err != nil {
-		return nil, "", preparation.ErrBaseline
+		return "", preparation.ErrBaseline
 	}
 	digest := sha256.Sum256(manifest)
-	return files, hex.EncodeToString(digest[:]), nil
+	return hex.EncodeToString(digest[:]), nil
 }
 
 func workingFile(dir int, name string, limit int64) (preparation.BaselineFile, error) {

@@ -1,6 +1,7 @@
 package restart
 
 import (
+	"context"
 	"crypto/x509"
 	"net/http"
 	"net/http/httptest"
@@ -8,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/agenthttp"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/preparation"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agentrevision"
 )
 
@@ -71,4 +73,64 @@ func TestCentralSourceVerifiesIndependentIdentityAndSnapshot(t *testing.T) {
 	if _, err := NewCentralSource(f.scope, untrusted).ReadCurrent(t.Context(), "synthetic"); err == nil {
 		t.Fatal("accepted a server with an unrelated certificate")
 	}
+}
+
+func TestAuthoritativeChangeBetweenReadsPreservesWorkingScope(t *testing.T) {
+	for _, outcome := range []string{"revoked", "replaced"} {
+		t.Run(outcome, func(t *testing.T) {
+			f := newApplyFixture(t)
+			firstTag, firstBody, err := agentrevision.Encode(f.scope.RouterID, f.first.Snapshot)
+			if err != nil {
+				t.Fatal(err)
+			}
+			newer := f.first.Snapshot
+			newer.Number++
+			nextTag, nextBody, err := agentrevision.Encode(f.scope.RouterID, newer)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var changed atomic.Bool
+			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				if r.Header.Get("Authorization") != "Bearer synthetic" ||
+					(changed.Load() && outcome == "revoked") {
+					w.WriteHeader(401)
+					_, _ = w.Write([]byte(`{"code":"unauthorized"}`))
+					return
+				}
+				if r.URL.Path == "/agent/v1/identity" {
+					_, _ = w.Write([]byte(`{"routerId":"router-example"}`))
+					return
+				}
+				tag, body := firstTag, firstBody
+				if changed.Load() {
+					tag, body = nextTag, nextBody
+				}
+				w.Header().Set("ETag", tag)
+				_, _ = w.Write(body)
+			}))
+			defer server.Close()
+			roots := x509.NewCertPool()
+			roots.AddCert(server.Certificate())
+			f.scope.Origin = server.URL
+			f.record.Scope = f.scope
+			central, err := agenthttp.New(server.URL, roots)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer central.CloseIdleConnections()
+			validator := centralValidationHook(func() { changed.Store(true) })
+			svc := New(f.scope, NewCentralSource(f.scope, central), f, f, validator)
+			if _, err := svc.Apply(t.Context(), "synthetic", firstTag); err != ErrDesired || len(f.effects) != 0 || f.record.Pending != nil {
+				t.Fatal("late central change allowed application", err)
+			}
+		})
+	}
+}
+
+type centralValidationHook func()
+
+func (h centralValidationHook) Check(context.Context, preparation.Scope, agentrevision.Snapshot) error {
+	h()
+	return nil
 }

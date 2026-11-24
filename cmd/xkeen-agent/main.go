@@ -37,9 +37,10 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	stateDir := flags.String("state-dir", "", "private state directory")
 	caFile := flags.String("ca-file", "", "optional PEM file with trusted certificates")
 	validatorSocket := flags.String("local-validator-socket", "", "protected local preparation supervisor socket")
+	applicationSocket := flags.String("local-application-socket", "", "protected local controlled application socket")
 	verifier := flags.String("local-verifier", "", "trusted local preparation profile ID")
 	if err := flags.Parse(args); errors.Is(err, flag.ErrHelp) {
-		fmt.Fprintln(stdout, "Usage: xkeen-agent --server HTTPS_ORIGIN --state-dir PATH [--ca-file PATH] [--local-validator-socket PATH --local-verifier ID]")
+		fmt.Fprintln(stdout, "Usage: xkeen-agent --server HTTPS_ORIGIN --state-dir PATH [--ca-file PATH] [--local-validator-socket PATH | --local-application-socket PATH] [--local-verifier ID]")
 		flags.SetOutput(stdout)
 		flags.PrintDefaults()
 		return 0
@@ -47,7 +48,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "invalid agent arguments: HTTPS server and state directory are required")
 		return 2
 	}
-	if (*validatorSocket == "") != (*verifier == "") {
+	if (*validatorSocket != "" && *applicationSocket != "") || (*validatorSocket == "" && *applicationSocket == "") != (*verifier == "") {
 		fmt.Fprintln(stderr, "invalid local preparation profile")
 		return 2
 	}
@@ -101,7 +102,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
-	prepare := candidatePreparation{socket: *validatorSocket, profile: *verifier, binding: *binding, store: store, out: stdout, diagnostics: stderr}
+	prepare := candidatePreparation{socket: *validatorSocket, application: *applicationSocket, profile: *verifier, binding: *binding, store: store, out: stdout, diagnostics: stderr}
 	prepare.check(ctx, snapshot)
 	fmt.Fprintln(stdout, "agent authenticated")
 	var latest int64

@@ -96,7 +96,9 @@ func (f *applyFixture) Load() (Record, error) { return f.record, nil }
 
 func (f *applyFixture) Save(record Record) error {
 	if record.Pending != nil {
-		f.effects = append(f.effects, "intent")
+		if record.Pending.Phase == Planned {
+			f.effects = append(f.effects, "intent")
+		}
 		if f.failIntent {
 			return ErrJournal
 		}
@@ -114,13 +116,24 @@ func (f *applyFixture) Observe(context.Context, *Confirmed) (preparation.Baselin
 	return f.old, f.observeErr
 }
 
-func (f *applyFixture) Preflight(context.Context, preparation.Baseline, Desired) error { return nil }
+func (f *applyFixture) Preflight(context.Context, preparation.Baseline, Desired) ([]preparation.BaselineFile, error) {
+	return f.old.Files, nil
+}
 
-func (f *applyFixture) Install(_ context.Context, intent Intent) (preparation.Baseline, error) {
+func (f *applyFixture) Install(_ context.Context, intent Intent, advance func(Phase, *preparation.Runtime) error) (preparation.Baseline, error) {
 	f.effects = append(f.effects, "install")
 	current := intent.Previous
 	current.Runtime.PID, current.Runtime.StartTick = 22, 2
-	return current, f.installErr
+	if f.installErr != nil {
+		return preparation.Baseline{}, f.installErr
+	}
+	if err := advance(Stopped, nil); err != nil {
+		return preparation.Baseline{}, err
+	}
+	if err := advance(FilesVerified, nil); err != nil {
+		return preparation.Baseline{}, err
+	}
+	return current, advance(RuntimeStarted, &current.Runtime)
 }
 
 func (f *applyFixture) Check(context.Context, preparation.Scope, agentrevision.Snapshot) error {

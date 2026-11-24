@@ -9,20 +9,21 @@ import (
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/enrollment"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/localvalidation"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/preparation"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/restart"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/statefile"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agentrevision"
 )
 
 // The desired loop calls check serially after a successful scoped D05 read.
 type candidatePreparation struct {
-	socket, profile, lastTag string
-	binding                  enrollment.State
-	store                    *statefile.Store
-	out, diagnostics         io.Writer
+	socket, application, profile, lastTag string
+	binding                               enrollment.State
+	store                                 *statefile.Store
+	out, diagnostics                      io.Writer
 }
 
 func (p *candidatePreparation) check(ctx context.Context, snapshot *agentrevision.Snapshot) {
-	if p.socket == "" || snapshot == nil || ctx.Err() != nil {
+	if (p.socket == "" && p.application == "") || snapshot == nil || ctx.Err() != nil {
 		return
 	}
 	tag, err := agentrevision.Tag(p.binding.RouterID, *snapshot)
@@ -39,6 +40,23 @@ func (p *candidatePreparation) check(ctx context.Context, snapshot *agentrevisio
 		return
 	}
 	scope := preparation.Scope{Origin: p.binding.Origin, RouterID: p.binding.RouterID, Profile: snapshot.Profile, VerifierID: p.profile}
+	if p.application != "" {
+		if err := localvalidation.ApplyCurrent(ctx, p.application, scope, p.binding.Key, tag); err != nil {
+			if ctx.Err() == nil {
+				switch {
+				case errors.Is(err, restart.ErrPending), errors.Is(err, restart.ErrDesired), errors.Is(err, restart.ErrBaseline),
+					errors.Is(err, preparation.ErrRejected), errors.Is(err, restart.ErrJournal), errors.Is(err, restart.ErrEffects):
+					fmt.Fprintln(p.diagnostics, err)
+				default:
+					fmt.Fprintln(p.diagnostics, "agent controlled application unavailable")
+				}
+			}
+			return
+		}
+		p.lastTag = tag
+		fmt.Fprintln(p.out, "agent revision verified locally")
+		return
+	}
 	client, err := localvalidation.NewClient(p.socket, scope)
 	if err != nil {
 		fmt.Fprintln(p.diagnostics, "agent local validation unavailable")
