@@ -57,9 +57,14 @@ func (c *Client) Origin() string { return c.origin }
 func (c *Client) CloseIdleConnections() { c.http.CloseIdleConnections() }
 
 func (c *Client) Enroll(ctx context.Context, invitation, key string) (string, error) {
+	return c.EnrollForRouter(ctx, invitation, key, "")
+}
+
+func (c *Client) EnrollForRouter(ctx context.Context, invitation, key, expectedRouter string) (string, error) {
 	payload, err := json.Marshal(struct {
 		Credential string `json:"credential"`
-	}{key})
+		RouterID   string `json:"routerId,omitempty"`
+	}{key, expectedRouter})
 	if err != nil {
 		return "", enrollment.ErrProtocol
 	}

@@ -18,6 +18,7 @@ import (
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/localvalidation"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/preparation"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/restart"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/localready"
 )
 
 func main() {
@@ -39,6 +40,7 @@ func main() {
 func run(ctx context.Context, args []string, out io.Writer) error {
 	flags := flag.NewFlagSet("xkeen-local-validator", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
+	requestReady := flags.Bool("ready-fd3", false, "send readiness on the inherited service pipe")
 	configPath := flags.String("config", "", "root-owned local supervisor profile")
 	applicationConfig := flags.String("application-config", "", "root-owned dedicated application profile")
 	manifestDir := flags.String("working-manifest", "", "record a trusted working directory manifest")
@@ -47,6 +49,16 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 	if err := flags.Parse(args); err != nil || flags.NArg() != 0 || os.Geteuid() != 0 {
 		return preparation.ErrUnavailable
 	}
+	var readiness *os.File
+	if *requestReady {
+		var err error
+		readiness, err = localready.Open()
+		if err != nil {
+			return err
+		}
+		defer readiness.Close()
+	}
+
 	if (*retryRollback != "" && *applicationConfig == "") ||
 		(*applicationConfig != "" && (*configPath == "" || *manifestDir != "" || *process != 0)) {
 		return preparation.ErrUnavailable
@@ -150,6 +162,9 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 	done := make(chan error, 1)
 	go func() { done <- server.Serve(listener) }()
 	fmt.Fprintln(out, ready)
+	if err := localready.Notify(readiness, ready); err != nil {
+		return err
+	}
 	select {
 	case err := <-done:
 		return err

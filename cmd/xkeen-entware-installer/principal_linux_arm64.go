@@ -10,11 +10,26 @@ func lockAdmission(role string, uid, gid uint32) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
+	if role == "agent-transport" {
+		if _, err := os.Lstat(applicationProfile); !errors.Is(err, os.ErrNotExist) {
+			lock.Close()
+			return nil, errors.New("managed application profile already claims the agent install")
+		}
+	}
 	otherUID, otherGID, err := otherPrincipal(role)
 	if err != nil || uid == otherUID || gid == otherGID {
 		lock.Close()
 		return nil, errors.New("agent and server require separate service identities")
 	}
+	if role == "server" {
+		application, err := loadApplicationProfile()
+		if (err != nil && !errors.Is(err, os.ErrNotExist)) ||
+			(err == nil && application.overlapsPrincipal(uid, gid)) {
+			lock.Close()
+			return nil, errors.New("agent and server require separate service identities")
+		}
+	}
+
 	return lock, nil
 }
 

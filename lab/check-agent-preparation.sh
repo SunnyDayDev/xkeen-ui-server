@@ -15,6 +15,10 @@ if [ "${XKEEN_LAB_REPORTS:-0}" = "1" ]; then
 fi
 go build -trimpath -o "$build_dir/xkeen-server" ./cmd/xkeen-ui-server
 go build -trimpath -o "$build_dir/xkeen-supervisor" ./cmd/xkeen-local-validator
+if [ "${XKEEN_LAB_INSTALLED:-0}" = "1" ]; then
+  go build -trimpath -o "$build_dir/installer" ./cmd/xkeen-entware-installer
+  cp scripts/install-entware.sh "$build_dir/install-entware.sh"
+fi
 go test -trimpath -c -o "$build_dir/runner.test" ./internal/agent/localvalidation
 go test -trimpath -c -o "$build_dir/process.test" ./cmd/xkeen-ui-server
 if [ "${XKEEN_LAB_APPLICATION:-0}" = "1" ]; then
@@ -22,11 +26,14 @@ if [ "${XKEEN_LAB_APPLICATION:-0}" = "1" ]; then
 fi
 
 run_lab() {
+  if [ "${XKEEN_LAB_INSTALLED:-0}" != "1" ]; then
+    set -- --security-opt=no-new-privileges "$@"
+  fi
   docker run --rm --platform linux/arm64 --cgroupns=private --network=none \
     --memory=512m --memory-swap=512m --pids-limit=128 \
     --cap-drop=ALL --cap-add=SYS_ADMIN --cap-add=SYS_CHROOT --cap-add=SETUID \
     --cap-add=SETGID --cap-add=SETPCAP --cap-add=KILL --cap-add=CHOWN --cap-add=DAC_OVERRIDE \
-    --security-opt=no-new-privileges --tmpfs /tmp:rw,nosuid,nodev \
+    --tmpfs /tmp:rw,nosuid,nodev \
     --mount "type=bind,src=$build_dir,dst=/proof,readonly" \
     "$@" --entrypoint /bin/sh "${XKEEN_LAB_IMAGE:-xkeen-router-lab:dev}" -ec '
 test "$(cat /proc/self/cgroup)" = "0::/"
@@ -47,7 +54,10 @@ export XKEEN_TEST_AGENT_BINARY=/proof/xkeen-agent
 export XKEEN_TEST_PREPARATION_BINARY=/proof/xkeen-supervisor
 uname -smr
 grep -E "^(Xray|Entware)=" /usr/local/share/router-lab/versions.txt
-if [ "${XKEEN_TEST_REPORTS:-0}" = "1" ]; then
+if [ "${XKEEN_TEST_INSTALLED:-0}" = "1" ]; then
+  export XKEEN_TEST_INSTALLED_APPLICATION=/proof/install-entware.sh
+  /proof/process.test -test.run "^TestEntwareInstallManagedApplication$" -test.v -test.timeout 2m
+elif [ "${XKEEN_TEST_REPORTS:-0}" = "1" ]; then
   /opt/sbin/iptables -I OUTPUT 1 -d 127.0.0.1 -p tcp --dport 10085 -m owner ! --uid-owner 0 -j REJECT
   export XKEEN_TEST_LEGACY_AGENT_BINARY=/proof/xkeen-agent-previous
   /proof/process.test -test.run "^TestProcessAgentReportsPublishedApplications$" -test.v -test.timeout 2m
@@ -68,7 +78,9 @@ test "$(find /tmp/validation-cgroup/jobs -mindepth 1 -type d | wc -l)" = 0
 '
 }
 
-if [ "${XKEEN_LAB_REPORTS:-0}" = "1" ]; then
+if [ "${XKEEN_LAB_INSTALLED:-0}" = "1" ]; then
+  run_lab --cap-add=SYS_PTRACE --env XKEEN_TEST_INSTALLED=1
+elif [ "${XKEEN_LAB_REPORTS:-0}" = "1" ]; then
   run_lab --read-only --cap-add=SYS_PTRACE --cap-add=NET_ADMIN --cap-add=NET_RAW --env XKEEN_TEST_REPORTS=1
 elif [ "${XKEEN_LAB_HOT:-0}" = "1" ]; then
   run_lab --read-only --cap-add=SYS_PTRACE --cap-add=NET_ADMIN --cap-add=NET_RAW --env XKEEN_TEST_HOT=1

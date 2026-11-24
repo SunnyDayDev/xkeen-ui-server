@@ -7,6 +7,8 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
+	"fmt"
 	"io"
 	"math/big"
 	"net"
@@ -18,11 +20,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/statefile"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agentcredential"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/agentcredentials"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/publication"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/reporting"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/storage/sqlite"
 )
 
@@ -215,5 +219,62 @@ func stopAgentProcess(t *testing.T, p *process) {
 	}
 	if err := p.wait(t); err != nil {
 		t.Fatalf("agent server shutdown: %v", err)
+	}
+}
+
+func TestProcessScopedEnrollmentPreservesAnotherRoutersInvitation(t *testing.T) {
+	ctx := t.Context()
+	path := filepath.Join(t.TempDir(), "server.sqlite")
+	invitation, credentials := fixtureEnrollment(t, path)
+	cert, key, roots := fixtureServerCertificate(t)
+	process := startProcess(t, testBinary, "--db-path", path, "--listen", "127.0.0.1:0", "--tls-cert", cert, "--tls-key", key)
+	client := &http.Client{Timeout: 2 * time.Second, Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: roots, MinVersion: tls.VersionTLS12}}}
+	defer client.CloseIdleConnections()
+	endpoint := "https://" + process.readyWithClient(t, client, "https") + "/agent/v1/enroll"
+	state := filepath.Join(t.TempDir(), "state")
+	if err := os.Mkdir(state, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(state, statefile.InvitationName), []byte(invitation), 0600); err != nil {
+		t.Fatal(err)
+	}
+	agent := startProcess(t, buildAgentForProcessTest(t), "--server", strings.TrimSuffix(endpoint, "/agent/v1/enroll"),
+		"--state-dir", state, "--ca-file", cert, "--expected-router-id", "different.example")
+	if err := agent.wait(t); err == nil || !strings.Contains(agent.output(), "agent credential was rejected") {
+		t.Fatal("wrong-scope agent did not refuse enrollment")
+	}
+	pending := readAgentState(t, state)
+	if pending.RouterID != "" || pending.InvitationDigest == "" {
+		t.Fatal("mismatched agent persisted an active identity")
+	}
+	if _, err := credentials.Identity(ctx, pending.Key); !errors.Is(err, agentcredentials.ErrUnauthorized) {
+		t.Fatal("wrong-scope CLI enrolled a key")
+	}
+	db, err := sqlite.Open(ctx, path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	if status, err := sqlite.NewContacts(db, time.Now).Status(ctx, "router-example"); err != nil || status.Presence != reporting.Unobserved {
+		t.Fatal("wrong-scope agent caused a server contact")
+	}
+
+	candidate := agentcredential.Generate(agentcredential.Working).Encode()
+	request := func(router string, want int) {
+		t.Helper()
+		body := fmt.Sprintf(`{"credential":%q,"routerId":%q}`, candidate, router)
+		if status, _ := requestAgentJSON(t, client, http.MethodPost, endpoint, invitation, body); status != want {
+			t.Fatalf("bound enrollment: received %d, want %d", status, want)
+		}
+	}
+	request("different.example", 401)
+	if _, err := credentials.Identity(ctx, candidate); !errors.Is(err, agentcredentials.ErrUnauthorized) {
+		t.Fatal("wrong-scope attempt registered a working key")
+	}
+	request("router-example", 200)
+	request("different.example", 401)
+	request("router-example", 200)
+	if id, err := credentials.Identity(ctx, candidate); err != nil || id.RouterID != "router-example" || id.Generation != 1 {
+		t.Fatal("the intended router could not redeem or replay its invitation")
 	}
 }

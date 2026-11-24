@@ -19,7 +19,7 @@ import (
 const maxEnrollmentBody = 1024
 
 type AgentAuthenticator interface {
-	Enroll(context.Context, string, string) (agentcredentials.Identity, error)
+	EnrollForRouter(context.Context, string, string, string) (agentcredentials.Identity, error)
 	Identity(context.Context, string) (agentcredentials.Identity, error)
 }
 
@@ -85,7 +85,7 @@ func enrollAgent(w http.ResponseWriter, r *http.Request, authenticator AgentAuth
 		agentError(w, http.StatusBadRequest, "invalid_request")
 		return
 	}
-	candidate, ok := readEnrollmentBody(w, r)
+	candidate, expectedRouter, ok := readEnrollmentBody(w, r)
 	if !ok {
 		return
 	}
@@ -93,7 +93,7 @@ func enrollAgent(w http.ResponseWriter, r *http.Request, authenticator AgentAuth
 		agentUnauthorized(w)
 		return
 	}
-	id, err := authenticator.Enroll(r.Context(), invitation, candidate)
+	id, err := authenticator.EnrollForRouter(r.Context(), invitation, candidate, expectedRouter)
 	writeAgentIdentity(w, id, err)
 }
 
@@ -136,25 +136,31 @@ func agentBearer(r *http.Request, kind agentcredential.Kind) (string, bool) {
 	return token, valid
 }
 
-func readEnrollmentBody(w http.ResponseWriter, r *http.Request) (string, bool) {
+func readEnrollmentBody(w http.ResponseWriter, r *http.Request) (string, string, bool) {
 	if r.ContentLength > maxEnrollmentBody {
 		agentError(w, http.StatusRequestEntityTooLarge, "request_too_large")
-		return "", false
+		return "", "", false
 	}
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxEnrollmentBody))
 	var tooLarge *http.MaxBytesError
 	if errors.As(err, &tooLarge) {
 		agentError(w, http.StatusRequestEntityTooLarge, "request_too_large")
-		return "", false
+		return "", "", false
 	}
 	var request struct {
-		Credential string `json:"credential"`
+		Credential string          `json:"credential"`
+		RouterID   json.RawMessage `json:"routerId"`
 	}
 	if err != nil || jsonv2.Unmarshal(body, &request, jsonv2.RejectUnknownMembers(true)) != nil || request.Credential == "" {
 		agentError(w, http.StatusBadRequest, "invalid_request")
-		return "", false
+		return "", "", false
 	}
-	return request.Credential, true
+	var expected string
+	if request.RouterID != nil && (jsonv2.Unmarshal(request.RouterID, &expected) != nil || expected == "") {
+		agentError(w, http.StatusBadRequest, "invalid_request")
+		return "", "", false
+	}
+	return request.Credential, expected, true
 }
 
 func writeAgentIdentity(w http.ResponseWriter, id agentcredentials.Identity, err error) {

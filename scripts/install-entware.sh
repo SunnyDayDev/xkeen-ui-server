@@ -14,7 +14,7 @@ refuse() {
 action=${1:-}
 case "$action" in install|update) ;; *) refuse 'expected install or update command' ;; esac
 shift
-role='' version='' manifest='' run_as='' server='' server_ca='' invite='' mirror='' mirror_ca='' listen='' web_origin='' tls_cert='' tls_key=''
+role='' version='' manifest='' run_as='' server='' server_ca='' invite='' mirror='' mirror_ca='' listen='' web_origin='' tls_cert='' tls_key='' local_cfg='' app_cfg=''
 while [ "$#" -gt 0 ]; do
   [ "$#" -ge 2 ] && [ -n "$2" ] || refuse 'missing installation option value'
   case "$1" in
@@ -29,6 +29,8 @@ while [ "$#" -gt 0 ]; do
     --web-origin) [ -z "$web_origin" ] || refuse 'duplicate option'; web_origin=$2 ;;
     --tls-cert) [ -z "$tls_cert" ] || refuse 'duplicate option'; tls_cert=$2 ;;
     --tls-key) [ -z "$tls_key" ] || refuse 'duplicate option'; tls_key=$2 ;;
+    --local-config) [ -z "$local_cfg" ] || refuse 'duplicate option'; local_cfg=$2 ;;
+    --application-config) [ -z "$app_cfg" ] || refuse 'duplicate option'; app_cfg=$2 ;;
     --release-mirror) [ -z "$mirror" ] || refuse 'duplicate option'; mirror=$2 ;;
     --mirror-ca-file) [ -z "$mirror_ca" ] || refuse 'duplicate option'; mirror_ca=$2 ;;
     *) refuse 'unknown installation option' ;;
@@ -46,15 +48,19 @@ case "$manifest" in ''|*[!0-9a-f]*) refuse 'invalid manifest SHA-256' ;; esac
 [ "${#manifest}" -eq 64 ] || refuse 'invalid manifest SHA-256'
 case "$action:$role" in
   install:agent-transport)
-    [ -n "$run_as" ] && [ -n "$server" ] && [ -z "$listen$web_origin$tls_cert$tls_key" ] ||
+    [ -n "$run_as" ] && [ -n "$server" ] && [ -z "$listen$web_origin$tls_cert$tls_key$local_cfg$app_cfg" ] ||
       refuse 'service identity and HTTPS origin are required' ;;
   update:agent-transport)
-    [ -z "$run_as$server$server_ca$invite$listen$web_origin$tls_cert$tls_key" ] ||
+    [ -z "$run_as$server$server_ca$invite$listen$web_origin$tls_cert$tls_key$local_cfg$app_cfg" ] ||
       refuse 'update uses the installed service profile' ;;
   install:server)
     [ -n "$run_as" ] && [ -n "$listen" ] && [ -n "$web_origin" ] && [ -n "$tls_cert" ] &&
-      [ -n "$tls_key" ] && [ -z "$server$server_ca$invite" ] ||
+      [ -n "$tls_key" ] && [ -z "$server$server_ca$invite$local_cfg$app_cfg" ] ||
       refuse 'server installation requires identity, listen, origin and both TLS files' ;;
+  install:agent-application)
+    [ -n "$run_as" ] && [ -n "$server" ] && [ -n "$local_cfg" ] && [ -n "$app_cfg" ] &&
+      [ -z "$server_ca$listen$web_origin$tls_cert$tls_key" ] ||
+      refuse 'unsupported Entware installation role without a managed application profile' ;;
   *) refuse 'unsupported Entware installation role' ;;
 esac
 
@@ -123,7 +129,9 @@ verify "$manifest" "$stage/SHA256SUMS"
 helper=xkeen-entware-installer-linux-arm64
 asset=xkeen-agent-linux-arm64
 [ "$role" != server ] || asset=xkeen-ui-server-linux-arm64
-for name in "$helper" "$asset"; do
+set -- "$helper" "$asset"
+[ "$role" != agent-application ] || set -- "$@" xkeen-local-validator-linux-arm64
+for name do
   digest=$(asset_digest "$name") || refuse 'release manifest does not describe required assets exactly once'
   fetch "$name" 67108864
   verify "$digest" "$stage/$name"
@@ -140,6 +148,8 @@ if [ "$action" = update ]; then
   "$stage/$helper" update-stage "$stage" "$version" "$manifest"
 elif [ "$role" = server ]; then
   "$stage/$helper" install-server-stage "$stage" "$version" "$manifest" "$run_as" "$listen" "$web_origin" "$tls_cert" "$tls_key"
+elif [ "$role" = agent-application ]; then
+  "$stage/$helper" install-application-stage "$stage" "$version" "$manifest" "$run_as" "$server" "$invite" "$local_cfg" "$app_cfg"
 else
   "$stage/$helper" install-stage "$stage" "$version" "$manifest" "$run_as" "$server" "$server_ca" "$invite"
 fi

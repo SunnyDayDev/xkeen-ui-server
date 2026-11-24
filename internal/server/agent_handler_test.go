@@ -21,7 +21,7 @@ type stubAgentAuthenticator struct {
 	err            error
 }
 
-func (s *stubAgentAuthenticator) Enroll(_ context.Context, invite, key string) (agentcredentials.Identity, error) {
+func (s *stubAgentAuthenticator) EnrollForRouter(_ context.Context, invite, key, _ string) (agentcredentials.Identity, error) {
 	s.enroll++
 	if invite != s.invite || key != s.key {
 		s.t.Fatal("incorrect credentials passed to enrollment")
@@ -91,7 +91,7 @@ func TestAgentHandlerFailsClosedOnMalformedInput(t *testing.T) {
 		{"unexpected identity body", "GET", "/agent/v1/identity", stub.key, `{"routerId":"other"}`, nil, 400},
 		{"duplicate JSON member", "POST", "/agent/v1/enroll", stub.invite, `{"credential":"a",` + validBody[1:], nil, 400},
 		{"case-alias JSON member", "POST", "/agent/v1/enroll", stub.invite, `{"Credential":"` + stub.key + `"}`, nil, 400},
-		{"foreign body member", "POST", "/agent/v1/enroll", stub.invite, `{"routerId":"other",` + validBody[1:], nil, 400},
+		{"foreign body member", "POST", "/agent/v1/enroll", stub.invite, `{"unexpected":"other",` + validBody[1:], nil, 400},
 		{"missing JSON member", "POST", "/agent/v1/enroll", stub.invite, "{}", nil, 400},
 		{"trailing body", "POST", "/agent/v1/enroll", stub.invite, validBody + "{}", nil, 400},
 		{"oversized body", "POST", "/agent/v1/enroll", stub.invite, validBody + strings.Repeat(" ", 1024), nil, 413},

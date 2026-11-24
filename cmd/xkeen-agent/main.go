@@ -25,6 +25,7 @@ import (
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/statefile"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agentrevision"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/localready"
 )
 
 func main() {
@@ -37,6 +38,8 @@ func main() {
 func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	flags := flag.NewFlagSet("xkeen-agent", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
+	requestReady := flags.Bool("ready-fd3", false, "send readiness on the inherited service pipe")
+	expectedRouter := flags.String("expected-router-id", "", "exact router ID for managed enrollment")
 	origin := flags.String("server", "", "configured HTTPS server origin")
 	stateDir := flags.String("state-dir", "", "private state directory")
 	caFile := flags.String("ca-file", "", "optional PEM file with trusted certificates")
@@ -53,10 +56,32 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "invalid agent arguments: HTTPS server and state directory are required")
 		return 2
 	}
+	pinnedRouter := false
+	flags.Visit(func(option *flag.Flag) {
+		if option.Name == "expected-router-id" {
+			pinnedRouter = true
+		}
+	})
+	if pinnedRouter && *expectedRouter == "" {
+		fmt.Fprintln(stderr, "invalid expected router ID")
+		return 2
+	}
+
 	if (*applicationReports && *applicationSocket == "") || (*validatorSocket != "" && *applicationSocket != "") || (*validatorSocket == "" && *applicationSocket == "") != (*verifier == "") {
 		fmt.Fprintln(stderr, "invalid local preparation profile")
 		return 2
 	}
+	var readiness *os.File
+	if *requestReady {
+		var err error
+		readiness, err = localready.Open()
+		if err != nil {
+			fmt.Fprintln(stderr, err)
+			return 2
+		}
+		defer readiness.Close()
+	}
+
 	roots, err := loadTrustedRoots(*caFile)
 	if err != nil {
 		fmt.Fprintln(stderr, "invalid agent CA configuration")
@@ -75,13 +100,19 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	}
 	defer store.Close()
 
-	if err := enrollment.Connect(ctx, client.Origin(), store, client); err != nil {
+	if *expectedRouter == "" {
+		err = enrollment.Connect(ctx, client.Origin(), store, client)
+	} else {
+		err = enrollment.ConnectForRouter(ctx, client.Origin(), *expectedRouter, store, client)
+	}
+	if err != nil {
 		if ctx.Err() != nil {
 			return 0
 		}
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
+
 	binding, err := store.Load()
 	if err != nil || binding == nil {
 		fmt.Fprintln(stderr, enrollment.ErrState)
@@ -149,6 +180,9 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	prepare := candidatePreparation{socket: *validatorSocket, application: reportSocket, applicationReports: *applicationReports, applicationReady: reportReady.Load, reportWake: wake, profile: *verifier, binding: *binding, store: store, out: stdout, diagnostics: stderr}
 	prepare.check(ctx, snapshot)
 	fmt.Fprintln(stdout, "agent authenticated")
+	if err := localready.Notify(readiness, "agent authenticated"); err != nil {
+		return 1
+	}
 	var latest int64
 	if snapshot != nil {
 		latest = snapshot.Number
