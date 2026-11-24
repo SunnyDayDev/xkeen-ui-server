@@ -209,6 +209,10 @@ Offline описывает контакт. При `runtime: "unknown"` ране�
 
 Через `GET /api/v1/routers/rules/local?routerId=example-router&elementId=550e8400-e29b-41d4-a716-446655440000` клиент получает буквальный JSON в поле `source` и сильный ETag. Передайте этот ETag в `If-Match` при PATCH того же ресурса с телом `{"source":"null"}`. Ссылки на переменные здесь остаются обычным текстом. Ответ содержит точное сохранённое значение. При устаревшей версии сервер возвращает 412, при неверном JSON — 422, при отсутствии локального UUID — 404. [OpenAPI операции](../openspec/changes/archive/2026-11-24-edit-external-router-local-rule/openapi.json).
 
+### Состояние правила роутера
+
+Вызовите `GET /api/v1/routers/rules/state?routerId=example-router&elementId=550e8400-e29b-41d4-a716-446655440000`, затем передайте его сильный ETag в `If-Match` и `{"disabled":true}` либо `{"disabled":false}` в PATCH того же ресурса. Поля ответа показывают персональную отметку, итоговое выключение, отдельное исключение и позицию с нуля в полном порядке. Снятие отметки сохраняет общие ограничения. Черновик с неоднозначной структурой активной маршрутизации возвращает 409. [OpenAPI состояния правила](../openspec/changes/archive/2026-11-24-change-external-router-rule-state/openapi.json).
+
 ## Состояние применения ревизии
 
 `GET /api/v1/routers/application?routerId=router-example&revision=2` читает точный известный номер. Версии передаются каноническими десятичными строками. `latestDesiredRevision` показывает текущее назначение, а `historicallyAppliedRevision` — последний подтверждённый номер. `contact` и `runtime` сообщают состояние отдельно.

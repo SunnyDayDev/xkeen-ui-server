@@ -65,21 +65,7 @@ func PrepareDraftInbounds(template *templates.Snapshot, draft routersettings.Dra
 	for _, item := range input.Rules.Local {
 		prepared.rules[item.ID] = inboundRuleSource{local: item.Content}
 	}
-	others := []*configuration.RouterSelectionInput{input.Log, input.API, input.Outbounds, input.Routing, input.Stats, input.FakeDNS}
-	for i := range input.Extra {
-		others = append(others, &input.Extra[i].Selection)
-	}
-	for _, selection := range others {
-		if selection == nil {
-			continue
-		}
-		for _, record := range selection.Shared {
-			prepared.input.OtherShared = append(prepared.input.OtherShared, configuration.ElementRef{ID: record.Element.ID, Position: record.Position})
-		}
-		for _, record := range selection.Local {
-			prepared.input.OtherLocal = append(prepared.input.OtherLocal, configuration.ElementRef{ID: record.ID, Position: record.Position})
-		}
-	}
+	prepared.input.OtherShared, prepared.input.OtherLocal = otherDraftRefs(input, input.Outbounds, input.Routing)
 	excluded := make(map[string]bool)
 	for _, item := range input.Inbounds.Exclusions {
 		excluded[item.Source.ElementID] = true
