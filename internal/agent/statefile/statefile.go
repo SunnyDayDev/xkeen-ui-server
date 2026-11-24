@@ -111,8 +111,12 @@ func (s *Store) Save(state enrollment.State) error {
 	if err != nil || len(raw) > maxRecord {
 		return enrollment.ErrState
 	}
+	return s.writePrivate(StateName, raw)
+}
+
+func (s *Store) writePrivate(name string, raw []byte) error {
 	fd := int(s.dir.Fd())
-	temp := ".credentials-" + rand.Text()
+	temp := ".state-" + rand.Text()
 	file, err := s.openPrivate(temp, unix.O_WRONLY|unix.O_CREAT|unix.O_EXCL)
 	if err != nil {
 		return enrollment.ErrState
@@ -124,7 +128,7 @@ func (s *Store) Save(state enrollment.State) error {
 	if writeErr != nil || syncErr != nil || closeErr != nil {
 		return enrollment.ErrState
 	}
-	if err := unix.Renameat(fd, temp, fd, StateName); err != nil {
+	if err := unix.Renameat(fd, temp, fd, name); err != nil {
 		return enrollment.ErrState
 	}
 	if err := s.dir.Sync(); err != nil {

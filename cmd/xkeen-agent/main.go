@@ -14,6 +14,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/agenthttp"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/desired"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/enrollment"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/statefile"
 )
@@ -59,6 +60,18 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	defer store.Close()
 
 	if err := enrollment.Connect(ctx, client.Origin(), store, client); err != nil {
+		if ctx.Err() != nil {
+			return 0
+		}
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	binding, err := store.Load()
+	if err != nil || binding == nil {
+		fmt.Fprintln(stderr, enrollment.ErrState)
+		return 1
+	}
+	if _, err := desired.UntilCurrent(ctx, *binding, store, client); err != nil {
 		if ctx.Err() != nil {
 			return 0
 		}

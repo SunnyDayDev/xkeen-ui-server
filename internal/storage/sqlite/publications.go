@@ -193,11 +193,21 @@ func validStoredBasis(draft routersettings.Draft, basis *publication.OrderBasis)
 	return true
 }
 
-func readDesiredRevision(ctx context.Context, tx *sql.Tx, id string) (*publication.Revision, error) {
+// ReadDesired returns the latest committed revision for one router.
+func (p *Publications) ReadDesired(ctx context.Context, routerID string) (*publication.Revision, error) {
+	if !validPublicationID(routerID) {
+		return nil, publication.ErrInvalidState
+	}
+	return readDesiredRevision(ctx, p.db, routerID)
+}
+
+func readDesiredRevision(ctx context.Context, source interface {
+	QueryRowContext(context.Context, string, ...any) *sql.Row
+}, id string) (*publication.Revision, error) {
 	var profile string
 	var number int64
 	var raw []byte
-	err := tx.QueryRowContext(ctx, `SELECT revision, profile, files FROM desired_router_revisions
+	err := source.QueryRowContext(ctx, `SELECT revision, profile, files FROM desired_router_revisions
 		WHERE router_id = ? ORDER BY revision DESC LIMIT 1`, id).Scan(&number, &profile, &raw)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil

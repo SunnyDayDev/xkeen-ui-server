@@ -45,7 +45,6 @@ func New(rawOrigin string, roots *x509.CertPool) (*Client, error) {
 	}
 	client := &http.Client{
 		Transport: transport,
-		Timeout:   5 * time.Second,
 		CheckRedirect: func(*http.Request, []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
@@ -72,7 +71,9 @@ func (c *Client) Identity(ctx context.Context, key string) (string, error) {
 }
 
 func (c *Client) exchange(ctx context.Context, method, path, token string, body io.Reader) (string, error) {
-	request, err := http.NewRequestWithContext(ctx, method, c.origin+path, body)
+	requestContext, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	request, err := http.NewRequestWithContext(requestContext, method, c.origin+path, body)
 	if err != nil {
 		return "", enrollment.ErrProtocol
 	}
