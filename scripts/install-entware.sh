@@ -12,13 +12,14 @@ refuse() {
 }
 
 action=${1:-}
-case "$action" in install|update) ;; *) refuse 'expected install or update command' ;; esac
+case "$action" in install|update|uninstall) ;; *) refuse 'expected install, update or uninstall command' ;; esac
 shift
 role='' version='' manifest='' run_as='' server='' server_ca='' invite='' mirror='' mirror_ca='' listen='' web_origin='' tls_cert='' tls_key='' local_cfg='' app_cfg=''
-agent_origin='' validator_origin='' validator_ca='' validator_cert='' validator_key=''
+confirm='' agent_origin='' validator_origin='' validator_ca='' validator_cert='' validator_key=''
 while [ "$#" -gt 0 ]; do
   [ "$#" -ge 2 ] && [ -n "$2" ] || refuse 'missing installation option value'
   case "$1" in
+    --confirm) [ -z "$confirm" ] || refuse 'duplicate option'; confirm=$2 ;;
     --role) [ -z "$role" ] || refuse 'duplicate option'; role=$2 ;;
     --version) [ -z "$version" ] || refuse 'duplicate option'; version=$2 ;;
     --manifest-sha256) [ -z "$manifest" ] || refuse 'duplicate option'; manifest=$2 ;;
@@ -61,7 +62,15 @@ if [ -n "$validator_origin$validator_ca$validator_cert$validator_key" ]; then
     refuse 'complete external validator configuration is required'
 fi
 
+if [ "$action" != uninstall ] && [ -n "$confirm" ]; then
+  refuse 'confirmation applies to uninstall'
+fi
+
 case "$action:$role" in
+  uninstall:agent-transport)
+    [ "$confirm" = remove-service ] &&
+      [ -z "$run_as$server$server_ca$invite$listen$web_origin$tls_cert$tls_key$local_cfg$app_cfg" ] ||
+      refuse 'uninstall requires explicit remove-service confirmation' ;;
   install:agent-transport)
     [ -n "$run_as" ] && [ -n "$server" ] && [ -z "$listen$web_origin$tls_cert$tls_key$local_cfg$app_cfg" ] ||
       refuse 'service identity and HTTPS origin are required' ;;
@@ -144,7 +153,11 @@ verify "$manifest" "$stage/SHA256SUMS"
 helper=xkeen-entware-installer-linux-arm64
 asset=xkeen-agent-linux-arm64
 [ "$role" != server ] || asset=xkeen-ui-server-linux-arm64
-set -- "$helper" "$asset"
+if [ "$action" = uninstall ]; then
+  set -- "$helper"
+else
+  set -- "$helper" "$asset"
+fi
 [ "$role" != agent-application ] || set -- "$@" xkeen-local-validator-linux-arm64
 for name do
   digest=$(asset_digest "$name") || refuse 'release manifest does not describe required assets exactly once'
@@ -153,7 +166,9 @@ for name do
 done
 
 /opt/bin/chmod 0700 "$stage/$helper"
-if [ "$action" = update ]; then
+if [ "$action" = uninstall ]; then
+  "$stage/$helper" uninstall-transport remove-service
+elif [ "$action" = update ]; then
   format=agent-state-format.txt
   if /opt/bin/awk -v name="$format" '$2 == name { found=1 } END { exit !found }' "$stage/SHA256SUMS"; then
     digest=$(asset_digest "$format") || refuse 'invalid state format declaration in release manifest'

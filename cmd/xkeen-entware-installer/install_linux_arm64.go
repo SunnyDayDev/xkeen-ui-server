@@ -57,6 +57,8 @@ func run(args []string) error {
 	switch {
 	case args[0] == "install-stage" && len(args) == 8:
 		return install(args[1:])
+	case args[0] == "uninstall-transport" && len(args) == 2 && args[1] == "remove-service":
+		return uninstallTransport()
 	case args[0] == "update-stage" && len(args) == 4:
 		return update(args[1], args[2], args[3])
 	case args[0] == "install-server-stage" && (len(args) == 9 || len(args) == 14):
@@ -124,6 +126,9 @@ func install(args []string) error {
 		return err
 	}
 	defer lock.Close()
+	if _, err := os.Lstat(transportRemovalPath); !errors.Is(err, os.ErrNotExist) {
+		return errRemoval
+	}
 	if _, err := os.Lstat(initPath); !errors.Is(err, os.ErrNotExist) {
 		return errInstalled
 	}

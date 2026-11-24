@@ -425,6 +425,83 @@ func TestEntwareInstallRegistersAgentAndRestartsSameIdentity(t *testing.T) {
 		t.Fatal("update and rollback changed saved identity")
 	}
 
+	invoke("start")
+	remove := func() ([]byte, error) {
+		t.Helper()
+		cmd := exec.CommandContext(t.Context(), "/opt/bin/sh", script, "uninstall", "--role", "agent-transport",
+			"--version", nextTag, "--manifest-sha256", sums[nextTag], "--release-mirror", mirror.URL, "--mirror-ca-file", cert, "--confirm", "remove-service")
+		return cmd.CombinedOutput()
+	}
+	goodReceipt := receipt()
+	if err := os.WriteFile(processReceipt, wrongReceipt, 0600); err != nil {
+		t.Fatal(err)
+	}
+	output, err = remove()
+	if restoreErr := os.WriteFile(processReceipt, []byte(goodReceipt), 0600); restoreErr != nil {
+		t.Fatal(restoreErr)
+	}
+	if err == nil || !strings.Contains(string(output), "instance ownership") || foreign.Process.Signal(syscall.Signal(0)) != nil {
+		t.Fatalf("uninstall did not safely refuse foreign receipt: %v, %s", err, output)
+	}
+	invoke("status")
+	const foreignFile = "/opt/libexec/xkeen-ui/agent-transport/foreign.bin"
+	if err := os.WriteFile(foreignFile, []byte("foreign fixture"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if output, err := remove(); err == nil {
+		t.Fatalf("uninstall accepted unmanaged content: %s", output)
+	}
+	invoke("status")
+	if observed, err := os.ReadFile(foreignFile); err != nil || string(observed) != "foreign fixture" {
+		t.Fatal("foreign content changed")
+	}
+	if err := os.Remove(foreignFile); err != nil {
+		t.Fatal(err)
+	}
+	invoke("stop")
+	stateLock, err := os.Open(filepath.Join(stateDir, ".lock"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer stateLock.Close()
+	if err := syscall.Flock(int(stateLock.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
+		t.Fatal(err)
+	}
+	if output, err := remove(); err == nil || !strings.Contains(string(output), "instance ownership") {
+		t.Fatalf("uninstall ignored unidentified owner of state: %v, %s", err, output)
+	}
+	if err := exec.CommandContext(t.Context(), initPath, "start").Run(); err == nil {
+		t.Fatal("interrupted uninstall allowed startup")
+	}
+	if err := stateLock.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if output, err := remove(); err != nil {
+		t.Fatalf("transport uninstall failed: %v, %s", err, output)
+	}
+	for _, path := range []string{initPath, processReceipt, "/opt/libexec/xkeen-ui/agent-transport"} {
+		if _, err := os.Lstat(path); !os.IsNotExist(err) {
+			t.Fatalf("uninstall left managed file: %s", path)
+		}
+	}
+	if readState() != first || foreign.Process.Signal(syscall.Signal(0)) != nil {
+		t.Fatal("uninstall changed agent state or signalled a foreign process")
+	}
+	if output, err := remove(); err != nil {
+		t.Fatalf("uninstall exact retry failed: %v, %s", err, output)
+	}
+	cmd = exec.CommandContext(t.Context(), "/opt/bin/sh", script, "install", "--role", "agent-transport",
+		"--version", nextTag, "--manifest-sha256", sums[nextTag], "--release-mirror", mirror.URL, "--mirror-ca-file", cert,
+		"--run-as", "65532:65532", "--server", origin, "--ca-file", cert)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("reinstall with preserved identity failed: %v, %s", err, output)
+	}
+	invoke("status")
+	invoke("stop")
+	if readState() != first {
+		t.Fatal("reinstall changed saved transport credentials")
+	}
+
 	identity, err := credentials.Identity(t.Context(), first.Key)
 	if err != nil || identity.Generation != 1 || identity.RouterID != first.RouterID {
 		t.Fatal("install or init.d restart created another registration")
