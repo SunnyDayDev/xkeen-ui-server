@@ -94,6 +94,7 @@ var migrations = []string{
 	// Older readers reject verbatim default source metadata. Existing templates need no rewrite.
 	`SELECT 1`,
 	createRouterDisplayName,
+	createRouterVisibilityEpoch,
 }
 
 func Open(ctx context.Context, path string) (*sql.DB, error) {

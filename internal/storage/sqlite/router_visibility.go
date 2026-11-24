@@ -35,14 +35,35 @@ func (v RouterVisibility) Hide(ctx context.Context, id string) error {
 	if !confirmed {
 		return routersettings.ErrVisibilityNotFound
 	}
-	if _, err := tx.ExecContext(ctx, `INSERT INTO hidden_router_visibility(router_id)
-		VALUES (?) ON CONFLICT(router_id) DO NOTHING`, id); err != nil {
+	if err := hideRouter(ctx, tx, id); err != nil {
 		return routersettings.ErrVisibilityUnavailable
 	}
 	if err := tx.Commit(); err != nil {
 		return routersettings.ErrVisibilityUnavailable
 	}
 	return nil
+}
+
+const createRouterVisibilityEpoch = `CREATE TABLE router_visibility_epochs (
+	router_id TEXT NOT NULL PRIMARY KEY COLLATE BINARY REFERENCES active_router_publications(router_id),
+	epoch INTEGER NOT NULL CHECK(typeof(epoch) = 'integer' AND epoch > 0)
+);
+INSERT INTO router_visibility_epochs (router_id,epoch)
+	SELECT router_id,1 FROM hidden_router_visibility;`
+
+func hideRouter(ctx context.Context, tx *sql.Tx, id string) error {
+	result, err := tx.ExecContext(ctx, `INSERT INTO hidden_router_visibility(router_id)
+		VALUES (?) ON CONFLICT(router_id) DO NOTHING`, id)
+	if err != nil {
+		return err
+	}
+	changed, err := result.RowsAffected()
+	if err != nil || changed == 0 {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, `INSERT INTO router_visibility_epochs(router_id,epoch)
+		VALUES (?,1) ON CONFLICT(router_id) DO UPDATE SET epoch=epoch+1`, id)
+	return err
 }
 
 func (v RouterVisibility) VisibleIDs(ctx context.Context) ([]string, error) {
