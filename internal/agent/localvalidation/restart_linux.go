@@ -81,11 +81,11 @@ func (w *RestartWorking) Observe(ctx context.Context, current *restart.Confirmed
 }
 
 func (w *RestartWorking) observe(ctx context.Context, probe Working) (preparation.Baseline, error) {
-	if !w.sameDirectory() {
+	if !w.sameDirectory() || !ownsListener(probe.PID, probe.SOCKS) {
 		return preparation.Baseline{}, restart.ErrBaseline
 	}
 	before, err := probe.Observe(ctx)
-	if err != nil || !w.sameDirectory() {
+	if err != nil || !w.sameDirectory() || !ownsListener(probe.PID, probe.SOCKS) {
 		return preparation.Baseline{}, restart.ErrBaseline
 	}
 	before.Runtime = w.fixedRuntime(before.Runtime.PID, before.Runtime.StartTick)
