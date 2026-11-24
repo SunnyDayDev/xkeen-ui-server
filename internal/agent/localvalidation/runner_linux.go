@@ -119,13 +119,24 @@ func writeControl(group, name, value string) error {
 }
 
 func (r Runner) stage(jail string, snapshot agentrevision.Snapshot) error {
-	for _, path := range []string{"candidate", "opt/etc/xray/dat", "opt/var/log/xray"} {
-		if err := os.MkdirAll(filepath.Join(jail, path), 0755); err != nil {
+	// The root-owned job parent stays private. Inside the isolated root the
+	// unprivileged worker needs exact modes, even under the installer umask.
+	for _, path := range []string{".", "candidate", "opt", "opt/etc", "opt/etc/xray", "opt/etc/xray/dat",
+		"opt/var", "opt/var/log", "opt/var/log/xray"} {
+		dir := filepath.Join(jail, path)
+		if err := os.Mkdir(dir, 0700); err != nil {
+			return err
+		}
+		if err := os.Chmod(dir, 0755); err != nil {
 			return err
 		}
 	}
 	for _, file := range snapshot.Files {
-		if err := os.WriteFile(filepath.Join(jail, "candidate", file.Name), file.Content, 0444); err != nil {
+		path := filepath.Join(jail, "candidate", file.Name)
+		if err := os.WriteFile(path, file.Content, 0600); err != nil {
+			return err
+		}
+		if err := os.Chmod(path, 0444); err != nil {
 			return err
 		}
 	}
@@ -134,18 +145,19 @@ func (r Runner) stage(jail string, snapshot agentrevision.Snapshot) error {
 		return err
 	}
 	defer binary.Close()
-	out, err := os.OpenFile(filepath.Join(jail, "xray"), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0555)
+	out, err := os.OpenFile(filepath.Join(jail, "xray"), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 	if err != nil {
 		return err
 	}
 	h := sha256.New()
 	const maxBinary = 64 << 20
 	n, copyErr := io.Copy(io.MultiWriter(out, h), io.LimitReader(binary, maxBinary+1))
-	if err := out.Close(); err != nil || copyErr != nil || n <= 0 || n > maxBinary ||
+	if copyErr != nil || n <= 0 || n > maxBinary ||
 		hex.EncodeToString(h.Sum(nil)) != hex.EncodeToString(r.Digest[:]) {
+		out.Close()
 		return preparation.ErrUnavailable
 	}
-	return nil
+	return errors.Join(out.Chmod(0555), out.Close())
 }
 
 func openRegular(path string) (*os.File, error) {
