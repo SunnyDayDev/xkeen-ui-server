@@ -45,6 +45,7 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 	applicationConfig := flags.String("application-config", "", "root-owned dedicated application profile")
 	manifestDir := flags.String("working-manifest", "", "record a trusted working directory manifest")
 	process := flags.Int("working-process", 0, "record start tick of a trusted launch")
+	detachRuntime := flags.Bool("detach-runtime", false, "stop the proven managed runtime")
 	retryRollback := flags.String("retry-rollback", "", "authorize one retry of a known restored attempt")
 	if err := flags.Parse(args); err != nil || flags.NArg() != 0 || os.Geteuid() != 0 {
 		return preparation.ErrUnavailable
@@ -59,6 +60,9 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 		defer readiness.Close()
 	}
 
+	if *detachRuntime && (*applicationConfig == "" || *retryRollback != "" || *requestReady) {
+		return preparation.ErrUnavailable
+	}
 	if (*retryRollback != "" && *applicationConfig == "") ||
 		(*applicationConfig != "" && (*configPath == "" || *manifestDir != "" || *process != 0)) {
 		return preparation.ErrUnavailable
@@ -114,6 +118,9 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 			return err
 		}
 		defer working.Close()
+		if *detachRuntime {
+			return working.DetachRuntime(ctx, journal)
+		}
 		if app.ReportVersion == 1 {
 			if err := restart.EnableReports(journal); err != nil {
 				return err

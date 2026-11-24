@@ -69,7 +69,7 @@ func uninstallTransport() error {
 		if _, err := serviceRunning(active); err != nil {
 			return err
 		}
-		if err := cleanTransportFiles(active, false); err != nil {
+		if err := cleanAgentBinaries(executableBase, active, false); err != nil {
 			return err
 		}
 		if err := writeFile(initPath, []byte(heldTransportInit), 0755, 0, 0); err != nil {
@@ -100,12 +100,12 @@ func uninstallTransport() error {
 			return err
 		}
 	}
-	stateLock, err := lockRetainedTransportState(record.Active)
+	stateLock, err := lockRetainedAgentState(stateDir, record.Active)
 	if err != nil {
 		return err
 	}
 	defer stateLock.Close()
-	if err := cleanTransportFiles(record.Active, true); err != nil {
+	if err := cleanAgentBinaries(executableBase, record.Active, true); err != nil {
 		return err
 	}
 	if err := syncDir(filepath.Dir(executableBase)); err != nil {
@@ -148,7 +148,7 @@ func saveTransportRemoval(record transportRemoval) error {
 	return nil
 }
 
-func cleanTransportFiles(active profile, remove bool) error {
+func cleanAgentBinaries(base string, active profile, remove bool) error {
 	// Inventory first, so an unexpected file blocks the operation before any
 	// deletion. No recursive removal is used, including on interrupted retries.
 	var files, dirs []string
@@ -164,7 +164,7 @@ func cleanTransportFiles(active profile, remove bool) error {
 		for _, entry := range entries {
 			name := entry.Name()
 			child := filepath.Join(path, name)
-			if path == executableBase && name == "current" {
+			if path == base && name == "current" {
 				target, err := os.Readlink(child)
 				if err != nil || target != "generations/"+active.Version {
 					return errRemoval
@@ -172,19 +172,21 @@ func cleanTransportFiles(active profile, remove bool) error {
 				files = append(files, child)
 				continue
 			}
-			if (path == executableBase && (name == "generations" || name == "control")) ||
-				(path == filepath.Join(executableBase, "generations") && tagPattern.MatchString(name) && len(name) <= 40) {
+			if (path == base && (name == "generations" || (name == "control" && base != applicationBase))) ||
+				(path == filepath.Join(base, "generations") && tagPattern.MatchString(name) && len(name) <= 40 &&
+					(base != applicationBase || name == active.Version)) {
 				if err := inventory(child); err != nil {
 					return err
 				}
 				continue
 			}
 			mode := os.FileMode(0755)
-			generation := filepath.Dir(path) == filepath.Join(executableBase, "generations")
+			generation := filepath.Dir(path) == filepath.Join(base, "generations")
 			switch {
 			case (generation || path == recoveryDir) && name == installerAsset:
 			case generation && name == agentAsset:
-			case generation && name == "release.json":
+			case generation && base == applicationBase && name == supervisorAsset:
+			case generation && base != applicationBase && name == "release.json":
 				mode = 0600
 			default:
 				return errRemoval
@@ -199,7 +201,7 @@ func cleanTransportFiles(active profile, remove bool) error {
 		dirs = append(dirs, path)
 		return nil
 	}
-	if err := inventory(executableBase); err != nil || !remove {
+	if err := inventory(base); err != nil || !remove {
 		return err
 	}
 	for _, path := range append(files, dirs...) {
@@ -210,12 +212,12 @@ func cleanTransportFiles(active profile, remove bool) error {
 	return nil
 }
 
-func lockRetainedTransportState(p profile) (*os.File, error) {
-	info, err := os.Lstat(stateDir)
+func lockRetainedAgentState(dir string, p profile) (*os.File, error) {
+	info, err := os.Lstat(dir)
 	if err != nil || !owned(info, p.UID, os.ModeDir, 0700) || info.Sys().(*syscall.Stat_t).Gid != p.GID {
 		return nil, errRemoval
 	}
-	lock, err := checkedFile(filepath.Join(stateDir, ".lock"), p.UID, 0600)
+	lock, err := checkedFile(filepath.Join(dir, ".lock"), p.UID, 0600)
 	if err != nil {
 		return nil, errRemoval
 	}

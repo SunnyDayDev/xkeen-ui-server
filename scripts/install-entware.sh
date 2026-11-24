@@ -67,7 +67,7 @@ if [ "$action" != uninstall ] && [ -n "$confirm" ]; then
 fi
 
 case "$action:$role" in
-  uninstall:agent-transport)
+  uninstall:agent-transport|uninstall:agent-application)
     [ "$confirm" = remove-service ] &&
       [ -z "$run_as$server$server_ca$invite$listen$web_origin$tls_cert$tls_key$local_cfg$app_cfg" ] ||
       refuse 'uninstall requires explicit remove-service confirmation' ;;
@@ -158,7 +158,7 @@ if [ "$action" = uninstall ]; then
 else
   set -- "$helper" "$asset"
 fi
-[ "$role" != agent-application ] || set -- "$@" xkeen-local-validator-linux-arm64
+[ "$action" = uninstall ] || [ "$role" != agent-application ] || set -- "$@" xkeen-local-validator-linux-arm64
 for name do
   digest=$(asset_digest "$name") || refuse 'release manifest does not describe required assets exactly once'
   fetch "$name" 67108864
@@ -167,7 +167,10 @@ done
 
 /opt/bin/chmod 0700 "$stage/$helper"
 if [ "$action" = uninstall ]; then
-  "$stage/$helper" uninstall-transport remove-service
+  case "$role" in
+    agent-transport) "$stage/$helper" uninstall-transport remove-service ;;
+    agent-application) "$stage/$helper" uninstall-application remove-service ;;
+  esac
 elif [ "$action" = update ]; then
   format=agent-state-format.txt
   if /opt/bin/awk -v name="$format" '$2 == name { found=1 } END { exit !found }' "$stage/SHA256SUMS"; then

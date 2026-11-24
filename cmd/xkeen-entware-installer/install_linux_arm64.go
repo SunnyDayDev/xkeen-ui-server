@@ -57,6 +57,8 @@ func run(args []string) error {
 	switch {
 	case args[0] == "install-stage" && len(args) == 8:
 		return install(args[1:])
+	case args[0] == "uninstall-application" && len(args) == 2 && args[1] == "remove-service":
+		return uninstallApplication()
 	case args[0] == "uninstall-transport" && len(args) == 2 && args[1] == "remove-service":
 		return uninstallTransport()
 	case args[0] == "update-stage" && len(args) == 4:
