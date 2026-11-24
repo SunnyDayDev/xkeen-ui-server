@@ -8,6 +8,7 @@ import (
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/templates"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/webadmin"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 )
 
 type WebTemplates struct{ db *sql.DB }
@@ -43,4 +44,21 @@ func (w WebTemplates) List(ctx context.Context, digest [32]byte, clock func() ti
 		return nil, err
 	}
 	return result, nil
+}
+
+// Create inserts the prepared draft and renews valid browser activity in the same writer.
+func (w WebTemplates) Create(ctx context.Context, digest [32]byte, clock func() time.Time, draft configuration.TemplateDraft) error {
+	tx, err := w.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	now := clock()
+	if err := touchActiveWebSession(ctx, tx, now, activeWebSessionArgs(digest, now)); err != nil {
+		return err
+	}
+	if err := insertTemplate(ctx, tx, draft); err != nil {
+		return err
+	}
+	return tx.Commit()
 }

@@ -30,11 +30,19 @@ type templateElementRecord struct {
 }
 
 func (r TemplateRepository) Insert(ctx context.Context, draft configuration.TemplateDraft) error {
+	return insertTemplate(ctx, r.db, draft)
+}
+
+type templateInserter interface {
+	ExecContext(context.Context, string, ...any) (sql.Result, error)
+}
+
+func insertTemplate(ctx context.Context, writer templateInserter, draft configuration.TemplateDraft) error {
 	raw, err := encodeTemplate(draft)
 	if err != nil {
 		return err
 	}
-	result, err := r.db.ExecContext(ctx, "INSERT INTO templates (id, draft) VALUES (?, ?) ON CONFLICT(id) DO NOTHING", draft.ID, raw)
+	result, err := writer.ExecContext(ctx, "INSERT INTO templates (id, draft) VALUES (?, ?) ON CONFLICT(id) DO NOTHING", draft.ID, raw)
 	if err != nil {
 		return operationError("create template", ctx.Err())
 	}

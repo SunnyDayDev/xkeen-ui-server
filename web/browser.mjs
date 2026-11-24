@@ -116,6 +116,128 @@ try {
   await password.fill(first);
   await password.press('Enter');
   await page.getByText('branch-east', {exact:true}).waitFor();
+
+  const openCreate = page.getByRole('button', {name:'Создать шаблон'});
+  const templateID = page.getByLabel('Идентификатор шаблона');
+  const submitCreate = page.getByRole('button', {name:'Создать', exact:true});
+  await openCreate.click();
+  const exactID = ' Branch / # ';
+  await templateID.fill(exactID);
+  const deferList = async route => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({status:503, contentType:'application/json',body:JSON.stringify({state:'unavailable'})});
+    } else {
+      await new Promise(resolve => setTimeout(resolve,220));
+      await route.continue();
+    }
+  };
+  await page.route('**/ui/v1/templates', deferList);
+  const atCreate = post.length;
+  await submitCreate.click();
+  const busyCreate = page.getByRole('button',{name:'Создаём…'});
+  await busyCreate.waitFor();
+  assert.ok(await busyCreate.isDisabled());
+  await page.getByText('Не удалось загрузить шаблоны.').waitFor();
+  await page.getByText('Шаблон создан:', {exact:false}).waitFor();
+  assert.deepEqual(post.slice(atCreate), ['/ui/v1/templates']);
+  await page.unroute('**/ui/v1/templates', deferList);
+  await page.getByRole('button',{name:'Повторить',exact:true}).click();
+  const savedID = page.getByRole('listitem').filter({hasText: 'Branch / #'});
+  await savedID.getByText('Версия 1',{exact:true}).waitFor();
+  assert.equal(await savedID.locator('bdi').textContent(), exactID);
+
+  await openCreate.click();
+  await templateID.fill(exactID);
+  await submitCreate.click();
+  await page.getByText('Шаблон с таким идентификатором уже существует.').waitFor();
+  assert.equal(await templateID.inputValue(),exactID);
+  if (process.env.XKEEN_BROWSER_SCREENSHOT) await page.screenshot({path:process.env.XKEEN_BROWSER_SCREENSHOT + '-create-wide.png'});
+  await page.setViewportSize({width:360,height:640});
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth),360);
+  if (process.env.XKEEN_BROWSER_SCREENSHOT) {
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    await page.screenshot({path:process.env.XKEEN_BROWSER_SCREENSHOT + '-create.png'});
+  }
+  await page.setViewportSize({width:1080,height:660});
+
+  await page.route('**/ui/v1/templates', route => route.request().method() === 'POST' ? route.abort() : route.continue(), {times:1});
+  await templateID.fill('unconfirmed write');
+  await submitCreate.click();
+  await page.getByText('Не удалось подтвердить создание. Проверьте список или повторите.').waitFor();
+  assert.equal(await templateID.inputValue(), 'unconfirmed write');
+
+  const retainedID = 'office-draft';
+  await templateID.fill(retainedID);
+  admin('reset', first);
+  const deniedCreate = page.waitForResponse(response => response.url().endsWith('/ui/v1/templates') &&
+    response.request().method() === 'POST' && response.status() === 401);
+  await submitCreate.click();
+  await deniedCreate;
+  await page.getByRole('heading', {name:'Сессия истекла'}).waitFor();
+  const beforeRelogin = post.length;
+  await password.fill(first);
+  await password.press('Enter');
+  await templateID.waitFor();
+  assert.equal(await templateID.inputValue(),retainedID);
+  assert.deepEqual(post.slice(beforeRelogin), ['/ui/v1/login']);
+  await page.getByText('branch-east',{exact:true}).waitFor();
+  assert.equal(await page.locator('bdi').filter({hasText:retainedID}).count(),0);
+  await page.getByRole('button',{name:'Отмена',exact:true}).click();
+
+  async function holdNextCreateReply() {
+    await page.evaluate(() => {
+      delete window.releaseOldTemplateResponse;
+      const fetchNext = window.fetch;
+      window.fetch = async (url, options) => {
+        const result = await fetchNext(url, options);
+        if (url === '/ui/v1/templates' && options?.method === 'POST') {
+          window.fetch = fetchNext;
+          await new Promise(resolve => { window.releaseOldTemplateResponse = resolve; });
+        }
+        return result;
+      };
+    });
+  }
+
+  await openCreate.click();
+  await templateID.fill('delayed-commit');
+  await holdNextCreateReply();
+  const replyHeld = page.waitForFunction(() => typeof window.releaseOldTemplateResponse === 'function');
+  await submitCreate.click();
+  await replyHeld;
+  await page.getByRole('link',{name:'Обзор'}).click();
+  await page.getByRole('link',{name:'Шаблоны'}).click();
+  await page.getByText('delayed-commit',{exact:true}).waitFor();
+  await openCreate.click();
+  await templateID.fill('new form value');
+  await page.evaluate(async () => {
+    window.releaseOldTemplateResponse();
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  });
+  await page.getByText('delayed-commit',{exact:true}).waitFor();
+  assert.equal(await templateID.inputValue(),'new form value');
+  assert.equal(await page.getByText('Шаблон создан:',{exact:false}).count(),0);
+  await templateID.fill('before-session-rotation');
+  await holdNextCreateReply();
+  await submitCreate.click();
+  await page.waitForFunction(() => typeof window.releaseOldTemplateResponse === 'function');
+  const loginElsewhere = await page.evaluate(async pass => {
+    const response = await fetch('/ui/v1/login', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:pass})
+    });
+    return response.status;
+  }, first);
+  assert.equal(loginElsewhere,200);
+  const updatedAccess = page.waitForResponse(response => response.url().endsWith('/ui/v1/session'));
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await updatedAccess;
+  await page.getByText('Не удалось подтвердить создание. Проверьте список или повторите.').waitFor();
+  await page.evaluate(async () => {
+    window.releaseOldTemplateResponse();
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  });
+  assert.equal(await templateID.inputValue(), 'before-session-rotation');
+  assert.equal(await page.getByText('Шаблон создан:',{exact:false}).count(),0);
   await page.getByRole('link',{name:'Обзор'}).click();
 
   await page.evaluate(() => {
@@ -157,7 +279,7 @@ try {
     await page.locator('form[aria-busy="false"]').waitFor();
   }
   await page.getByText('Слишком много попыток входа. Повторите позже.').waitFor();
-  console.log('F04–F05 real HTTPS browser scenarios passed');
+  console.log('F04–F06 real HTTPS browser scenarios passed');
 } finally {
   if (browser) await browser.close();
   if (server && server.exitCode === null) {

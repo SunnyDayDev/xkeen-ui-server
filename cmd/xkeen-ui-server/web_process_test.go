@@ -85,6 +85,8 @@ func TestProcessWebAdministratorLifecycle(t *testing.T) {
 		State     string
 		CSRF      string
 		Templates []templateSummary
+		ID        string
+		Version   string
 	}
 	request := func(method, path, requestOrigin, csrf, body string, cookie *http.Cookie, status int, state string) (result, *http.Cookie) {
 		t.Helper()
@@ -159,6 +161,13 @@ func TestProcessWebAdministratorLifecycle(t *testing.T) {
 	if len(listing.Templates) != 1 || listing.Templates[0] != (templateSummary{ID: templateID, Version: "1"}) {
 		t.Fatalf("expected saved C02 metadata, got %#v", listing.Templates)
 	}
+	const newTemplate = `{"id":"office / draft"}`
+	request("POST", "/templates", origin, "incorrect-proof", newTemplate, firstCookie, 403, "invalid_csrf")
+	created, _ := request("POST", "/templates", origin, first.CSRF, newTemplate, firstCookie, 201, "")
+	if created.ID != "office / draft" || created.Version != "1" {
+		t.Fatalf("unexpected create result: %v %v", created.ID, created.Version)
+	}
+	request("POST", "/templates", origin, first.CSRF, newTemplate, firstCookie, 409, "template_exists")
 	agentRequest, err := http.NewRequestWithContext(t.Context(), http.MethodGet, endpoint+"/agent/v1/identity", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -184,6 +193,10 @@ func TestProcessWebAdministratorLifecycle(t *testing.T) {
 	if reopened.CSRF != first.CSRF {
 		t.Fatal("session changed during restart")
 	}
+	listing, _ = request("GET", "/templates", "", "", "", firstCookie, 200, "")
+	if len(listing.Templates) != 2 || listing.Templates[1] != (templateSummary{ID: created.ID, Version: "1"}) {
+		t.Fatalf("created draft after restart: %#v", listing.Templates)
+	}
 	rotated, rotatedCookie := login(pass, firstCookie)
 	if rotatedCookie.Value == firstCookie.Value || rotated.CSRF == first.CSRF {
 		t.Fatal("unchanged login credential")
@@ -198,6 +211,7 @@ func TestProcessWebAdministratorLifecycle(t *testing.T) {
 	change("reset", 0)
 	request("GET", "/session", "", "", "", secondCookie, 200, "signed_out")
 	request("GET", "/templates", "", "", "", secondCookie, 401, "signed_out")
+	request("POST", "/templates", origin, second.CSRF, `{"id":"revoked draft"}`, secondCookie, 401, "signed_out")
 	request("POST", "/login", origin, "", `{"password":"synthetic first password"}`, nil, 401, "invalid_credentials")
 	login(replacement, nil)
 	// Exercise expensive incorrect passwords while the non-browser handler remains available.

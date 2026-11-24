@@ -2,8 +2,10 @@ package webadmin
 
 import (
 	"context"
-	"crypto/sha256"
 	"time"
+
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/templates"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 )
 
 // TemplateSummary holds the metadata needed to display one saved draft.
@@ -12,24 +14,40 @@ type TemplateSummary struct {
 	Version int64
 }
 
-// TemplateListStore authorizes the list and reads it in the same snapshot.
-type TemplateListStore interface {
+// TemplateStore checks session activity in the same transaction as each operation.
+type TemplateStore interface {
 	List(context.Context, [32]byte, func() time.Time) ([]TemplateSummary, error)
+	Create(context.Context, [32]byte, func() time.Time, configuration.TemplateDraft) error
 }
 
-type TemplateLister struct {
-	store TemplateListStore
+type Templates struct {
+	store TemplateStore
 	now   func() time.Time
 }
 
-func NewTemplateLister(store TemplateListStore, now func() time.Time) TemplateLister {
-	return TemplateLister{store: store, now: now}
+func NewTemplates(store TemplateStore, now func() time.Time) Templates {
+	return Templates{store: store, now: now}
 }
 
-func (l TemplateLister) List(ctx context.Context, token string) ([]TemplateSummary, error) {
-	raw, ok := decodeToken(token)
-	if !ok {
-		return nil, ErrSignedOut
+func (s Templates) List(ctx context.Context, token string) ([]TemplateSummary, error) {
+	digest, _, err := SessionProof(token, "", false)
+	if err != nil {
+		return nil, err
 	}
-	return l.store.List(ctx, sha256.Sum256(raw), l.now)
+	return s.store.List(ctx, digest, s.now)
+}
+
+func (s Templates) Create(ctx context.Context, token, proof, id string) (TemplateSummary, error) {
+	digest, _, err := SessionProof(token, proof, true)
+	if err != nil {
+		return TemplateSummary{}, err
+	}
+	draft, err := templates.PrepareDraft(configuration.TemplateDraft{ID: id})
+	if err != nil {
+		return TemplateSummary{}, err
+	}
+	if err := s.store.Create(ctx, digest, s.now, draft); err != nil {
+		return TemplateSummary{}, err
+	}
+	return TemplateSummary{ID: draft.ID, Version: 1}, nil
 }
