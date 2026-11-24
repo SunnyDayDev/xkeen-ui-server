@@ -3,11 +3,13 @@ package server_test
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -288,4 +290,148 @@ func TestExternalTemplateListConsumer(t *testing.T) {
 		t.Fatal("stale collection permit", err)
 	}
 
+}
+
+func TestExternalTemplateCreateConsumer(t *testing.T) {
+	ctx := t.Context()
+	db, err := sqlite.Open(ctx, filepath.Join(t.TempDir(), "create.sqlite"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	admin := sqlite.NewWebAdmin(db)
+	session := [32]byte{8}
+	if err := admin.SaveVerifier(ctx, webadmin.Verifier{Version: 1, Salt: [16]byte{1}, Digest: [32]byte{2}}, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := admin.Issue(ctx, 1, session, [32]byte{}, time.Now()); err != nil {
+		t.Fatal(err)
+	}
+	store := sqlite.NewExternalAccess(db, time.Now)
+	endpoint := server.NewExternalTemplates(store)
+	beforeWrite := make(chan func(), 1)
+	srv := httptest.NewTLSServer(server.NewExternalAccessHandler("", store, func(w http.ResponseWriter, r *http.Request, p externalaccess.Permit) {
+		if r.URL.RawQuery == "stale=1" {
+			(<-beforeWrite)()
+			r.URL.RawQuery = ""
+		}
+		endpoint(w, r, p)
+	}, http.NotFoundHandler()))
+	defer srv.Close()
+
+	const collection = "/api/v1/templates"
+	type response struct {
+		status                int
+		body, location, cache string
+		err                   error
+	}
+	call := func(method, path, body, bearer, contentType string) response {
+		req, err := http.NewRequestWithContext(ctx, method, srv.URL+path, strings.NewReader(body))
+		if err != nil {
+			return response{err: err}
+		}
+		if contentType != "" {
+			req.Header.Set("Content-Type", contentType)
+		}
+		if bearer != "" {
+			req.Header.Set("Authorization", "Bearer "+bearer)
+		}
+		res, err := srv.Client().Do(req)
+		if err != nil {
+			return response{err: err}
+		}
+		defer res.Body.Close()
+		raw, err := io.ReadAll(res.Body)
+		return response{res.StatusCode, strings.TrimSpace(string(raw)), res.Header.Get("Location"), res.Header.Get("Cache-Control"), err}
+	}
+	post := func(path, body, bearer string) response {
+		return call(http.MethodPost, path, body, bearer, "application/json")
+	}
+	expect := func(got response, status int, code string) {
+		t.Helper()
+		if got.err != nil || got.status != status || (code != "" && got.body != fmt.Sprintf(`{"code":%q}`, code)) {
+			t.Fatalf("got %d %q %v, want %d %q", got.status, got.body, got.err, status, code)
+		}
+	}
+	change := func(change externalaccess.Change) (externalaccess.Settings, string) {
+		t.Helper()
+		state, token, err := store.Owner(ctx, session, &change)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return state, token
+	}
+	expect(post(collection, `{"id":"hidden"}`, ""), 404, "not_found")
+	state, _ := change(externalaccess.Change{Version: 1, Enabled: true})
+	const exactID = " +&/ alpha "
+	const body = `{"id":" +&/ alpha "}`
+	got := post(collection, body, "")
+	expect(got, 201, "")
+	if got.location != collection+"/item?"+(url.Values{"templateId": {exactID}}).Encode() || !strings.Contains(got.cache, "no-store") {
+		t.Fatalf("create headers %+v", got)
+	}
+	var created struct {
+		ID      string
+		Version string
+	}
+	if err := json.Unmarshal([]byte(got.body), &created); err != nil || created.ID != exactID || created.Version != "1" {
+		t.Fatalf("created %+v %v", created, err)
+	}
+	item := call(http.MethodGet, got.location, "", "", "")
+	expect(item, 200, "")
+	var read struct {
+		ID       string
+		Version  string
+		Sections []any
+	}
+	if err := json.Unmarshal([]byte(item.body), &read); err != nil || read.ID != exactID || read.Version != "1" || read.Sections == nil || len(read.Sections) != 0 {
+		t.Fatalf("read %+v %v", read, err)
+	}
+	expect(post(collection, body, ""), 409, "template_exists")
+	for _, bad := range []string{`{"id":null}`, `{"ID":"different"}`, `{"id":"one","id":"two"}`, `{"id":"discard","sections":[]}`, `{"id":"discard"} {}`, `{"id":""}`, `{"id":"` + string([]byte{0xff}) + `"}`} {
+		expect(post(collection, bad, ""), 400, "invalid_request")
+	}
+	expect(post(collection+"?", `{"id":"query"}`, ""), 400, "invalid_request")
+	expect(call(http.MethodPost, collection, body, "", "text/plain"), 415, "unsupported_media_type")
+	expect(post(collection, `{"id":"`+strings.Repeat("x", 70000)+`"}`, ""), 413, "too_large")
+	state, _ = change(externalaccess.Change{Version: state.Version, Enabled: true, Protected: true})
+	expect(post(collection, `{"id":"protected"}`, ""), 401, "unauthorized")
+	state, bearer := change(externalaccess.Change{Version: state.Version, Rotate: true})
+	results := make(chan response, 2)
+	for range 2 {
+		go func() { results <- post(collection, `{"id":"one winner"}`, bearer) }()
+	}
+	counts := map[int]int{}
+	for range 2 {
+		res := <-results
+		if res.err != nil {
+			t.Fatal(res.err)
+		}
+		counts[res.status]++
+	}
+	if counts[201] != 1 || counts[409] != 1 {
+		t.Fatalf("concurrent responses %v", counts)
+	}
+	rotate := make(chan error, 1)
+	beforeWrite <- func() {
+		_, _, err := store.Owner(ctx, session, &externalaccess.Change{Version: state.Version, Rotate: true})
+		rotate <- err
+	}
+	expect(post(collection+"?stale=1", `{"id":"stale"}`, bearer), 401, "unauthorized")
+	if err := <-rotate; err != nil {
+		t.Fatal(err)
+	}
+	expect(post(collection, `{"id":"revoked"}`, bearer), 401, "unauthorized")
+	var count int
+	if err := db.QueryRowContext(ctx, "SELECT COUNT(*) FROM templates").Scan(&count); err != nil || count != 2 {
+		t.Fatalf("drafts %d %v", count, err)
+	}
+	for _, query := range []string{
+		"SELECT COUNT(*) FROM active_router_publications",
+		"SELECT COUNT(*) FROM desired_router_revisions",
+	} {
+		if err := db.QueryRowContext(ctx, query).Scan(&count); err != nil || count != 0 {
+			t.Fatalf("unexpected publication state %d %v", count, err)
+		}
+	}
 }

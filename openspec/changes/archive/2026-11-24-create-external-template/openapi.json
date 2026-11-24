@@ -1,0 +1,104 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "XKeen external template creation",
+    "version": "1"
+  },
+  "paths": {
+    "/api/v1/templates": {
+      "post": {
+        "operationId": "createTemplate",
+        "description": "Creates an empty draft under the exact ID. Query parameters are forbidden. The body limit is 8192 bytes.",
+        "security": [
+          {
+            "externalBearer": []
+          },
+          {}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Empty draft created",
+            "headers": {
+              "Location": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "format": "uri-reference"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "version"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "const": "1"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body or query"
+          },
+          "401": {
+            "description": "Missing, invalid or revoked authorization"
+          },
+          "404": {
+            "description": "External API disabled"
+          },
+          "409": {
+            "description": "Exact ID already exists"
+          },
+          "413": {
+            "description": "Request body exceeds 8192 bytes"
+          },
+          "415": {
+            "description": "Expected application/json"
+          },
+          "503": {
+            "description": "Storage unavailable"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "externalBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

@@ -19,6 +19,10 @@ type extTemplateFixture struct {
 	snapshot *templates.Snapshot
 }
 
+func (f *extTemplateFixture) CreateExternalTemplate(context.Context, externalaccess.Permit, string) (templates.Summary, error) {
+	panic("unexpected create")
+}
+
 func (f *extTemplateFixture) ReadExternalTemplate(_ context.Context, p externalaccess.Permit, id string) (*templates.Snapshot, error) {
 	f.calls++
 	if p.Version != 4 {

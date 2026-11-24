@@ -3,10 +3,10 @@ package sqlite
 import (
 	"context"
 	"database/sql"
-	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/externalaccess"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/templates"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 )
 
 func requireExternalPermit(ctx context.Context, tx *sql.Tx, permit externalaccess.Permit) error {
@@ -22,6 +22,28 @@ func requireExternalPermit(ctx context.Context, tx *sql.Tx, permit externalacces
 	}
 	return nil
 }
+func (s *ExternalAccess) CreateExternalTemplate(ctx context.Context, permit externalaccess.Permit, id string) (templates.Summary, error) {
+	draft, err := templates.PrepareDraft(configuration.TemplateDraft{ID: id})
+	if err != nil {
+		return templates.Summary{}, err
+	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return templates.Summary{}, err
+	}
+	defer tx.Rollback()
+	if err := requireExternalPermit(ctx, tx, permit); err != nil {
+		return templates.Summary{}, err
+	}
+	if err := insertTemplate(ctx, tx, draft); err != nil {
+		return templates.Summary{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return templates.Summary{}, err
+	}
+	return templates.Summary{ID: draft.ID, Version: 1}, nil
+}
+
 func (s *ExternalAccess) ReadExternalTemplate(ctx context.Context, permit externalaccess.Permit, id string) (*templates.Snapshot, error) {
 	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
