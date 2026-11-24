@@ -30,6 +30,9 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 	if len(args) > 0 && args[0] == "admin" {
 		return runAdmin(args[1:], os.Stdin, stdout, stderr)
 	}
+	if len(args) > 0 && args[0] == "storage" {
+		return runStorage(args[1:], stdout, stderr)
+	}
 	cfg, err := parseArgs(args, stdout)
 	if errors.Is(err, flag.ErrHelp) {
 		return 0
