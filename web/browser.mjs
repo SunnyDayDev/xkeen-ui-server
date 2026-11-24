@@ -151,6 +151,7 @@ try {
   await submitCreate.click();
   await page.getByText('Шаблон с таким идентификатором уже существует.').waitFor();
   assert.equal(await templateID.inputValue(),exactID);
+  if (process.env.XKEEN_BROWSER_SCREENSHOT) await page.screenshot({path:process.env.XKEEN_BROWSER_SCREENSHOT + '-create-wide.png'});
   await page.setViewportSize({width:360,height:640});
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth),360);
   if (process.env.XKEEN_BROWSER_SCREENSHOT) {
