@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/netip"
 	"strings"
+
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/server"
 )
 
 const defaultDBPath = "state/xkeen-ui-server.sqlite"
@@ -15,6 +17,7 @@ type config struct {
 	listen             string
 	dbPath             string
 	tlsCert, tlsKey    string
+	webOrigin          server.WebOrigin
 	createDefaultDBDir bool
 }
 
@@ -26,11 +29,12 @@ func parseArgs(args []string, help io.Writer) (config, error) {
 	flags.StringVar(&cfg.listen, "listen", "127.0.0.1:8080", "TCP listen address (IP literal:port)")
 	flags.StringVar(&cfg.dbPath, "db-path", defaultDBPath, "path to the SQLite database file")
 	flags.StringVar(&cfg.tlsCert, "tls-cert", "", "PEM certificate chain for the HTTPS listener")
+	webOrigin := flags.String("web-origin", "", "explicit browser HTTPS origin")
 	flags.StringVar(&cfg.tlsKey, "tls-key", "", "PEM private key for the HTTPS listener")
 	if err := flags.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			flags.SetOutput(help)
-			fmt.Fprintln(help, "Usage: xkeen-ui-server [--listen IP:port] [--db-path PATH] [--tls-cert PATH --tls-key PATH]")
+			fmt.Fprintln(help, "Usage: xkeen-ui-server [--listen IP:port] [--db-path PATH] [--tls-cert PATH --tls-key PATH] [--web-origin HTTPS_ORIGIN]")
 			flags.PrintDefaults()
 		}
 		return config{}, err
@@ -45,15 +49,26 @@ func parseArgs(args []string, help io.Writer) (config, error) {
 		return config{}, errors.New("invalid --db-path: path must be nonempty")
 	}
 	cfg.createDefaultDBDir = true
-	var tlsFlag bool
+	var tlsFlag, webFlag bool
 	flags.Visit(func(f *flag.Flag) {
 		if f.Name == "db-path" {
 			cfg.createDefaultDBDir = false
 		}
+		webFlag = webFlag || f.Name == "web-origin"
 		tlsFlag = tlsFlag || f.Name == "tls-cert" || f.Name == "tls-key"
 	})
 	if tlsFlag && (strings.TrimSpace(cfg.tlsCert) == "" || strings.TrimSpace(cfg.tlsKey) == "") {
 		return config{}, errors.New("invalid TLS configuration: both certificate and key files are required")
+	}
+	if webFlag {
+		if cfg.tlsCert == "" {
+			return config{}, errors.New("web origin requires HTTPS TLS configuration")
+		}
+		origin, err := server.ParseWebOrigin(*webOrigin)
+		if err != nil {
+			return config{}, err
+		}
+		cfg.webOrigin = origin
 	}
 	return cfg, nil
 }

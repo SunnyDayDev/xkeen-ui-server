@@ -17,6 +17,7 @@ import (
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/agentcredentials"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/revisionwatch"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/webadmin"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/server"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/storage/sqlite"
 )
@@ -26,6 +27,9 @@ func main() {
 }
 
 func run(args []string, stdout, stderr io.Writer) (exitCode int) {
+	if len(args) > 0 && args[0] == "admin" {
+		return runAdmin(args[1:], os.Stdin, stdout, stderr)
+	}
 	cfg, err := parseArgs(args, stdout)
 	if errors.Is(err, flag.ErrHelp) {
 		return 0
@@ -74,6 +78,9 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 		publications := sqlite.NewPublications(db, watch.Notify)
 		credentials := agentcredentials.NewService(sqlite.NewAgentCredentials(db, watch.Notify), time.Now)
 		handler = server.NewAgentHandler(credentials, publications, sqlite.NewContacts(db, time.Now), watch)
+	}
+	if cfg.webOrigin != "" {
+		handler = server.NewWebAdminHandler(cfg.webOrigin, webadmin.New(sqlite.NewWebAdmin(db), time.Now), handler)
 	}
 	if err := json.NewEncoder(stderr).Encode(struct {
 		Event   string `json:"event"`

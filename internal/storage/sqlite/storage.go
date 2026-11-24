@@ -80,6 +80,7 @@ var migrations = []string{
 	createPublicationStorage,
 	createAgentCredentialStorage,
 	createContactStorage,
+	createWebAdminStorage,
 }
 
 func Open(ctx context.Context, path string) (*sql.DB, error) {
