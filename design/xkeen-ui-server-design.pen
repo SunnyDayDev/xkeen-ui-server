@@ -21277,6 +21277,3902 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "mYVzR",
+      "x": 0,
+      "y": 26170,
+      "name": "24 / Подготовка роутера / Действие в обзоре",
+      "width": 1080,
+      "height": 740,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "fH4wH",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "U5OX8u",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "ZuiVg",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "mDWjs",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Шаблоны",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "cMTMa",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "xt6XK",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "MRfKL",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "sbypa",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "HRNIK",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Обзор",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "CW0SV",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Открыть подготовку",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Подключить роутер",
+                  "fill": "#FFFFFF"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "hO4bD",
+      "x": 0,
+      "y": 26980,
+      "name": "24 / Подготовка роутера / Шаблонов пока нет",
+      "width": 1080,
+      "height": 740,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "DimRv",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "c8yC36",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "YMf6I",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "o9hwYT",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "cv2wQ",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "IKg47",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "IPmdi",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "mwGYn",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "hySoW",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Подключить роутер",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "y4Ukpg",
+              "name": "Подготовка подключения",
+              "width": 700,
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "yNMGn",
+                  "name": "Шаблонов пока нет.",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Шаблонов пока нет.",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "id": "K86RM",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Открыть шаблоны",
+                  "fill": "$surface",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Открыть шаблоны",
+                      "fill": "$ink"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "bbUFl",
+      "x": 0,
+      "y": 27790,
+      "name": "24 / Подготовка роутера / Выбор шаблона",
+      "width": 1080,
+      "height": 740,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "MPQhv",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "PZ8CI",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "a7yRwZ",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "N8I8cm",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "xDxZ1",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "IKiYM",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "U80xo",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "LLl26",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "GQUGq",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Подключить роутер",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "Z3GHIA",
+              "name": "Подготовка подключения",
+              "width": 700,
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "id": "vAJgl",
+                  "type": "ref",
+                  "ref": "BmmQR",
+                  "name": "Имя роутера",
+                  "width": "fill_container",
+                  "descendants": {
+                    "uFzxP": {
+                      "content": "Имя роутера"
+                    },
+                    "hN1cU/VdSCq": {
+                      "content": "Например, Филиал Восток"
+                    },
+                    "GDH1i": {
+                      "enabled": false,
+                      "content": ""
+                    }
+                  }
+                },
+                {
+                  "id": "m6s56a",
+                  "type": "ref",
+                  "ref": "wnZ1c",
+                  "name": "Шаблон",
+                  "width": "fill_container",
+                  "descendants": {
+                    "Fw4KI": {
+                      "content": "Шаблон"
+                    },
+                    "lZ6jv/m9t6A": {
+                      "content": "Выберите шаблон"
+                    },
+                    "KI6ZC": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "q9tQH",
+                  "name": "Подтверждение подготовки",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "RsLAT",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Подтвердить подготовку",
+                      "fill": "$line",
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Проверить и подготовить"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "R2Ion8",
+      "x": 0,
+      "y": 28600,
+      "name": "24 / Подготовка роутера / Загрузка шаблона",
+      "width": 1080,
+      "height": 740,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "N2XAwR",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "Ofnsr",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "Klu6Z",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "fQIpP",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "Uk9N4",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "q7L2FO",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "yCOOh",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Qh3LI",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "XFk2m",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Подключить роутер",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "aObtJ",
+              "name": "Подготовка подключения",
+              "width": 700,
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "wFvdo",
+                  "name": "Загружаем определения шаблона…",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Загружаем определения шаблона…",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "ZcFez",
+      "x": 0,
+      "y": 29410,
+      "name": "24 / Подготовка роутера / Не удалось прочитать",
+      "width": 1080,
+      "height": 740,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "j6nNe",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "Sjujt",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "ZRIvd",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "srfbE",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "FsNgG",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "Z8L21Q",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "YZAFZ",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "deQwq",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "AeSv0",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Подключить роутер",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "vMTvm",
+              "name": "Подготовка подключения",
+              "width": 700,
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "T9edzq",
+                  "name": "Не удалось загрузить шаблон.",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Не удалось загрузить шаблон.",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "id": "W3jSjJ",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Повторить",
+                  "fill": "$accent",
+                  "descendants": {
+                    "GyrRR": {
+                      "fill": "#FFFFFF",
+                      "content": "Повторить"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Wh2x8",
+      "x": 0,
+      "y": 30220,
+      "name": "24 / Подготовка роутера / Принятый снимок",
+      "width": 1080,
+      "height": 740,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "dthPf",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "jj3EY",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "eoEar",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "m44cq",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "N9iIQ",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "lFwMA",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "G58mL",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "fhL23",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "TclnI",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Подключить роутер",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "CJYkq",
+              "name": "Подготовка подключения",
+              "width": 700,
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "id": "J3Nkhd",
+                  "type": "ref",
+                  "ref": "BmmQR",
+                  "name": "Имя роутера",
+                  "width": "fill_container",
+                  "descendants": {
+                    "uFzxP": {
+                      "content": "Имя роутера"
+                    },
+                    "hN1cU/VdSCq": {
+                      "content": "Филиал Восток"
+                    },
+                    "GDH1i": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                },
+                {
+                  "id": "lfDxK",
+                  "type": "ref",
+                  "ref": "wnZ1c",
+                  "name": "Шаблон",
+                  "width": "fill_container",
+                  "descendants": {
+                    "Fw4KI": {
+                      "content": "Шаблон"
+                    },
+                    "lZ6jv/m9t6A": {
+                      "content": "office-network"
+                    },
+                    "KI6ZC": {
+                      "content": "Принятый снимок · версия 3"
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "n1DRiO",
+                  "name": "Значения выбранного элемента",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ttAzn",
+                      "name": "Персональные значения",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Персональные значения",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "yPxb7",
+                      "name": "outbounds · 550e8400-e29b-41d4-a716-446655440000",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "outbounds · 550e8400-e29b-41d4-a716-446655440000",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "id": "zfIMY",
+                      "type": "ref",
+                      "ref": "BmmQR",
+                      "name": "endpoint",
+                      "width": "fill_container",
+                      "descendants": {
+                        "uFzxP": {
+                          "content": "endpoint"
+                        },
+                        "hN1cU/VdSCq": {
+                          "content": "node.example"
+                        },
+                        "GDH1i": {
+                          "content": "Строка · обязательное значение",
+                          "enabled": true
+                        }
+                      }
+                    },
+                    {
+                      "id": "weITC",
+                      "type": "ref",
+                      "ref": "BmmQR",
+                      "name": "timeoutSeconds",
+                      "width": "fill_container",
+                      "descendants": {
+                        "uFzxP": {
+                          "content": "timeoutSeconds"
+                        },
+                        "hN1cU/VdSCq": {
+                          "content": "5"
+                        },
+                        "GDH1i": {
+                          "content": "Число · используется дефолт",
+                          "enabled": true
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "W3MP0",
+                  "name": "Подтверждение подготовки",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "m6FI4",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Подтвердить подготовку",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Проверить и подготовить",
+                          "fill": "#FFFFFF"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "MQA1I",
+      "x": 0,
+      "y": 31030,
+      "name": "24 / Подготовка роутера / Первый общий снимок",
+      "width": 1080,
+      "height": 740,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "BF3J7",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "RfvXY",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "g1MlX",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "Vt1a3",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "UIGDv",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "F9oRis",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "XQ4NI",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "rC96s",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "iFgPH",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Подключить роутер",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "xMTNw",
+              "name": "Подготовка подключения",
+              "width": 700,
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "id": "DvW8d",
+                  "type": "ref",
+                  "ref": "BmmQR",
+                  "name": "Имя роутера",
+                  "width": "fill_container",
+                  "descendants": {
+                    "uFzxP": {
+                      "content": "Имя роутера"
+                    },
+                    "hN1cU/VdSCq": {
+                      "content": "Филиал Восток"
+                    },
+                    "GDH1i": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                },
+                {
+                  "id": "F9vTip",
+                  "type": "ref",
+                  "ref": "wnZ1c",
+                  "name": "Шаблон",
+                  "width": "fill_container",
+                  "descendants": {
+                    "Fw4KI": {
+                      "content": "Шаблон"
+                    },
+                    "lZ6jv/m9t6A": {
+                      "content": "test-profile"
+                    },
+                    "KI6ZC": {
+                      "content": "Черновик · версия 2"
+                    }
+                  }
+                },
+                {
+                  "type": "text",
+                  "id": "ugQJp",
+                  "name": "При подтверждении черновик станет принятым снимком.",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "При подтверждении черновик станет принятым снимком.",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "j6yTe6",
+                  "name": "Значения выбранного элемента",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "J4LWUE",
+                      "name": "Персональные значения",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Персональные значения",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "OEtL4",
+                      "name": "outbounds · 550e8400-e29b-41d4-a716-446655440000",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "outbounds · 550e8400-e29b-41d4-a716-446655440000",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "id": "kCeSO",
+                      "type": "ref",
+                      "ref": "BmmQR",
+                      "name": "endpoint",
+                      "width": "fill_container",
+                      "descendants": {
+                        "uFzxP": {
+                          "content": "endpoint"
+                        },
+                        "hN1cU/VdSCq": {
+                          "content": "node.example"
+                        },
+                        "GDH1i": {
+                          "content": "Строка · обязательное значение",
+                          "enabled": true
+                        }
+                      }
+                    },
+                    {
+                      "id": "lfTgk",
+                      "type": "ref",
+                      "ref": "BmmQR",
+                      "name": "timeoutSeconds",
+                      "width": "fill_container",
+                      "descendants": {
+                        "uFzxP": {
+                          "content": "timeoutSeconds"
+                        },
+                        "hN1cU/VdSCq": {
+                          "content": "5"
+                        },
+                        "GDH1i": {
+                          "content": "Число · используется дефолт",
+                          "enabled": true
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "xcYkH",
+                  "name": "Подтверждение подготовки",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "ja8O7",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Подтвердить подготовку",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Проверить и подготовить",
+                          "fill": "#FFFFFF"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "s2W2Ca",
+      "x": 0,
+      "y": 31840,
+      "name": "24 / Подготовка роутера / Обязательное значение",
+      "width": 1080,
+      "height": 740,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "cD8dz",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "u7EkT",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "wquLD",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "dHHbJ",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "NbeTC",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "cGbme",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "nr506",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "e2DvKV",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "EwIel",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Подключить роутер",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "hpZtU",
+              "name": "Подготовка подключения",
+              "width": 700,
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "id": "AsOZS",
+                  "type": "ref",
+                  "ref": "BmmQR",
+                  "name": "Имя роутера",
+                  "width": "fill_container",
+                  "descendants": {
+                    "uFzxP": {
+                      "content": "Имя роутера"
+                    },
+                    "hN1cU/VdSCq": {
+                      "content": "Филиал Восток"
+                    },
+                    "GDH1i": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                },
+                {
+                  "id": "DmHB7",
+                  "type": "ref",
+                  "ref": "wnZ1c",
+                  "name": "Шаблон",
+                  "width": "fill_container",
+                  "descendants": {
+                    "Fw4KI": {
+                      "content": "Шаблон"
+                    },
+                    "lZ6jv/m9t6A": {
+                      "content": "office-network"
+                    },
+                    "KI6ZC": {
+                      "content": "Принятый снимок · версия 3"
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "yU6b5",
+                  "name": "Значения выбранного элемента",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "L0RV0h",
+                      "name": "Персональные значения",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Персональные значения",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "pdPhS",
+                      "name": "outbounds · 550e8400-e29b-41d4-a716-446655440000",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "outbounds · 550e8400-e29b-41d4-a716-446655440000",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "id": "IX67C",
+                      "type": "ref",
+                      "ref": "BmmQR",
+                      "name": "endpoint",
+                      "width": "fill_container",
+                      "descendants": {
+                        "uFzxP": {
+                          "content": "endpoint"
+                        },
+                        "hN1cU/VdSCq": {
+                          "content": "Введите значение"
+                        },
+                        "GDH1i": {
+                          "content": "Строка · обязательное значение",
+                          "enabled": true
+                        }
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "id": "gBYsK",
+                      "name": "Заполните обязательное значение.",
+                      "fill": "$error",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Заполните обязательное значение.",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "id": "XqgvE",
+                      "type": "ref",
+                      "ref": "BmmQR",
+                      "name": "timeoutSeconds",
+                      "width": "fill_container",
+                      "descendants": {
+                        "uFzxP": {
+                          "content": "timeoutSeconds"
+                        },
+                        "hN1cU/VdSCq": {
+                          "content": "5"
+                        },
+                        "GDH1i": {
+                          "content": "Число · используется дефолт",
+                          "enabled": true
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "t33UAu",
+                  "name": "Подтверждение подготовки",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "od7K4",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Подтвердить подготовку",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Проверить и подготовить",
+                          "fill": "#FFFFFF"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "ti0VM",
+      "x": 0,
+      "y": 32650,
+      "name": "24 / Подготовка роутера / Проверка",
+      "width": 1080,
+      "height": 740,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "CYCBK",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "GizQZ",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "qvsh9",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "BPZxl",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "o99Ofi",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "e0bpc3",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "S9NWGA",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "lWJ1F",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "JaBbp",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Подключить роутер",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "UQLEe",
+              "name": "Подготовка подключения",
+              "width": 700,
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "id": "N7VjfK",
+                  "type": "ref",
+                  "ref": "BmmQR",
+                  "name": "Имя роутера",
+                  "width": "fill_container",
+                  "descendants": {
+                    "uFzxP": {
+                      "content": "Имя роутера"
+                    },
+                    "hN1cU/VdSCq": {
+                      "content": "Филиал Восток"
+                    },
+                    "GDH1i": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                },
+                {
+                  "id": "T4bcm",
+                  "type": "ref",
+                  "ref": "wnZ1c",
+                  "name": "Шаблон",
+                  "width": "fill_container",
+                  "descendants": {
+                    "Fw4KI": {
+                      "content": "Шаблон"
+                    },
+                    "lZ6jv/m9t6A": {
+                      "content": "office-network"
+                    },
+                    "KI6ZC": {
+                      "content": "Принятый снимок · версия 3"
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "MN493",
+                  "name": "Значения выбранного элемента",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "LCnt7",
+                      "name": "Персональные значения",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Персональные значения",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "tdAkT",
+                      "name": "outbounds · 550e8400-e29b-41d4-a716-446655440000",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "outbounds · 550e8400-e29b-41d4-a716-446655440000",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "id": "nzxgw",
+                      "type": "ref",
+                      "ref": "BmmQR",
+                      "name": "endpoint",
+                      "width": "fill_container",
+                      "descendants": {
+                        "uFzxP": {
+                          "content": "endpoint"
+                        },
+                        "hN1cU/VdSCq": {
+                          "content": "node.example"
+                        },
+                        "GDH1i": {
+                          "content": "Строка · обязательное значение",
+                          "enabled": true
+                        }
+                      }
+                    },
+                    {
+                      "id": "bhGnD",
+                      "type": "ref",
+                      "ref": "BmmQR",
+                      "name": "timeoutSeconds",
+                      "width": "fill_container",
+                      "descendants": {
+                        "uFzxP": {
+                          "content": "timeoutSeconds"
+                        },
+                        "hN1cU/VdSCq": {
+                          "content": "5"
+                        },
+                        "GDH1i": {
+                          "content": "Число · используется дефолт",
+                          "enabled": true
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "XbyP0",
+                  "name": "Подтверждение подготовки",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "H1JPvk",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Подтвердить подготовку",
+                      "fill": "$line",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Проверяем конфигурацию…",
+                          "fill": "$ink"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "PPw7M",
+      "x": 0,
+      "y": 33460,
+      "name": "24 / Подготовка роутера / Снимок изменился",
+      "width": 1080,
+      "height": 740,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "CMHv7",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "NJWZc",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "R16JXD",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "Taxkn",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "xFEQW",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "ZFAgX",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "aKAZm",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "L4ny6p",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "C9Bjxf",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Подключить роутер",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "U1zYrF",
+              "name": "Подготовка подключения",
+              "width": 700,
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "id": "dGy3i",
+                  "type": "ref",
+                  "ref": "BmmQR",
+                  "name": "Имя роутера",
+                  "width": "fill_container",
+                  "descendants": {
+                    "uFzxP": {
+                      "content": "Имя роутера"
+                    },
+                    "hN1cU/VdSCq": {
+                      "content": "Филиал Восток"
+                    },
+                    "GDH1i": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                },
+                {
+                  "id": "AokNK",
+                  "type": "ref",
+                  "ref": "wnZ1c",
+                  "name": "Шаблон",
+                  "width": "fill_container",
+                  "descendants": {
+                    "Fw4KI": {
+                      "content": "Шаблон"
+                    },
+                    "lZ6jv/m9t6A": {
+                      "content": "office-network"
+                    },
+                    "KI6ZC": {
+                      "content": "Принятый снимок · версия 3"
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "V0bz6R",
+                  "name": "Значения выбранного элемента",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "vYVmi",
+                      "name": "Персональные значения",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Персональные значения",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "J51Wl",
+                      "name": "outbounds · 550e8400-e29b-41d4-a716-446655440000",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "outbounds · 550e8400-e29b-41d4-a716-446655440000",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "id": "C5zWjn",
+                      "type": "ref",
+                      "ref": "BmmQR",
+                      "name": "endpoint",
+                      "width": "fill_container",
+                      "descendants": {
+                        "uFzxP": {
+                          "content": "endpoint"
+                        },
+                        "hN1cU/VdSCq": {
+                          "content": "node.example"
+                        },
+                        "GDH1i": {
+                          "content": "Строка · обязательное значение",
+                          "enabled": true
+                        }
+                      }
+                    },
+                    {
+                      "id": "ekYK3",
+                      "type": "ref",
+                      "ref": "BmmQR",
+                      "name": "timeoutSeconds",
+                      "width": "fill_container",
+                      "descendants": {
+                        "uFzxP": {
+                          "content": "timeoutSeconds"
+                        },
+                        "hN1cU/VdSCq": {
+                          "content": "5"
+                        },
+                        "GDH1i": {
+                          "content": "Число · используется дефолт",
+                          "enabled": true
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "osGl1",
+                  "name": "Снимок изменился. Перечитайте шаблон и подтвердите ещё раз.",
+                  "fill": "$error",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Снимок изменился. Перечитайте шаблон и подтвердите ещё раз.",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "vM0na",
+                  "name": "Подтверждение подготовки",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "kRP0j",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Перечитать источник",
+                      "fill": "$surface",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Перечитать",
+                          "fill": "$ink"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "WN413",
+      "x": 0,
+      "y": 34270,
+      "name": "24 / Подготовка роутера / Проверка недоступна",
+      "width": 1080,
+      "height": 740,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "pjppR",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "OPxRB",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "Ya1Fc",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "hUJ2b",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "CjtQB",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "qOltF",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "iS8hp",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "fNLuE",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "EjcWj",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Подключить роутер",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "qAax1",
+              "name": "Подготовка подключения",
+              "width": 700,
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "id": "H0PeDB",
+                  "type": "ref",
+                  "ref": "BmmQR",
+                  "name": "Имя роутера",
+                  "width": "fill_container",
+                  "descendants": {
+                    "uFzxP": {
+                      "content": "Имя роутера"
+                    },
+                    "hN1cU/VdSCq": {
+                      "content": "Филиал Восток"
+                    },
+                    "GDH1i": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                },
+                {
+                  "id": "H4ljN",
+                  "type": "ref",
+                  "ref": "wnZ1c",
+                  "name": "Шаблон",
+                  "width": "fill_container",
+                  "descendants": {
+                    "Fw4KI": {
+                      "content": "Шаблон"
+                    },
+                    "lZ6jv/m9t6A": {
+                      "content": "office-network"
+                    },
+                    "KI6ZC": {
+                      "content": "Принятый снимок · версия 3"
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "Dk1ea",
+                  "name": "Значения выбранного элемента",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "rc2lt",
+                      "name": "Персональные значения",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Персональные значения",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "bkMfj",
+                      "name": "outbounds · 550e8400-e29b-41d4-a716-446655440000",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "outbounds · 550e8400-e29b-41d4-a716-446655440000",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "id": "LwG1A",
+                      "type": "ref",
+                      "ref": "BmmQR",
+                      "name": "endpoint",
+                      "width": "fill_container",
+                      "descendants": {
+                        "uFzxP": {
+                          "content": "endpoint"
+                        },
+                        "hN1cU/VdSCq": {
+                          "content": "node.example"
+                        },
+                        "GDH1i": {
+                          "content": "Строка · обязательное значение",
+                          "enabled": true
+                        }
+                      }
+                    },
+                    {
+                      "id": "D2qLL",
+                      "type": "ref",
+                      "ref": "BmmQR",
+                      "name": "timeoutSeconds",
+                      "width": "fill_container",
+                      "descendants": {
+                        "uFzxP": {
+                          "content": "timeoutSeconds"
+                        },
+                        "hN1cU/VdSCq": {
+                          "content": "5"
+                        },
+                        "GDH1i": {
+                          "content": "Число · используется дефолт",
+                          "enabled": true
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "PKsse",
+                  "name": "Проверка Xray сейчас недоступна.",
+                  "fill": "$error",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Проверка Xray сейчас недоступна.",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "X9BvKi",
+                  "name": "Подтверждение подготовки",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "yWW92",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Подтвердить подготовку",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Проверить и подготовить",
+                          "fill": "#FFFFFF"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Jsvjg",
+      "x": 0,
+      "y": 35080,
+      "name": "24 / Подготовка роутера / Конфигурация отклонена",
+      "width": 1080,
+      "height": 740,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "UuQUY",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "mpEiw",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "CB09K",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "S1AkB",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "tM3jh",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "BK44t",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "ZsDfn",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "TnMyo",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "Vl4c9",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Подключить роутер",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "SQKpW",
+              "name": "Подготовка подключения",
+              "width": 700,
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "id": "J0ozjy",
+                  "type": "ref",
+                  "ref": "BmmQR",
+                  "name": "Имя роутера",
+                  "width": "fill_container",
+                  "descendants": {
+                    "uFzxP": {
+                      "content": "Имя роутера"
+                    },
+                    "hN1cU/VdSCq": {
+                      "content": "Филиал Восток"
+                    },
+                    "GDH1i": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                },
+                {
+                  "id": "p3SLN9",
+                  "type": "ref",
+                  "ref": "wnZ1c",
+                  "name": "Шаблон",
+                  "width": "fill_container",
+                  "descendants": {
+                    "Fw4KI": {
+                      "content": "Шаблон"
+                    },
+                    "lZ6jv/m9t6A": {
+                      "content": "office-network"
+                    },
+                    "KI6ZC": {
+                      "content": "Принятый снимок · версия 3"
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "j9LHHx",
+                  "name": "Значения выбранного элемента",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "P72zJ",
+                      "name": "Персональные значения",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Персональные значения",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "YjkUP",
+                      "name": "outbounds · 550e8400-e29b-41d4-a716-446655440000",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "outbounds · 550e8400-e29b-41d4-a716-446655440000",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "id": "qYFLR",
+                      "type": "ref",
+                      "ref": "BmmQR",
+                      "name": "endpoint",
+                      "width": "fill_container",
+                      "descendants": {
+                        "uFzxP": {
+                          "content": "endpoint"
+                        },
+                        "hN1cU/VdSCq": {
+                          "content": "node.example"
+                        },
+                        "GDH1i": {
+                          "content": "Строка · обязательное значение",
+                          "enabled": true
+                        }
+                      }
+                    },
+                    {
+                      "id": "S4A67",
+                      "type": "ref",
+                      "ref": "BmmQR",
+                      "name": "timeoutSeconds",
+                      "width": "fill_container",
+                      "descendants": {
+                        "uFzxP": {
+                          "content": "timeoutSeconds"
+                        },
+                        "hN1cU/VdSCq": {
+                          "content": "5"
+                        },
+                        "GDH1i": {
+                          "content": "Число · используется дефолт",
+                          "enabled": true
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "pY1sa",
+                  "name": "Xray отклонил конфигурацию. Проверьте значения шаблона.",
+                  "fill": "$error",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Xray отклонил конфигурацию. Проверьте значения шаблона.",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "G6YKiS",
+                  "name": "Подтверждение подготовки",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "iViIO",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Подтвердить подготовку",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Проверить и подготовить",
+                          "fill": "#FFFFFF"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "WkugJ",
+      "x": 0,
+      "y": 35890,
+      "name": "24 / Подготовка роутера / Неизвестный результат",
+      "width": 1080,
+      "height": 740,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "Fzrkh",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "J0FACi",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "f1oSs",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "m2PMv",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "rXVKU",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "cE5xc",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "u4aN4h",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "yT51W",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "F2JWc",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Подключить роутер",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "Ymjpb",
+              "name": "Подготовка подключения",
+              "width": 700,
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "id": "e71NAT",
+                  "type": "ref",
+                  "ref": "BmmQR",
+                  "name": "Имя роутера",
+                  "width": "fill_container",
+                  "descendants": {
+                    "uFzxP": {
+                      "content": "Имя роутера"
+                    },
+                    "hN1cU/VdSCq": {
+                      "content": "Филиал Восток"
+                    },
+                    "GDH1i": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                },
+                {
+                  "id": "G62ui9",
+                  "type": "ref",
+                  "ref": "wnZ1c",
+                  "name": "Шаблон",
+                  "width": "fill_container",
+                  "descendants": {
+                    "Fw4KI": {
+                      "content": "Шаблон"
+                    },
+                    "lZ6jv/m9t6A": {
+                      "content": "office-network"
+                    },
+                    "KI6ZC": {
+                      "content": "Принятый снимок · версия 3"
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "Xfe0s",
+                  "name": "Значения выбранного элемента",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Fr3MU",
+                      "name": "Персональные значения",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Персональные значения",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "DpGGQ",
+                      "name": "outbounds · 550e8400-e29b-41d4-a716-446655440000",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "outbounds · 550e8400-e29b-41d4-a716-446655440000",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "id": "JYD3G",
+                      "type": "ref",
+                      "ref": "BmmQR",
+                      "name": "endpoint",
+                      "width": "fill_container",
+                      "descendants": {
+                        "uFzxP": {
+                          "content": "endpoint"
+                        },
+                        "hN1cU/VdSCq": {
+                          "content": "node.example"
+                        },
+                        "GDH1i": {
+                          "content": "Строка · обязательное значение",
+                          "enabled": true
+                        }
+                      }
+                    },
+                    {
+                      "id": "kxmuy",
+                      "type": "ref",
+                      "ref": "BmmQR",
+                      "name": "timeoutSeconds",
+                      "width": "fill_container",
+                      "descendants": {
+                        "uFzxP": {
+                          "content": "timeoutSeconds"
+                        },
+                        "hN1cU/VdSCq": {
+                          "content": "5"
+                        },
+                        "GDH1i": {
+                          "content": "Число · используется дефолт",
+                          "enabled": true
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "rDTjK",
+                  "name": "Не удалось подтвердить результат.",
+                  "fill": "$error",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Не удалось подтвердить результат.",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "MCEwI",
+                  "name": "Подтверждение подготовки",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "qMugN",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Проверить результат",
+                      "fill": "$surface",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Проверить результат",
+                          "fill": "$ink"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "cpPEH",
+      "x": 0,
+      "y": 36700,
+      "name": "24 / Подготовка роутера / Подготовлен",
+      "width": 1080,
+      "height": 740,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "o4MMx7",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "to2UM",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "w4OWI",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "B1kEXJ",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "PvIu7",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "A4VkAC",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "UygId",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "T505t1",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "mJCh6",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Роутер подготовлен",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "CHuAd",
+              "name": "Подготовка подключения",
+              "width": 700,
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ypJj9",
+                  "name": "Филиал Восток",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Филиал Восток",
+                  "fontFamily": "$font",
+                  "fontSize": 16,
+                  "fontWeight": "semibold"
+                },
+                {
+                  "type": "text",
+                  "id": "a6R66c",
+                  "name": "ID: 550e8400-e29b-41d4-a716-446655440000",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "ID: 550e8400-e29b-41d4-a716-446655440000",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "OSv6Q",
+                  "name": "Желаемая ревизия 1",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Желаемая ревизия 1",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "A0LAvm",
+      "x": 0,
+      "y": 37510,
+      "name": "24 / Подготовка роутера / Узкая компоновка",
+      "width": 360,
+      "height": 830,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "oeKvf",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "layout": "vertical",
+          "gap": 12,
+          "padding": [
+            14,
+            16
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "mZJFL",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "qUj2Y",
+              "name": "Действия консоли",
+              "width": "fill_container",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "BD0MT",
+                  "name": "Ссылки консоли",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "jLRTk",
+                      "name": "Первая строка навигации",
+                      "width": "fill_container",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "id": "x2tIM",
+                          "type": "ref",
+                          "ref": "oQHGq",
+                          "name": "Текущий раздел",
+                          "width": 94,
+                          "fill": "$ink",
+                          "descendants": {
+                            "uzKPJ": {
+                              "fill": "#FFFFFF",
+                              "icon": "layout-dashboard"
+                            },
+                            "G2nPu4": {
+                              "fill": "#FFFFFF",
+                              "content": "Обзор"
+                            }
+                          }
+                        },
+                        {
+                          "id": "ySijt",
+                          "type": "ref",
+                          "ref": "oQHGq",
+                          "name": "Текущий раздел",
+                          "width": 108,
+                          "fill": "$ink",
+                          "descendants": {
+                            "uzKPJ": {
+                              "fill": "#FFFFFF",
+                              "icon": "layers"
+                            },
+                            "G2nPu4": {
+                              "fill": "#FFFFFF",
+                              "content": "Шаблоны"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "ykcQD",
+                      "type": "ref",
+                      "ref": "oQHGq",
+                      "name": "Настройки",
+                      "width": 112,
+                      "fill": "$ink",
+                      "descendants": {
+                        "uzKPJ": {
+                          "fill": "#FFFFFF",
+                          "icon": "settings"
+                        },
+                        "G2nPu4": {
+                          "fill": "#FFFFFF",
+                          "content": "Настройки"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "WzXHs",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Завершить сессию",
+                  "fill": "$accent",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Выйти"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "NRfbn",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "aNlwo",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Подключить роутер",
+              "fontFamily": "$font",
+              "fontSize": 24,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "TcMuM",
+              "name": "Подготовка подключения",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 14,
+              "children": [
+                {
+                  "id": "u26V2z",
+                  "type": "ref",
+                  "ref": "BmmQR",
+                  "name": "Имя роутера",
+                  "width": "fill_container",
+                  "descendants": {
+                    "uFzxP": {
+                      "content": "Имя роутера"
+                    },
+                    "hN1cU/VdSCq": {
+                      "content": "Филиал Восток"
+                    },
+                    "GDH1i": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                },
+                {
+                  "id": "es0GU",
+                  "type": "ref",
+                  "ref": "wnZ1c",
+                  "name": "Шаблон",
+                  "width": "fill_container",
+                  "descendants": {
+                    "Fw4KI": {
+                      "content": "Шаблон"
+                    },
+                    "lZ6jv/m9t6A": {
+                      "content": "office-network"
+                    },
+                    "KI6ZC": {
+                      "content": "Принятый снимок · версия 3"
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "jaH3D",
+                  "name": "Значения выбранного элемента",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "roIeS",
+                      "name": "Персональные значения",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Персональные значения",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "m38tX",
+                      "name": "outbounds · 550e8400-e29b-41d4-a716-446655440000",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "outbounds · 550e8400-e29b-41d4-a716-446655440000",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "id": "XMmjt",
+                      "type": "ref",
+                      "ref": "BmmQR",
+                      "name": "endpoint",
+                      "width": "fill_container",
+                      "descendants": {
+                        "uFzxP": {
+                          "content": "endpoint"
+                        },
+                        "hN1cU/VdSCq": {
+                          "content": "node.example"
+                        },
+                        "GDH1i": {
+                          "content": "Строка · обязательное значение",
+                          "enabled": true
+                        }
+                      }
+                    },
+                    {
+                      "id": "RiXqk",
+                      "type": "ref",
+                      "ref": "BmmQR",
+                      "name": "timeoutSeconds",
+                      "width": "fill_container",
+                      "descendants": {
+                        "uFzxP": {
+                          "content": "timeoutSeconds"
+                        },
+                        "hN1cU/VdSCq": {
+                          "content": "5"
+                        },
+                        "GDH1i": {
+                          "content": "Число · используется дефолт",
+                          "enabled": true
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "M0hp1",
+                  "name": "Подтверждение подготовки",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "HRGDC",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Подтвердить подготовку",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Проверить и подготовить",
+                          "fill": "#FFFFFF"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Z4CQiY",
+      "x": 0,
+      "y": 38410,
+      "name": "24 / Подготовка роутера / Отключённый вход",
+      "width": 1080,
+      "height": 740,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "ujix6",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "tHl22",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "CVN9g",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "Z0EXH",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "agUZq",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "vnCZe",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "UICqe",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "sVXRU",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "LeS48",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Подключить роутер",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "bxPvl",
+              "name": "Подготовка подключения",
+              "width": 700,
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "id": "OpcBa",
+                  "type": "ref",
+                  "ref": "BmmQR",
+                  "name": "Имя роутера",
+                  "width": "fill_container",
+                  "descendants": {
+                    "uFzxP": {
+                      "content": "Имя роутера"
+                    },
+                    "hN1cU/VdSCq": {
+                      "content": "Филиал Восток"
+                    },
+                    "GDH1i": {
+                      "enabled": false,
+                      "content": ""
+                    }
+                  }
+                },
+                {
+                  "id": "jVwPm",
+                  "type": "ref",
+                  "ref": "wnZ1c",
+                  "name": "Шаблон",
+                  "width": "fill_container",
+                  "descendants": {
+                    "Fw4KI": {
+                      "content": "Шаблон"
+                    },
+                    "lZ6jv/m9t6A": {
+                      "content": "office-network"
+                    },
+                    "KI6ZC": {
+                      "content": "Принятый снимок · версия 3"
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "llrCR",
+                  "name": "Значения выбранного элемента",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "pzt7I",
+                      "name": "Персональные значения",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Персональные значения",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "TgN1r",
+                      "name": "Отключённый общий вход",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "inbounds · 550e8400-e29b-41d4-a716-446655440000",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "id": "N0iYPs",
+                      "type": "ref",
+                      "ref": "BmmQR",
+                      "name": "endpoint",
+                      "width": "fill_container",
+                      "descendants": {
+                        "uFzxP": {
+                          "content": "endpoint"
+                        },
+                        "hN1cU": {
+                          "fill": "$bg"
+                        },
+                        "hN1cU/VdSCq": {
+                          "content": "node.example",
+                          "fill": "$muted"
+                        },
+                        "GDH1i": {
+                          "enabled": true,
+                          "content": "Строка · элемент отключён"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "bgW7j",
+                  "name": "Подтверждение подготовки",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "TxaTy",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Подтвердить подготовку",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "#FFFFFF",
+                          "content": "Проверить и подготовить"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "variables": {
