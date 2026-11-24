@@ -1,0 +1,153 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Проект внешнего API управления XKeen UI Server",
+    "version": "0.1.0",
+    "description": "Контракт F19. Операции появятся в F21 и F22 после F20. Доступ без Bearer определяется настройкой владельца."
+  },
+  "servers": [{ "url": "https://management.example/api/v1" }],
+  "paths": {
+    "/templates/item": {
+      "parameters": [{
+        "name": "templateId",
+        "in": "query",
+        "required": true,
+        "description": "Один точный UTF-8 ID. Приведение регистра и нормализация не применяются.",
+        "schema": { "type": "string", "minLength": 1 }
+      }],
+      "get": {
+        "operationId": "getTemplateDraft",
+        "security": [{ "externalBearer": [] }, {}],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Draft" },
+          "400": { "$ref": "#/components/responses/Error" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/Error" },
+          "503": { "$ref": "#/components/responses/Error" }
+        }
+      },
+      "patch": {
+        "operationId": "replaceTemplateElementContent",
+        "security": [{ "externalBearer": [] }, {}],
+        "parameters": [{
+          "name": "If-Match",
+          "in": "header",
+          "required": true,
+          "description": "Один сильный ETag из успешного GET этого шаблона.",
+          "schema": { "type": "string" }
+        }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["elementId", "source"],
+                "properties": {
+                  "elementId": { "$ref": "#/components/schemas/ElementID" },
+                  "source": { "type": "string", "description": "Авторский JSON без нормализации." }
+                }
+              },
+              "example": {
+                "elementId": "550e8400-e29b-41d4-a716-446655440000",
+                "source": "{\"tag\":\"example-outbound\",\"protocol\":\"freedom\"}"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "$ref": "#/components/responses/Draft" },
+          "400": { "$ref": "#/components/responses/Error" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" },
+          "412": { "$ref": "#/components/responses/Error" },
+          "413": { "$ref": "#/components/responses/Error" },
+          "415": { "$ref": "#/components/responses/Error" },
+          "422": { "$ref": "#/components/responses/Error" },
+          "428": { "$ref": "#/components/responses/Error" },
+          "503": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "externalBearer": { "type": "http", "scheme": "bearer" }
+    },
+    "responses": {
+      "Draft": {
+        "description": "Сохранённый редактируемый снимок.",
+        "headers": {
+          "ETag": { "required": true, "schema": { "type": "string" } },
+          "Cache-Control": { "required": true, "schema": { "type": "string", "const": "no-store, no-transform" } }
+        },
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TemplateDraft" } } }
+      },
+      "Error": {
+        "description": "Безопасный структурированный отказ. Код и опциональная позиция без авторского JSON.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "Unauthorized": {
+        "description": "Требуется действительное внешнее полномочие.",
+        "headers": { "WWW-Authenticate": { "required": true, "schema": { "type": "string" } } },
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    },
+    "schemas": {
+      "ElementID": { "type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" },
+      "TemplateDraft": {
+        "type": "object",
+        "required": ["id", "version", "sections"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "version": { "type": "string", "pattern": "^[1-9][0-9]{0,18}$", "description": "Десятичный положительный int64." },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "elements"],
+              "properties": {
+                "name": { "type": "string" },
+                "elements": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "source", "disabled", "variables"],
+                    "properties": {
+                      "id": { "$ref": "#/components/schemas/ElementID" },
+                      "source": { "type": "string" },
+                      "disabled": { "type": "boolean" },
+                      "variables": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": ["name", "type"],
+                          "properties": {
+                            "name": { "type": "string" },
+                            "type": { "type": "string" },
+                            "defaultSource": { "type": "string", "description": "JSON-дефолт. Ключ отсутствует без дефолта." }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["code"],
+        "properties": {
+          "code": { "type": "string" },
+          "offset": { "type": "integer", "minimum": 0 },
+          "path": { "type": "string" }
+        }
+      }
+    }
+  }
+}
