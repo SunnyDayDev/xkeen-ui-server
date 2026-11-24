@@ -69,7 +69,7 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 	handler := server.NewHandler()
 	if tlsConfig != nil {
 		listener = tls.NewListener(listener, tlsConfig)
-		handler = server.NewAgentHandler(agentcredentials.NewService(sqlite.NewAgentCredentials(db), time.Now), sqlite.NewPublications(db))
+		handler = server.NewAgentHandler(agentcredentials.NewService(sqlite.NewAgentCredentials(db), time.Now), sqlite.NewPublications(db), sqlite.NewContacts(db, time.Now))
 	}
 	if err := json.NewEncoder(stderr).Encode(struct {
 		Event   string `json:"event"`

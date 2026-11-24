@@ -178,7 +178,7 @@ func TestAgentDesiredTLSKeepsCacheAfterInterruptedBoundaryCatalog(t *testing.T) 
 	}
 	defer db.Close()
 	publications := sqlite.NewPublications(db)
-	handler := server.NewAgentHandler(credentials, publications)
+	handler := server.NewAgentHandler(credentials, publications, nil)
 	var truncate atomic.Bool
 	tlsServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !truncate.Load() {

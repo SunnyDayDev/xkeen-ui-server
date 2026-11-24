@@ -14,6 +14,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/agenthttp"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/contact"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/desired"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/enrollment"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/statefile"
@@ -71,6 +72,18 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, enrollment.ErrState)
 		return 1
 	}
+	contactContext, stopContact := context.WithCancel(ctx)
+	contactDone := make(chan struct{})
+	go func() {
+		defer close(contactDone)
+		contact.New(*binding, store, client).Run(contactContext, func(error) {
+			fmt.Fprintln(stderr, "agent report remains pending")
+		})
+	}()
+	defer func() {
+		stopContact()
+		<-contactDone
+	}()
 	if _, err := desired.UntilCurrent(ctx, *binding, store, client); err != nil {
 		if ctx.Err() != nil {
 			return 0

@@ -37,7 +37,7 @@ func TestAgentDesiredScopesAndCanonicalizesConditionalRead(t *testing.T) {
 		}
 		calls++
 		return rev, storeErr
-	}))
+	}), nil)
 	get := func(token, path string, conditions ...string) *httptest.ResponseRecorder {
 		req := agentRequest(http.MethodGet, path, token, "")
 		for _, condition := range conditions {
