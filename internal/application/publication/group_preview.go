@@ -137,3 +137,41 @@ func fingerprintGroupPlan(plan TemplateGroupPlan) [sha256.Size]byte {
 	}
 	return [sha256.Size]byte(hash.Sum(nil))
 }
+
+type TemplateGroupCurrent struct {
+	TemplateID               string
+	Version, AcceptedVersion int64
+	Routers                  []TemplateGroupCurrentRouter
+}
+
+type TemplateGroupCurrentRouter struct {
+	RouterID string
+	Name     string
+	Desired  int64
+}
+
+// ReadTemplateGroupCurrent reads existing numbers without attributing them to a particular confirmation.
+func ReadTemplateGroupCurrent(ctx context.Context, store TemplateGroupStore, id string) (*TemplateGroupCurrent, error) {
+	snapshot, err := store.ReadTemplateGroup(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if snapshot == nil || snapshot.TemplateDraft == nil || snapshot.TemplateDraft.ID != id {
+		return nil, ErrStoredState
+	}
+	current := &TemplateGroupCurrent{TemplateID: id, Version: snapshot.TemplateDraft.Version,
+		Routers: make([]TemplateGroupCurrentRouter, 0, len(snapshot.Members))}
+	if snapshot.Accepted != nil {
+		current.AcceptedVersion = snapshot.Accepted.Version
+	}
+	for _, member := range snapshot.Members {
+		name := member.Active.Draft.Name
+		if name == "" {
+			name = member.Active.Draft.ID
+		}
+		current.Routers = append(current.Routers, TemplateGroupCurrentRouter{
+			RouterID: member.Active.Draft.ID, Name: name, Desired: member.Desired.Number,
+		})
+	}
+	return current, nil
+}

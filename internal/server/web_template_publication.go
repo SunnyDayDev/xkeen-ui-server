@@ -62,11 +62,7 @@ func NewWebTemplatePublicationHandler(lifetime context.Context, origin WebOrigin
 				webPublicationFailure(w, err)
 				return
 			}
-			reply = webPublicationResponse{State: "current", TemplateID: result.TemplateID, Version: strconv.FormatInt(result.Version, 10),
-				AcceptedVersion: strconv.FormatInt(result.AcceptedVersion, 10), Members: make([]webPublicationMember, 0, len(result.Routers))}
-			for _, item := range result.Routers {
-				reply.Members = append(reply.Members, webPublicationMember{RouterID: item.RouterID, Name: item.Name, DesiredRevision: strconv.FormatInt(item.Desired, 10)})
-			}
+			reply = templatePublicationCurrentResponse(result)
 		} else {
 			ctx, done := publicationRequestContext(r.Context(), lifetime)
 			defer done()
@@ -143,13 +139,7 @@ func prepareWebPublication(w http.ResponseWriter, r *http.Request, service webTe
 		if err != nil {
 			return failure(err)
 		}
-		reply := webPublicationResponse{State: "published", TemplateID: result.TemplateID, AcceptedVersion: strconv.FormatInt(result.Version, 10),
-			Members: make([]webPublicationMember, 0, len(result.Routers))}
-		for _, item := range result.Routers {
-			reply.Members = append(reply.Members, webPublicationMember{RouterID: item.RouterID,
-				DesiredRevision: strconv.FormatInt(item.Revision, 10), Changed: &item.Changed})
-		}
-		return reply, true
+		return templatePublicationConfirmedResponse(result), true
 	}
 	webResult(w, http.StatusBadRequest, "invalid_request", "")
 	return webPublicationResponse{}, false
@@ -176,6 +166,25 @@ func templatePublicationPreviewResponse(plan *publication.TemplateGroupPreview, 
 			DesiredRevision: strconv.FormatInt(item.Expected.DesiredNumber, 10), Contact: contact[i], Estimate: item.Estimate, Changes: item.Changes})
 	}
 	return reply, nil
+}
+
+func templatePublicationCurrentResponse(result *publication.TemplateGroupCurrent) webPublicationResponse {
+	reply := webPublicationResponse{State: "current", TemplateID: result.TemplateID, Version: strconv.FormatInt(result.Version, 10),
+		AcceptedVersion: strconv.FormatInt(result.AcceptedVersion, 10), Members: make([]webPublicationMember, 0, len(result.Routers))}
+	for _, item := range result.Routers {
+		reply.Members = append(reply.Members, webPublicationMember{RouterID: item.RouterID, Name: item.Name, DesiredRevision: strconv.FormatInt(item.Desired, 10)})
+	}
+	return reply
+}
+
+func templatePublicationConfirmedResponse(result *publication.TemplateGroupResult) webPublicationResponse {
+	reply := webPublicationResponse{State: "published", TemplateID: result.TemplateID, AcceptedVersion: strconv.FormatInt(result.Version, 10),
+		Members: make([]webPublicationMember, 0, len(result.Routers))}
+	for _, item := range result.Routers {
+		reply.Members = append(reply.Members, webPublicationMember{RouterID: item.RouterID,
+			DesiredRevision: strconv.FormatInt(item.Revision, 10), Changed: &item.Changed})
+	}
+	return reply
 }
 
 func webPublicationFailure(w http.ResponseWriter, err error) {

@@ -163,6 +163,27 @@ func TestProcessWebRouterPreparation(t *testing.T) {
 	}
 	forbidden, _ := json.Marshal(map[string]string{"action": "confirm", "receipt": result.Receipt})
 	request(http.MethodPost, publicationPath, forbidden, 409)
+	confirmEndpoint := "/api/v1/templates/publication/confirm?templateId="
+	confirmPayload := func(receipt string) []byte {
+		raw, err := json.Marshal(map[string]string{"receipt": receipt})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return raw
+	}
+	var webPlan struct{ Receipt string }
+	if json.Unmarshal(checked, &webPlan) != nil || webPlan.Receipt == "" {
+		t.Fatal("missing web proof")
+	}
+	request(http.MethodPost, confirmEndpoint+url.QueryEscape(unpublishedID), confirmPayload(webPlan.Receipt), 409)
+	request(http.MethodPost, confirmEndpoint+url.QueryEscape(templateID), confirmPayload(result.Receipt), 409)
+	emptyCommit, _ := request(http.MethodPost, confirmEndpoint+url.QueryEscape(unpublishedID), confirmPayload(result.Receipt), 200)
+	if !strings.Contains(string(emptyCommit), `"acceptedVersion":"1"`) || !strings.Contains(string(emptyCommit), `"members":[]`) {
+		t.Fatalf("zero-member confirmation: %s", emptyCommit)
+	}
+	if repeat, _ := request(http.MethodPost, confirmEndpoint+url.QueryEscape(unpublishedID), confirmPayload(result.Receipt), 200); !bytes.Equal(repeat, emptyCommit) {
+		t.Fatalf("same empty plan grew an effect: %s", repeat)
+	}
 
 	request(http.MethodGet, "/ui/routers/connect", nil, 200)
 	raw, _ = request(http.MethodGet, selectedRoute, nil, 200)
@@ -271,5 +292,52 @@ func TestProcessWebRouterPreparation(t *testing.T) {
 	refused, _ := request(http.MethodPost, realEndpoint, []byte(`{"version":"3"}`), 422)
 	if !strings.Contains(string(refused), `"code":"catalog_rejected"`) || strings.Contains(string(refused), `"receipt"`) {
 		t.Fatalf("partial Xray rejection: %s", refused)
+	}
+	confirmGroup := confirmEndpoint + url.QueryEscape(templateID)
+	request(http.MethodPost, confirmGroup, confirmPayload(members.Receipt), 409)
+	currentGroup, _ := request(http.MethodGet, "/api/v1/templates/publication?templateId="+url.QueryEscape(templateID), nil, 200)
+	if !strings.Contains(string(currentGroup), `"acceptedVersion":"1"`) || !strings.Contains(string(currentGroup), `"state":"current"`) ||
+		strings.Contains(string(currentGroup), `"receipt"`) || !strings.Contains(string(currentGroup), `"offline.example"`) {
+		t.Fatalf("unsafe or incomplete recovery: %s", currentGroup)
+	}
+	for _, id := range []string{form.RouterID, second.ID} {
+		if saved, err := store.ReadDesired(ctx, id); err != nil || saved.Number != 1 {
+			t.Fatalf("stale confirmation changed desired: %v %v", saved, err)
+		}
+	}
+	snapshot.Sections[0].Elements[0].Element.Content = `{"protocol":"blackhole","tag":"shared.example","unknownField":9007199254740993}`
+	if _, err := repo.Replace(ctx, snapshot.TemplateDraft, 3); err != nil {
+		t.Fatal(err)
+	}
+	actual, _ = request(http.MethodPost, realEndpoint, []byte(`{"version":"4"}`), 200)
+	if json.Unmarshal(actual, &members) != nil || len(members.Members) != 2 || members.Receipt == "" {
+		t.Fatalf("missing latest plan: %s", actual)
+	}
+	committedGroup, _ := request(http.MethodPost, confirmGroup, confirmPayload(members.Receipt), 200)
+	var publicationResult struct {
+		AcceptedVersion string
+		Members         []struct {
+			RouterID, DesiredRevision string
+			Changed                   bool
+		}
+	}
+	if json.Unmarshal(committedGroup, &publicationResult) != nil || publicationResult.AcceptedVersion != "4" ||
+		len(publicationResult.Members) != 2 || strings.Contains(string(committedGroup), "appliedRevision") {
+		t.Fatalf("group commit: %s", committedGroup)
+	}
+	for _, member := range publicationResult.Members {
+		if member.DesiredRevision != "2" || !member.Changed {
+			t.Fatalf("partial result: %+v", member)
+		}
+		saved, err := store.ReadDesired(ctx, member.RouterID)
+		if err != nil || saved.Number != 2 {
+			t.Fatalf("group desired: %v %v", saved, err)
+		}
+	}
+	request(http.MethodPost, confirmGroup, confirmPayload(members.Receipt), 409)
+	currentGroup, _ = request(http.MethodGet, "/api/v1/templates/publication?templateId="+url.QueryEscape(templateID), nil, 200)
+	if !strings.Contains(string(currentGroup), `"acceptedVersion":"4"`) || !strings.Contains(string(currentGroup), `"state":"current"`) ||
+		strings.Contains(string(currentGroup), `"receipt"`) || !strings.Contains(string(currentGroup), `"offline.example"`) {
+		t.Fatalf("unsafe or incomplete recovery: %s", currentGroup)
 	}
 }

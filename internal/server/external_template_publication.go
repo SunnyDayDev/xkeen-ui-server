@@ -13,16 +13,25 @@ import (
 
 type externalTemplatePublicationService interface {
 	Preview(context.Context, externalaccess.Permit, string, int64) (*externalaccess.TemplateGroupPreview, error)
+	Confirm(context.Context, externalaccess.Permit, string, string) (*publication.TemplateGroupResult, error)
+	Current(context.Context, externalaccess.Permit, string) (*publication.TemplateGroupCurrent, error)
 }
 
 func NewExternalTemplatePublications(lifetime context.Context, service externalTemplatePublicationService, next ExternalOperation) ExternalOperation {
 	return func(w http.ResponseWriter, r *http.Request, permit externalaccess.Permit) {
-		if r.URL.Path != "/api/v1/templates/publication/preview" {
+		const root = "/api/v1/templates/publication"
+		var method string
+		switch r.URL.Path {
+		case root:
+			method = http.MethodGet
+		case root + "/preview", root + "/confirm":
+			method = http.MethodPost
+		default:
 			next(w, r, permit)
 			return
 		}
-		if r.Method != http.MethodPost {
-			w.Header().Set("Allow", http.MethodPost)
+		if r.Method != method {
+			w.Header().Set("Allow", method)
 			externalError(w, http.StatusMethodNotAllowed, "method_not_allowed")
 			return
 		}
@@ -31,29 +40,58 @@ func NewExternalTemplatePublications(lifetime context.Context, service externalT
 			externalError(w, http.StatusBadRequest, "invalid_request")
 			return
 		}
-		var input struct {
-			Version string `json:"version"`
-		}
-		if !readExternalPublicationJSON(w, r, 1024, &input) {
-			return
-		}
-		version, ok := variableGeneration(input.Version, 1)
-		if !ok {
-			externalError(w, http.StatusBadRequest, "invalid_request")
-			return
-		}
 		ctx, done := publicationRequestContext(r.Context(), lifetime)
 		defer done()
-		result, err := service.Preview(ctx, permit, id, version)
-		if err != nil {
-			externalTemplatePublicationFailure(w, err)
-			return
+		var reply webPublicationResponse
+		switch r.URL.Path {
+		case root:
+			result, err := service.Current(ctx, permit, id)
+			if err != nil {
+				externalTemplatePublicationFailure(w, err)
+				return
+			}
+			reply = templatePublicationCurrentResponse(result)
+		case root + "/preview":
+			var input struct {
+				Version string `json:"version"`
+			}
+			if !readExternalPublicationJSON(w, r, 1024, &input) {
+				return
+			}
+			version, ok := variableGeneration(input.Version, 1)
+			if !ok {
+				externalError(w, http.StatusBadRequest, "invalid_request")
+				return
+			}
+			result, err := service.Preview(ctx, permit, id, version)
+			if err != nil {
+				externalTemplatePublicationFailure(w, err)
+				return
+			}
+			reply, err = templatePublicationPreviewResponse(result.Plan, result.Contact, result.Receipt)
+			if err != nil {
+				externalFailure(w, err)
+				return
+			}
+		case root + "/confirm":
+			var input struct {
+				Receipt string `json:"receipt"`
+			}
+			if !readExternalPublicationJSON(w, r, 16<<10, &input) {
+				return
+			}
+			if input.Receipt == "" {
+				externalError(w, http.StatusBadRequest, "invalid_request")
+				return
+			}
+			result, err := service.Confirm(ctx, permit, id, input.Receipt)
+			if err != nil {
+				externalTemplatePublicationFailure(w, err)
+				return
+			}
+			reply = templatePublicationConfirmedResponse(result)
 		}
-		reply, err := templatePublicationPreviewResponse(result.Plan, result.Contact, result.Receipt)
-		if err != nil {
-			externalFailure(w, err)
-			return
-		}
+
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(reply)
 	}

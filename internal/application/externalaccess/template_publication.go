@@ -11,7 +11,7 @@ import (
 )
 
 type TemplatePublicationsStore interface {
-	ForExternalTemplateGroup(Permit) publication.TemplateGroupStore
+	ForExternalTemplateGroup(Permit, func() time.Time, time.Time) publication.TemplateGroupStore
 	CheckExternalTemplateGroupPreview(context.Context, Permit, func() time.Time, *publication.TemplateGroupPreview) ([]reporting.Presence, error)
 }
 
@@ -33,16 +33,10 @@ func NewTemplatePublications(store TemplatePublicationsStore, validator publicat
 }
 
 func (s TemplatePublications) Preview(ctx context.Context, permit Permit, id string, version int64) (*TemplateGroupPreview, error) {
-	service := publication.NewTemplateGroupService(s.store.ForExternalTemplateGroup(permit), s.validator)
+	service := publication.NewTemplateGroupService(s.store.ForExternalTemplateGroup(permit, s.now, time.Time{}), s.validator)
 	plan, err := service.Preview(ctx, id, version)
 	if err != nil {
-		if _, check := s.store.CheckExternalTemplateGroupPreview(ctx, permit, s.now, nil); check != nil {
-			return nil, check
-		}
-		if errors.Is(err, publication.ErrEffectRefused) {
-			return nil, ErrUnauthorized
-		}
-		return nil, err
+		return nil, s.recheckFailure(ctx, permit, err)
 	}
 	contact, err := s.store.CheckExternalTemplateGroupPreview(ctx, permit, s.now, plan)
 	if err != nil {
@@ -53,6 +47,37 @@ func (s TemplatePublications) Preview(ctx context.Context, permit Permit, id str
 		return nil, err
 	}
 	return &TemplateGroupPreview{Plan: plan, Contact: contact, Receipt: receipt}, nil
+}
+
+func (s TemplatePublications) Confirm(ctx context.Context, permit Permit, id, receipt string) (*publication.TemplateGroupResult, error) {
+	request, expires, err := s.receipts.Open(groupAuthority(permit), id, receipt, s.now())
+	if err != nil {
+		return nil, err
+	}
+	service := publication.NewTemplateGroupService(s.store.ForExternalTemplateGroup(permit, s.now, expires), s.validator)
+	result, err := service.Publish(ctx, request)
+	if err != nil {
+		return nil, s.recheckFailure(ctx, permit, err)
+	}
+	return result, nil
+}
+
+func (s TemplatePublications) Current(ctx context.Context, permit Permit, id string) (*publication.TemplateGroupCurrent, error) {
+	result, err := publication.ReadTemplateGroupCurrent(ctx, s.store.ForExternalTemplateGroup(permit, s.now, time.Time{}), id)
+	if err != nil {
+		return nil, s.recheckFailure(ctx, permit, err)
+	}
+	return result, nil
+}
+
+func (s TemplatePublications) recheckFailure(ctx context.Context, permit Permit, err error) error {
+	if _, check := s.store.CheckExternalTemplateGroupPreview(ctx, permit, s.now, nil); check != nil {
+		return check
+	}
+	if errors.Is(err, publication.ErrEffectRefused) {
+		return ErrUnauthorized
+	}
+	return err
 }
 
 func groupAuthority(permit Permit) [32]byte {
