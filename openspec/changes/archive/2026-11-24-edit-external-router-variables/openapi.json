@@ -1,0 +1,189 @@
+{
+  "openapi": "3.1.0",
+  "info": {"title": "XKeen Console external router variables", "version": "1"},
+  "servers": [{"url": "https://console.example.net"}],
+  "security": [{}, {"externalBearer": []}],
+  "paths": {
+    "/api/v1/routers/variables": {
+      "parameters": [
+        {
+          "in": "query",
+          "name": "routerId",
+          "required": true,
+          "schema": {"type": "string", "minLength": 1}
+        },
+        {
+          "in": "query",
+          "name": "elementId",
+          "required": true,
+          "schema": {"type": "string", "format": "uuid"}
+        }
+      ],
+      "get": {
+        "operationId": "readRouterVariables",
+        "responses": {
+          "200": {"$ref": "#/components/responses/RouterVariables"},
+          "400": {"$ref": "#/components/responses/HTTP400"},
+          "401": {"$ref": "#/components/responses/HTTP401"},
+          "404": {"$ref": "#/components/responses/HTTP404"},
+          "409": {"$ref": "#/components/responses/HTTP409"},
+          "405": {"$ref": "#/components/responses/HTTP405"},
+          "503": {"$ref": "#/components/responses/HTTP503"}
+        }
+      },
+      "patch": {
+        "operationId": "editRouterVariables",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "If-Match",
+            "required": true,
+            "schema": {"type": "string", "pattern": "^\"[0-9a-f]{64}\"$"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/VariableChanges"}}}
+        },
+        "responses": {
+          "200": {"$ref": "#/components/responses/RouterVariables"},
+          "400": {"$ref": "#/components/responses/HTTP400"},
+          "401": {"$ref": "#/components/responses/HTTP401"},
+          "404": {"$ref": "#/components/responses/HTTP404"},
+          "409": {"$ref": "#/components/responses/HTTP409"},
+          "405": {"$ref": "#/components/responses/HTTP405"},
+          "503": {"$ref": "#/components/responses/HTTP503"},
+          "412": {"$ref": "#/components/responses/HTTP412"},
+          "413": {"$ref": "#/components/responses/HTTP413"},
+          "415": {"$ref": "#/components/responses/HTTP415"},
+          "422": {"$ref": "#/components/responses/HTTP422"},
+          "428": {"$ref": "#/components/responses/HTTP428"},
+          "403": {"$ref": "#/components/responses/HTTP403"}
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "externalBearer": {"type": "http", "scheme": "bearer", "description": "Required when F20 enables protection"}
+    },
+    "schemas": {
+      "RouterVariables": {
+        "type": "object",
+        "required": [
+          "routerId",
+          "templateId",
+          "acceptedVersion",
+          "activeGeneration",
+          "draftGeneration",
+          "id",
+          "section",
+          "mode",
+          "definitions"
+        ],
+        "properties": {
+          "routerId": {"type": "string", "minLength": 1},
+          "templateId": {"type": "string", "minLength": 1},
+          "acceptedVersion": {"type": "string", "pattern": "^[1-9][0-9]*$"},
+          "activeGeneration": {"type": "string", "pattern": "^[1-9][0-9]*$"},
+          "draftGeneration": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
+          "id": {"type": "string", "format": "uuid"},
+          "section": {"type": "string"},
+          "mode": {"type": "string", "enum": ["variables", "replacement"]},
+          "definitions": {"type": "array", "items": {"$ref": "#/components/schemas/Definition"}}
+        }
+      },
+      "Definition": {
+        "type": "object",
+        "required": ["name", "type", "required"],
+        "properties": {
+          "name": {"type": "string"},
+          "type": {"type": "string"},
+          "required": {"type": "boolean"},
+          "defaultSource": {"type": "string"},
+          "personalSource": {"type": "string"},
+          "issue": {"type": "string"}
+        }
+      },
+      "VariableChanges": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["values"],
+        "properties": {
+          "values": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name"],
+              "properties": {
+                "name": {"type": "string", "minLength": 1},
+                "source": {"type": "string", "description": "Exact authored JSON. Omit to use inheritance."}
+              }
+            }
+          }
+        }
+      },
+      "Error": {"type": "object", "required": ["code"], "properties": {"code": {"type": "string"}}}
+    },
+    "responses": {
+      "RouterVariables": {
+        "description": "Exact router variable View at one accepted snapshot",
+        "headers": {
+          "ETag": {"required": true, "schema": {"type": "string", "pattern": "^\"[0-9a-f]{64}\"$"}},
+          "Cache-Control": {"schema": {"type": "string", "example": "no-store, no-transform"}}
+        },
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RouterVariables"}}}
+      },
+      "HTTP400": {
+        "description": "Invalid query or body",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP401": {
+        "description": "Protected API requires current credentials",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP404": {
+        "description": "Disabled API or unavailable resource",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP409": {
+        "description": "Content mode or template mismatch",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP405": {
+        "description": "Method not allowed",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP503": {
+        "description": "Service unavailable",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP412": {
+        "description": "Conditional basis is stale",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP413": {
+        "description": "Request body exceeds 8 MiB",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP415": {
+        "description": "Unsupported media type",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP422": {
+        "description": "Invalid literal JSON source",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP428": {
+        "description": "If-Match required",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP403": {
+        "description": "Supplied browser Origin does not match the HTTPS origin",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      }
+    }
+  }
+}

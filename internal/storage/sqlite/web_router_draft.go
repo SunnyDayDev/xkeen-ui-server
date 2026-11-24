@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/publication"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routerdraft"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/webadmin"
 )
@@ -20,7 +21,7 @@ func NewWebRouterDrafts(db *sql.DB) WebRouterDrafts { return WebRouterDrafts{db:
 func (w WebRouterDrafts) Read(ctx context.Context, digest [32]byte, clock func() time.Time, id string) (webadmin.RouterDraftSnapshot, error) {
 	var result webadmin.RouterDraftSnapshot
 	if !validPublicationID(id) {
-		return result, webadmin.ErrRouterDraftMissing
+		return result, routerdraft.ErrMissing
 	}
 	tx, err := w.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
@@ -30,6 +31,11 @@ func (w WebRouterDrafts) Read(ctx context.Context, digest [32]byte, clock func()
 	if err := requireActiveWebSession(ctx, tx, activeWebSessionArgs(digest, clock())); err != nil {
 		return result, err
 	}
+	return readRouterDraft(ctx, tx, id)
+}
+
+func readRouterDraft(ctx context.Context, tx *sql.Tx, id string) (routerdraft.Snapshot, error) {
+	var result routerdraft.Snapshot
 	basis, err := readVisibleRouterDraftBasis(ctx, tx, id)
 	if err != nil {
 		return result, err
@@ -62,24 +68,24 @@ func (w WebRouterDrafts) Read(ctx context.Context, digest [32]byte, clock func()
 	if err != nil {
 		return result, err
 	}
-	return webadmin.RouterDraftSnapshot{Exclusions: source, OrderBasis: publication.EditableRuleOrderBasis(draft, active), Basis: basis, Name: name, Accepted: accepted, Editable: editable}, nil
+	return routerdraft.Snapshot{Exclusions: source, OrderBasis: publication.EditableRuleOrderBasis(draft, active), Basis: basis, Name: name, Accepted: accepted, Editable: editable}, nil
 }
 
-func readVisibleRouterDraftBasis(ctx context.Context, tx *sql.Tx, id string) (webadmin.RouterDraftBasis, error) {
-	basis := webadmin.RouterDraftBasis{RouterID: id}
+func readVisibleRouterDraftBasis(ctx context.Context, tx *sql.Tx, id string) (routerdraft.Basis, error) {
+	basis := routerdraft.Basis{RouterID: id}
 	err := tx.QueryRowContext(ctx, `SELECT active.template_id, active.generation,
 		coalesce((SELECT max(version) FROM accepted_templates WHERE template_id=active.template_id),0),
 		coalesce((SELECT generation FROM router_settings WHERE id=active.router_id),0)`+
 		visibleRouterSource+` AND active.router_id = ?`, id).
 		Scan(&basis.TemplateID, &basis.ActiveGeneration, &basis.AcceptedVersion, &basis.DraftGeneration)
 	if errors.Is(err, sql.ErrNoRows) {
-		return webadmin.RouterDraftBasis{}, webadmin.ErrRouterDraftMissing
+		return routerdraft.Basis{}, routerdraft.ErrMissing
 	}
 	if err != nil {
-		return webadmin.RouterDraftBasis{}, err
+		return routerdraft.Basis{}, err
 	}
 	if !validPublicationID(basis.TemplateID) || basis.ActiveGeneration < 1 || basis.AcceptedVersion < 1 || basis.DraftGeneration < 0 {
-		return webadmin.RouterDraftBasis{}, publication.ErrStoredState
+		return routerdraft.Basis{}, publication.ErrStoredState
 	}
 	return basis, nil
 }
@@ -96,8 +102,15 @@ func (w WebRouterDrafts) WriteOrder(ctx context.Context, digest [32]byte, clock 
 }
 
 func (w WebRouterDrafts) write(ctx context.Context, digest [32]byte, clock func() time.Time, expected webadmin.RouterDraftBasis, draft routersettings.Draft, basis *publication.OrderBasis) (int64, error) {
+	return writeRouterDraft(ctx, w.db, expected, draft, basis, func(ctx context.Context, tx *sql.Tx) error {
+		now := clock()
+		return touchActiveWebSession(ctx, tx, now, activeWebSessionArgs(digest, now))
+	})
+}
+
+func writeRouterDraft(ctx context.Context, db *sql.DB, expected routerdraft.Basis, draft routersettings.Draft, basis *publication.OrderBasis, guard publicationGuard) (int64, error) {
 	if draft.ID != expected.RouterID || draft.TemplateID != expected.TemplateID {
-		return 0, webadmin.ErrRouterDraftConflict
+		return 0, routerdraft.ErrConflict
 	}
 	if err := routersettings.ValidateDraft(draft); err != nil {
 		return 0, err
@@ -113,13 +126,12 @@ func (w WebRouterDrafts) write(ctx context.Context, digest [32]byte, clock func(
 			return 0, err
 		}
 	}
-	tx, err := w.db.BeginTx(ctx, nil)
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, err
 	}
 	defer tx.Rollback()
-	now := clock()
-	if err := touchActiveWebSession(ctx, tx, now, activeWebSessionArgs(digest, now)); err != nil {
+	if err := guard(ctx, tx); err != nil {
 		return 0, err
 	}
 	current, err := readVisibleRouterDraftBasis(ctx, tx, expected.RouterID)
@@ -127,7 +139,7 @@ func (w WebRouterDrafts) write(ctx context.Context, digest [32]byte, clock func(
 		return 0, err
 	}
 	if current != expected || current.DraftGeneration == math.MaxInt64 {
-		return 0, webadmin.ErrRouterDraftConflict
+		return 0, routerdraft.ErrConflict
 	}
 	if basis != nil {
 		accepted, err := readPublicationTemplate(ctx, tx, readAcceptedTemplate, current.TemplateID)
@@ -135,7 +147,7 @@ func (w WebRouterDrafts) write(ctx context.Context, digest [32]byte, clock func(
 			return 0, err
 		}
 		if !basisMatchesTemplate(basis, accepted) {
-			return 0, webadmin.ErrRouterDraftConflict
+			return 0, routerdraft.ErrConflict
 		}
 	}
 	if current.DraftGeneration == 0 {
@@ -152,7 +164,7 @@ func (w WebRouterDrafts) write(ctx context.Context, digest [32]byte, clock func(
 		if err == nil {
 			n, err = result.RowsAffected()
 			if err == nil && n != 1 {
-				return 0, webadmin.ErrRouterDraftForeign
+				return 0, routerdraft.ErrForeign
 			}
 		}
 	}
