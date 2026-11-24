@@ -120,3 +120,9 @@ type InvalidDraftError struct{ Issues []configuration.ElementIssue }
 
 func (e *InvalidDraftError) Error() string { return ErrInvalid.Error() }
 func (e *InvalidDraftError) Unwrap() error { return ErrInvalid }
+
+// Summary contains the metadata exposed by template collection reads.
+type Summary struct {
+	ID      string
+	Version int64
+}

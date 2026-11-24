@@ -21,6 +21,7 @@ import (
 )
 
 type ExternalTemplateStore interface {
+	ListExternalTemplates(context.Context, externalaccess.Permit) ([]templates.Summary, error)
 	ReplaceExternalTemplate(context.Context, externalaccess.Permit, configuration.TemplateDraft, int64) (int64, error)
 	ReadExternalTemplate(context.Context, externalaccess.Permit, string) (*templates.Snapshot, error)
 }
@@ -74,6 +75,24 @@ func draftRepresentation(s *templates.Snapshot) ([]byte, string, error) {
 func NewExternalTemplates(store ExternalTemplateStore) ExternalOperation {
 	return func(w http.ResponseWriter, r *http.Request, permit externalaccess.Permit) {
 		w.Header().Set("Cache-Control", "no-store, no-transform")
+		if r.URL.Path == "/api/v1/templates" {
+			if r.Method != http.MethodGet {
+				w.Header().Set("Allow", http.MethodGet)
+				externalError(w, 405, "method_not_allowed")
+				return
+			}
+			if r.URL.RawQuery != "" || r.URL.ForceQuery {
+				externalError(w, 400, "invalid_request")
+				return
+			}
+			summaries, err := store.ListExternalTemplates(r.Context(), permit)
+			if err != nil {
+				externalFailure(w, err)
+				return
+			}
+			writeTemplateSummaries(w, summaries)
+			return
+		}
 		if r.URL.Path != "/api/v1/templates/item" {
 			externalError(w, 404, "not_found")
 			return

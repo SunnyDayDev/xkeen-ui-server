@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -198,4 +199,93 @@ func TestExternalHTTPSConditionalPatch(t *testing.T) {
 	if _, err = store.ReplaceExternalTemplate(ctx, permit, snap.TemplateDraft, snap.Version); err != externalaccess.ErrUnauthorized {
 		t.Fatal("stale writer permit", err)
 	}
+}
+
+func TestExternalTemplateListConsumer(t *testing.T) {
+	ctx := t.Context()
+	db, err := sqlite.Open(ctx, filepath.Join(t.TempDir(), "collection.sqlite"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	admin := sqlite.NewWebAdmin(db)
+	session := [32]byte{8}
+	if err := admin.SaveVerifier(ctx, webadmin.Verifier{Version: 1, Salt: [16]byte{1}, Digest: [32]byte{2}}, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := admin.Issue(ctx, 1, session, [32]byte{}, time.Now()); err != nil {
+		t.Fatal(err)
+	}
+	store := sqlite.NewExternalAccess(db, time.Now)
+	srv := httptest.NewTLSServer(server.NewExternalAccessHandler("", store, server.NewExternalTemplates(store), http.NotFoundHandler()))
+	defer srv.Close()
+	get := func(path string, want int) string {
+		t.Helper()
+		resp, err := srv.Client().Get(srv.URL + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+		raw, err := io.ReadAll(resp.Body)
+		if err != nil || resp.StatusCode != want || !strings.Contains(resp.Header.Get("Cache-Control"), "no-store") {
+			t.Fatal("HTTP result", resp.StatusCode, err)
+		}
+		return strings.TrimSpace(string(raw))
+	}
+	const path = "/api/v1/templates"
+	get(path, 404)
+	state, _, err := store.Owner(ctx, session, &externalaccess.Change{Version: 1, Enabled: true, Protected: false})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := get(path, 200); got != `{"templates":[]}` {
+		t.Fatalf("empty list: %q", got)
+	}
+	service := templates.New(sqlite.NewTemplateRepository(db))
+	for _, id := range []string{"z example", "A+example"} {
+		if _, err := service.Create(ctx, configuration.TemplateDraft{ID: id}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if got := get(path, 200); got != `{"templates":[{"id":"A+example","version":"1"},{"id":"z example","version":"1"}]}` {
+		t.Fatalf("non-empty list: %q", got)
+	}
+	if got := get(path+"/item?templateId=A%2Bexample", 200); !strings.Contains(got, `"id":"A+example"`) {
+		t.Fatalf("item: %q", got)
+	}
+	get(path+"?other=1", 400)
+	_, _, err = store.Owner(ctx, session, &externalaccess.Change{Version: state.Version, Enabled: true, Protected: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	get(path, 401)
+	state, token, err := store.Owner(ctx, session, &externalaccess.Change{Version: state.Version + 1, Rotate: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, srv.URL+path, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	resp, err := srv.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil || resp.StatusCode != 200 || !bytes.Contains(raw, []byte(`"id":"A+example"`)) {
+		t.Fatal("protected list", resp.StatusCode, err)
+	}
+	permit, err := store.Admit(ctx, []string{"Bearer " + token})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err = store.Owner(ctx, session, &externalaccess.Change{Version: state.Version, Rotate: true}); err != nil {
+		t.Fatal(err)
+	}
+	if rows, err := store.ListExternalTemplates(ctx, permit); rows != nil || !errors.Is(err, externalaccess.ErrUnauthorized) {
+		t.Fatal("stale collection permit", err)
+	}
+
 }

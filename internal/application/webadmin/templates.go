@@ -9,10 +9,7 @@ import (
 )
 
 // TemplateSummary holds the metadata needed to display one saved draft.
-type TemplateSummary struct {
-	ID      string
-	Version int64
-}
+type TemplateSummary = templates.Summary
 
 // TemplateStore checks session activity in the same transaction as each operation.
 type TemplateStore interface {

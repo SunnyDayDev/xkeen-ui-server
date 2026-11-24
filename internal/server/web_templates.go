@@ -46,14 +46,7 @@ func NewWebTemplatesHandler(origin WebOrigin, service webTemplateService, next h
 			webFailure(w, err)
 			return
 		}
-		result := make([]webTemplateSummary, len(summaries))
-		for i, summary := range summaries {
-			result[i] = templateSummaryResponse(summary)
-		}
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(struct {
-			Templates []webTemplateSummary `json:"templates"`
-		}{Templates: result})
+		writeTemplateSummaries(w, summaries)
 	})
 }
 
@@ -107,4 +100,15 @@ func readWebJSON(w http.ResponseWriter, r *http.Request, limit int64, out any) b
 		return false
 	}
 	return true
+}
+
+func writeTemplateSummaries(w http.ResponseWriter, summaries []templates.Summary) {
+	result := make([]webTemplateSummary, len(summaries))
+	for i, summary := range summaries {
+		result[i] = templateSummaryResponse(summary)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(struct {
+		Templates []webTemplateSummary `json:"templates"`
+	}{Templates: result})
 }

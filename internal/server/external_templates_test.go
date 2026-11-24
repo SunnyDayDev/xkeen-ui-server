@@ -89,3 +89,7 @@ func (f *extTemplateFixture) ReplaceExternalTemplate(ctx context.Context, p exte
 	f.snapshot = &templates.Snapshot{TemplateDraft: draft, Version: expected + 1}
 	return expected + 1, nil
 }
+
+func (f *extTemplateFixture) ListExternalTemplates(context.Context, externalaccess.Permit) ([]templates.Summary, error) {
+	return nil, nil
+}
