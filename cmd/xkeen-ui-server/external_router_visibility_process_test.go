@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agentcredential"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/externalaccess"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/reporting"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/storage/sqlite"
 )
@@ -40,6 +41,7 @@ func TestProcessExternalHidePreservesIdentityAndRejectsReusedETag(t *testing.T) 
 	p := startProcess(t, testBinary, "--listen", "127.0.0.1:0", "--db-path", path, "--tls-cert", cert, "--tls-key", key)
 	origin := "https://" + p.readyWithClient(t, client, "https")
 	resource := origin + "/api/v1/routers/visibility?" + url.Values{"routerId": {id.RouterID}}.Encode()
+	var bearer string
 	request := func(method, tag, body string, want int, visible bool) string {
 		t.Helper()
 		req, err := http.NewRequestWithContext(ctx, method, resource, strings.NewReader(body))
@@ -52,6 +54,9 @@ func TestProcessExternalHidePreservesIdentityAndRejectsReusedETag(t *testing.T) 
 		}
 		if tag != "" {
 			req.Header.Set("If-Match", tag)
+		}
+		if bearer != "" {
+			req.Header.Set("Authorization", "Bearer "+bearer)
 		}
 		response, err := client.Do(req)
 		if err != nil {
@@ -100,6 +105,26 @@ func TestProcessExternalHidePreservesIdentityAndRejectsReusedETag(t *testing.T) 
 	}
 	if status, err := contact.Status(ctx, id.RouterID); err != nil || status.Applied != 1 || status.Desired != 1 {
 		t.Fatal("hide modified publication or applied state")
+	}
+	retired, digest, err := externalaccess.Issue()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.ExecContext(ctx, "UPDATE external_access SET protected=1, digest=?, version=3", digest[:]); err != nil {
+		t.Fatal(err)
+	}
+	bearer = retired
+	valid := request("GET", "", "", 200, true)
+	if _, err := db.ExecContext(ctx, "UPDATE external_access SET digest=NULL, version=4"); err != nil {
+		t.Fatal(err)
+	}
+	request("POST", valid, `{"action":"hide","confirm":true}`, 401, false)
+	if _, err := db.ExecContext(ctx, "UPDATE external_access SET protected=0, version=5"); err != nil {
+		t.Fatal(err)
+	}
+	bearer = ""
+	if restored := request("GET", "", "", 200, true); restored != revived {
+		t.Fatal("revoked request changed visibility")
 	}
 	stopAgentProcess(t, p)
 }
