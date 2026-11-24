@@ -5,20 +5,27 @@ package main
 import (
 	"context"
 	"errors"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/validation"
 	"os"
 	"os/exec"
 	"time"
 )
 
 func main() {
-	if len(os.Args) != 2 {
+	if len(os.Args) < 2 {
 		os.Exit(125)
 	}
 	var args []string
 	switch os.Args[1] {
 	case "version":
+		if len(os.Args) != 2 {
+			os.Exit(125)
+		}
 		args = []string{"version"}
 	case "test":
+		if len(os.Args) != 3 || !validation.VerifyStagedCatalog("/candidate", os.Args[2]) {
+			os.Exit(125)
+		}
 		args = []string{"run", "-test", "-format", "json", "-confdir", "/candidate"}
 	default:
 		os.Exit(125)

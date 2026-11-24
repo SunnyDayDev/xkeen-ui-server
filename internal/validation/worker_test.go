@@ -183,6 +183,20 @@ func TestDockerRealCatalog(t *testing.T) {
 			t.Fatalf("%s: %v", name, err)
 		}
 	}
+	// Reap a private scratch directory left by an interrupted worker before
+	// reporting a fresh result. No secret marker survives completion.
+	stale := filepath.Join(dir, "job-00000000000000000000000000000000")
+	if err := os.Mkdir(stale, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(stale, "synthetic-canary"), []byte("synthetic-private-marker"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	files := sample()
+	files[0].Content = []byte(`{"log":{"access":"/opt/var/log/xray/access.log","error":"/opt/var/log/xray/error.log","loglevel":"warning","fixture":"synthetic-private-marker"}}`)
+	if err := v.Validate(context.Background(), configuration.XrayIdentityVersion, files); err != nil {
+		t.Fatal("ephemeral logger", err)
+	}
 	entries, err := os.ReadDir(dir)
 	if err != nil || len(entries) != 1 || entries[0].Name() != "worker.lock" {
 		t.Fatal("stale private files")
@@ -364,5 +378,37 @@ func TestWorkerLimitsAndCancellation(t *testing.T) {
 	}
 	if e := <-done; !errors.Is(e, publication.ErrValidatorUnavailable) {
 		t.Fatal("cancelled job returned success")
+	}
+}
+
+func TestRuntimeSeesExactlyStagedBytes(t *testing.T) {
+	dir := t.TempDir()
+	req, err := newRequest(configuration.XrayIdentityVersion, sample())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range req.Files {
+		if err := os.WriteFile(filepath.Join(dir, f.Name), f.Bytes, 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if !VerifyStagedCatalog(dir, req.Digest) {
+		t.Fatal("complete exact mount was rejected")
+	}
+	first := filepath.Join(dir, req.Files[0].Name)
+	if err := os.WriteFile(first, []byte("{}"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if VerifyStagedCatalog(dir, req.Digest) {
+		t.Fatal("changed bytes in runtime mount were accepted")
+	}
+	if err := os.WriteFile(first, req.Files[0].Bytes, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "other.json"), []byte("{}"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if VerifyStagedCatalog(dir, req.Digest) {
+		t.Fatal("additional runtime file accepted")
 	}
 }

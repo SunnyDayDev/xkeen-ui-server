@@ -203,7 +203,7 @@ func (w *DockerWorker) check(ctx context.Context, req request) (result error) {
 	if len(fields) < 2 || fields[0] != "Xray" || fields[1] != req.Profile {
 		return publication.ErrValidatorUnavailable
 	}
-	out, state, err := w.run(ctx, dir, "test")
+	out, state, err := w.run(ctx, dir, "test", req.Digest)
 	if err != nil {
 		return err
 	}
