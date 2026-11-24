@@ -43,7 +43,9 @@ func TestMain(m *testing.M) {
 		}
 		projectRoot = filepath.Clean(filepath.Join(cwd, "../.."))
 		testBinary = filepath.Join(dir, "xkeen-ui-server")
-		build := exec.Command(filepath.Join(runtime.GOROOT(), "bin/go"), "build", "-o", testBinary, ".")
+		// Match the launcher build so its readiness check starts with a warm Go cache.
+		build := exec.Command(filepath.Join(runtime.GOROOT(), "bin/go"), "build", "-trimpath", "-o", testBinary, ".")
+		build.Env = append(os.Environ(), "CGO_ENABLED=0")
 		if output, err := build.CombinedOutput(); err != nil {
 			fmt.Fprintf(os.Stderr, "build test binary: %v\n%s", err, output)
 			return 1
