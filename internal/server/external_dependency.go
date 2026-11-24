@@ -48,13 +48,7 @@ func NewExternalRouterDependencies(store externalRouterDraftReader, next Externa
 			return
 		}
 		analysis, analysisErr := publication.AnalyzeDraftDependencies(snap.Accepted, snap.Editable, snap.OrderBasis)
-		current, err := store.ReadExternalRouterDraft(r.Context(), permit, id)
-		if err != nil {
-			externalRouterFailure(w, err)
-			return
-		}
-		if current.Basis != snap.Basis {
-			externalError(w, 409, "snapshot_changed")
+		if !recheckExternalRouterDraft(w, r, store, permit, snap.Basis) {
 			return
 		}
 		var invalid *publication.PreparationError
