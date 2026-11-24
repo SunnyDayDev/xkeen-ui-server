@@ -7,9 +7,7 @@ import (
 )
 
 func discoverDefinitions(content string, existing []VariableDefinition) []VariableDefinition {
-	tree, _ := parseJSON([]byte(content), Issue{})
-	names := map[string]bool{}
-	collectNames(tree, names)
+	names := VariableReferences(content)
 	for _, v := range existing {
 		delete(names, v.Name)
 	}
@@ -23,6 +21,14 @@ func discoverDefinitions(content string, existing []VariableDefinition) []Variab
 		definitions = append(definitions, VariableDefinition{Name: name, Type: "string", Default: []byte(`""`)})
 	}
 	return definitions
+}
+
+// VariableReferences lists whole references under the same rules as A08.
+func VariableReferences(content string) map[string]bool {
+	tree, _ := parseJSON([]byte(content), Issue{})
+	names := map[string]bool{}
+	collectNames(tree, names)
+	return names
 }
 
 func collectNames(value any, names map[string]bool) {

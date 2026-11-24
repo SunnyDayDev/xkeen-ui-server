@@ -104,8 +104,43 @@ func TestProcessWebTemplateEditor(t *testing.T) {
 	}
 	badCSRF := csrf
 	csrf = "invalid"
-	input["source"] = `{"tag":"next.example"}`
+	edited := `{"tag":"next.example","port":"$` + "{port}" + `"}`
+	input["source"] = edited
 	request("POST", target, input, 403)
 	csrf = badCSRF
 	request("POST", target, input, 200)
+
+	varsURL := "/ui/v1/templates/variables?templateId=" + url.QueryEscape(id) + "&elementId=" + elementID
+	first, _ := request("GET", varsURL, nil, 200)
+	row := first["definitions"].([]any)[0].(map[string]any)
+	if first["version"] != "3" || row["type"] != "string" || row["required"] != true || row["defaultSource"] != `""` {
+		t.Fatal("automatic definition's first default")
+	}
+	definition := map[string]string{"name": "port", "type": "number"}
+	body := map[string]any{"version": "3", "definitions": []map[string]string{definition}}
+	absent, _ := request("POST", varsURL, body, 200)
+	if row := absent["definitions"].([]any)[0].(map[string]any); row["defaultSource"] != nil || row["required"] != true {
+		t.Fatal("absent default and type change")
+	}
+	body["version"] = "4"
+	definition["defaultSource"] = "9007199254740993"
+	precise, _ := request("POST", varsURL, body, 200)
+	if row := precise["definitions"].([]any)[0].(map[string]any); row["defaultSource"] != "9007199254740993" || row["required"] != false {
+		t.Fatal("exact filled default")
+	}
+	body["version"] = "5"
+	definition["defaultSource"] = "{"
+	failed, _ := request("POST", varsURL, body, 422)
+	if failed["definitionIndex"] != float64(0) {
+		t.Fatal("missing error row")
+	}
+	definition["defaultSource"] = "null"
+	unfinished, _ := request("POST", varsURL, body, 200)
+	if row := unfinished["definitions"].([]any)[0].(map[string]any); row["defaultSource"] != "null" || row["issue"] != "null_not_allowed" {
+		t.Fatal("semantic error was lost")
+	}
+	remaining, _ := request("GET", target, nil, 200)
+	if remaining["version"] != "6" || remaining["selected"].(map[string]any)["source"] != edited {
+		t.Fatal("variable edit changed authored content")
+	}
 }

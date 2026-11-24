@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick, untrack } from 'svelte';
   import { ExactSource, sourceLocation } from './exact-source';
+  import TemplateVariables from './TemplateVariables.svelte';
 
   type Member = { id: string; label: string };
   type Section = { name: string; members: Member[] };
@@ -32,6 +33,8 @@
   let saving: { epoch: number } | undefined;
   let comparing = $state(false);
   let conflict = $state(false);
+  let editingVariables = $state(false);
+  let variableButton = $state<HTMLButtonElement>();
   let buffer = new ExactSource('');
   let previous: { start: number; end: number; kind: string } | undefined;
   let reading: AbortController | undefined;
@@ -257,6 +260,14 @@
   }
 </script>
 
+{#if editingVariables && current?.selected}
+  <TemplateVariables {id} elementId={current.selected.id} {active} {csrf} {sessionEpoch} {signedOut}
+    {refreshSession} close={async () => { editingVariables = false; await tick(); variableButton?.focus(); }}
+    changed={(before,after) => {
+      if (current?.version === before) current = {...current,version:after};
+      changed();
+    }} />
+{:else}
 <p class="editor-context"><bdi>{id}</bdi></p>
 <h1>{loadState === 'ready' && !current?.selected ? 'Первый элемент' : 'Сырой JSON элемента'}</h1>
 {#if loadState === 'loading'}
@@ -309,6 +320,9 @@
         <button type="button" disabled={comparing} onclick={compare}>Показать актуальную версию</button>
       {:else}
         <button type="submit" disabled={!active || busy || !section}>{current.selected ? 'Сохранить черновик' : 'Создать элемент'}</button>
+        {#if current.selected}
+          <button bind:this={variableButton} type="button" class="secondary" disabled={busy} onclick={() => { editingVariables = true; }}>Переменные</button>
+        {/if}
       {/if}
     </div>
   </form>
@@ -321,6 +335,7 @@
       <button onclick={useLatest}>Продолжить от актуальной версии</button>
     {/if}
   {/if}
+{/if}
 {/if}
 
 <style>
@@ -336,6 +351,7 @@
   }
   textarea { resize:vertical; line-height:1.55; }
   textarea[aria-invalid=true] { border-color:#b42318; }
+  button.secondary { background:var(--surface); color:var(--ink); border:1px solid var(--line); }
   pre { white-space:pre-wrap; overflow-wrap:anywhere; }
   .editor-info,.editor-warning,.editor-error { padding:10px 12px; border-radius:var(--radius); overflow-wrap:anywhere; }
   .editor-info { background:#eaf1ff; }

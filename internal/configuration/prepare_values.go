@@ -15,22 +15,8 @@ import (
 func PrepareValues(elementID string, definitions []VariableDefinition, personal map[string]json.RawMessage) (map[string]json.RawMessage, []Issue) {
 	seen := make(map[string]bool, len(definitions))
 	for i, def := range definitions {
-		code, field := "", "name"
-		switch {
-		case !utf8.ValidString(def.Name) || !validVariableName(def.Name):
-			code = "invalid_variable_name"
-		case !validVariableType(def.Type):
-			code, field = "invalid_variable_type", "type"
-		case seen[def.Name]:
-			code = "duplicate_variable"
-		}
-		if code != "" {
-			path := "/" + strconv.Itoa(i) + "/" + field
-			issue := Issue{Code: code, ElementID: elementID, Source: "definition", Path: &path}
-			if utf8.ValidString(def.Name) {
-				issue.VariableName = &def.Name
-			}
-			return nil, []Issue{issue}
+		if issue := validateDefinition(elementID, i, def, seen); issue != nil {
+			return nil, []Issue{*issue}
 		}
 		seen[def.Name] = true
 	}
@@ -74,6 +60,55 @@ func PrepareValues(elementID string, definitions []VariableDefinition, personal 
 		result[def.Name] = bytes.Clone(raw)
 	}
 	return result, nil
+}
+
+func validateDefinition(elementID string, i int, def VariableDefinition, seen map[string]bool) *Issue {
+	code, field := "", "name"
+	switch {
+	case !utf8.ValidString(def.Name) || !validVariableName(def.Name):
+		code = "invalid_variable_name"
+	case !validVariableType(def.Type):
+		code, field = "invalid_variable_type", "type"
+	case seen[def.Name]:
+		code = "duplicate_variable"
+	default:
+		return nil
+	}
+	path := "/" + strconv.Itoa(i) + "/" + field
+	issue := Issue{Code: code, ElementID: elementID, Source: "definition", Path: &path}
+	if utf8.ValidString(def.Name) {
+		issue.VariableName = &def.Name
+	}
+	return &issue
+}
+
+type DefinitionInspection struct {
+	Required bool
+	Issue    *Issue
+}
+
+// InspectVariableDefinitions reports definition/default problems without
+// requiring values from a router or interpreting the element's JSON.
+func InspectVariableDefinitions(elementID string, definitions []VariableDefinition) []DefinitionInspection {
+	seen := make(map[string]bool, len(definitions))
+	result := make([]DefinitionInspection, len(definitions))
+	for i, def := range definitions {
+		issue := validateDefinition(elementID, i, def, seen)
+		seen[def.Name] = true
+		if issue != nil {
+			result[i].Issue = issue
+			continue
+		}
+		if def.Default == nil {
+			result[i].Required = true
+			continue
+		}
+		filled, issue := validatePreparedValue(def.Default, def.Type, Issue{
+			ElementID: elementID, VariableName: &def.Name, Source: "default",
+		})
+		result[i] = DefinitionInspection{Required: !filled && issue == nil, Issue: issue}
+	}
+	return result
 }
 
 func validVariableType(typ string) bool {

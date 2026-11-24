@@ -1,3 +1,4 @@
+import { checkTemplateVariables } from './template-variables-browser.mjs';
 import { checkTemplateEditor } from './template-editor-browser.mjs';
 import { checkExternalAccess } from './external-access-browser.mjs';
 import assert from 'node:assert/strict';
@@ -265,6 +266,7 @@ try {
       db.close();
     }
   }, process.env.XKEEN_BROWSER_SCREENSHOT);
+  await checkTemplateVariables(page, first, () => admin("reset", first), process.env.XKEEN_BROWSER_SCREENSHOT);
   await page.getByRole('link',{name:'Обзор'}).click();
 
   await page.getByRole('link',{name:'Подключить роутер'}).click();
