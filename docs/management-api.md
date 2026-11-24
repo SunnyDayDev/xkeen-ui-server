@@ -124,3 +124,13 @@ GET /api/v1/templates возвращает объект с массивом temp
 `POST /api/v1/templates` принимает один JSON-объект с полем `id`, например `{"id":"example-profile"}`. Заголовок `Content-Type` должен быть `application/json`. Параметры запроса запрещены, тело ограничено 8 КиБ. В защищённом режиме нужен действующий внешний bearer F20.
 
 Ответ `201 Created` содержит точный `id` и строку `"1"` в поле `version`. Заголовок `Location` ведёт к пустому черновику по точному URL-кодированному ID. При совпадении ID возвращается `409 template_exists`. Если результат создания неизвестен, прочитайте запись по этому ID. Найденный шаблон может быть результатом другого запроса. [OpenAPI создания](../openspec/changes/archive/2026-11-24-create-external-template/openapi.json).
+
+## Добавление элемента
+
+Отправьте `POST /api/v1/templates/item/elements?templateId=example-profile` с точным ID шаблона, одним сильным `If-Match` из F21 и `Content-Type: application/json`. Тело содержит `section`, выбранный клиентом канонический UUIDv4 `elementId` и полный исходный текст JSON `source`. Действует ограничение 8 МиБ.
+
+```json
+{"section":"outbounds","elementId":"550e8400-e29b-41d4-a716-446655440000","source":"{\"tag\":\"example-outbound\",\"protocol\":\"freedom\"}"}
+```
+
+Ответ `201` содержит полное сохранённое представление, новый ETag и `Content-Location` на точный путь чтения F21. Повтор UUID в любой секции или занятая однократная секция возвращают `409`. Без `If-Match` сервер возвращает `428`, с устаревшим тегом — `412`. После потери ответа прочитайте черновик и проверьте выбранный UUID и текст. Публикация остаётся отдельной операцией. [OpenAPI добавления](../openspec/changes/archive/2026-11-24-add-external-template-element/openapi.json).

@@ -73,6 +73,12 @@ func draftRepresentation(s *templates.Snapshot) ([]byte, string, error) {
 	return data, fmt.Sprintf("\"%x\"", sha256.Sum256(data)), nil
 }
 
+const externalTemplateItemPath = "/api/v1/templates/item"
+
+func externalTemplateItemLocation(id string) string {
+	return externalTemplateItemPath + "?" + (url.Values{"templateId": {id}}).Encode()
+}
+
 func NewExternalTemplates(store ExternalTemplateStore) ExternalOperation {
 	return func(w http.ResponseWriter, r *http.Request, permit externalaccess.Permit) {
 		w.Header().Set("Cache-Control", "no-store, no-transform")
@@ -98,11 +104,17 @@ func NewExternalTemplates(store ExternalTemplateStore) ExternalOperation {
 			writeTemplateSummaries(w, summaries)
 			return
 		}
-		if r.URL.Path != "/api/v1/templates/item" {
+		adding := r.URL.Path == externalTemplateItemPath+"/elements"
+		if r.URL.Path != externalTemplateItemPath && !adding {
 			externalError(w, 404, "not_found")
 			return
 		}
-		if r.Method != http.MethodGet && r.Method != http.MethodPatch {
+		if adding && r.Method != http.MethodPost {
+			w.Header().Set("Allow", http.MethodPost)
+			externalError(w, 405, "method_not_allowed")
+			return
+		}
+		if !adding && r.Method != http.MethodGet && r.Method != http.MethodPatch {
 			w.Header().Set("Allow", "GET, PATCH")
 			externalError(w, 405, "method_not_allowed")
 			return
@@ -114,10 +126,11 @@ func NewExternalTemplates(store ExternalTemplateStore) ExternalOperation {
 			return
 		}
 		var edit externalEdit
-		var condition string
-		if r.Method == http.MethodPatch {
+		var condition, section string
+		mutating := adding || r.Method == http.MethodPatch
+		if mutating {
 			var ok bool
-			edit, condition, ok = readExternalEdit(w, r)
+			edit, condition, section, ok = readExternalEdit(w, r, adding)
 			if !ok {
 				return
 			}
@@ -136,19 +149,30 @@ func NewExternalTemplates(store ExternalTemplateStore) ExternalOperation {
 			externalFailure(w, err)
 			return
 		}
-		if r.Method == http.MethodPatch {
+		if mutating {
 			if condition != tag {
 				externalError(w, 412, "precondition_failed")
 				return
 			}
-			candidate, err := templates.EditElementContent(s, edit.ElementID, *edit.Source)
+			var candidate configuration.TemplateDraft
+			if adding {
+				candidate, err = templates.AddElement(s, section, edit.ElementID, *edit.Source)
+			} else {
+				candidate, err = templates.EditElementContent(s, edit.ElementID, *edit.Source)
+			}
 			if err != nil {
 				var invalid *templates.InvalidDraftError
 				switch {
 				case errors.Is(err, templates.ErrElementNotFound):
 					externalError(w, 404, "not_found")
+				case errors.Is(err, templates.ErrElementExists):
+					externalError(w, 409, "element_exists")
+				case errors.Is(err, templates.ErrSectionOccupied):
+					externalError(w, 409, "section_occupied")
 				case errors.As(err, &invalid):
 					externalError(w, 422, "invalid_content")
+				case adding && errors.Is(err, templates.ErrInvalid):
+					externalError(w, 400, "invalid_request")
 				default:
 					externalFailure(w, err)
 				}
@@ -173,6 +197,10 @@ func NewExternalTemplates(store ExternalTemplateStore) ExternalOperation {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("ETag", tag)
+		if adding {
+			w.Header().Set("Content-Location", externalTemplateItemLocation(ids[0]))
+			w.WriteHeader(http.StatusCreated)
+		}
 		_, _ = w.Write(data)
 	}
 }
@@ -197,8 +225,7 @@ func createExternalTemplate(w http.ResponseWriter, r *http.Request, store Extern
 	case err != nil:
 		externalFailure(w, err)
 	default:
-		query := url.Values{"templateId": {created.ID}}
-		w.Header().Set("Location", "/api/v1/templates/item?"+query.Encode())
+		w.Header().Set("Location", externalTemplateItemLocation(created.ID))
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		_ = json.NewEncoder(w).Encode(templateSummaryResponse(created))
@@ -206,31 +233,37 @@ func createExternalTemplate(w http.ResponseWriter, r *http.Request, store Extern
 }
 
 type externalEdit struct {
-	ElementID string  `json:"elementId"`
-	Source    *string `json:"source"`
+	ElementID string          `json:"elementId"`
+	Source    *string         `json:"source"`
+	Section   json.RawMessage `json:"section"`
 }
 
 var externalDraftTag = regexp.MustCompile(`^"[0-9a-f]{64}"$`)
 
-func readExternalEdit(w http.ResponseWriter, r *http.Request) (externalEdit, string, bool) {
+func readExternalEdit(w http.ResponseWriter, r *http.Request, adding bool) (externalEdit, string, string, bool) {
 	var edit externalEdit
 	tags := r.Header.Values("If-Match")
 	if len(tags) == 0 {
 		externalError(w, 428, "precondition_required")
-		return edit, "", false
+		return edit, "", "", false
 	}
 	if len(tags) != 1 || !externalDraftTag.MatchString(tags[0]) {
 		externalError(w, 400, "invalid_request")
-		return edit, "", false
+		return edit, "", "", false
 	}
 	if !readExternalTemplateJSON(w, r, maxWebEditorBody, &edit) {
-		return edit, "", false
+		return edit, "", "", false
 	}
-	if !configuration.ValidElementID(edit.ElementID) || edit.Source == nil {
+	var section string
+	validSection := edit.Section == nil
+	if adding {
+		validSection = json.Unmarshal(edit.Section, &section) == nil && section != ""
+	}
+	if !configuration.ValidElementID(edit.ElementID) || edit.Source == nil || !validSection {
 		externalError(w, http.StatusBadRequest, "invalid_request")
-		return edit, "", false
+		return edit, "", "", false
 	}
-	return edit, tags[0], true
+	return edit, tags[0], section, true
 }
 
 func readExternalTemplateJSON(w http.ResponseWriter, r *http.Request, limit int64, out any) bool {
