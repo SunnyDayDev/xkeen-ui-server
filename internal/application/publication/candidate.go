@@ -55,6 +55,12 @@ func PrepareRouterCandidate(template *templates.Snapshot, router *routersettings
 	}, nil
 }
 
+// SupportsTemplateDisabling reports the sections whose disabled elements
+// are excluded from the effective catalog.
+func SupportsTemplateDisabling(section string) bool {
+	return section == "rules" || section == "inbounds"
+}
+
 func prepareCatalogInput(template *templates.Snapshot, router *routersettings.Draft) (configuration.CatalogInput, []configuration.CatalogIssue) {
 	input := configuration.CatalogInput{
 		Template:      configuration.Owner{Kind: "template", ID: template.ID},
@@ -87,13 +93,13 @@ func prepareCatalogInput(template *templates.Snapshot, router *routersettings.Dr
 				continue
 			}
 			ref := configuration.ElementRef{ID: item.Element.ID, Position: location.Position}
-			switch section.Name {
-			case "rules":
-				input.DisabledRules = append(input.DisabledRules, ref)
-			case "inbounds":
-				input.DisabledInbounds = append(input.DisabledInbounds, ref)
-			default:
+			if !SupportsTemplateDisabling(section.Name) {
 				return configuration.CatalogInput{}, candidateFailure("unsupported_disabled_section", location.Owner, location.Position)
+			}
+			if section.Name == "rules" {
+				input.DisabledRules = append(input.DisabledRules, ref)
+			} else {
+				input.DisabledInbounds = append(input.DisabledInbounds, ref)
 			}
 		}
 	}

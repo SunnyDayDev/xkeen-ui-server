@@ -16,6 +16,10 @@ type encodedPublication struct {
 }
 
 func (p *Publications) Commit(ctx context.Context, plan publication.CommitPlan) (int64, error) {
+	return p.commit(ctx, plan, nil)
+}
+
+func (p *Publications) commit(ctx context.Context, plan publication.CommitPlan, guard publicationGuard) (int64, error) {
 	encoded, err := encodePublicationPlan(plan)
 	if err != nil {
 		return 0, err
@@ -25,6 +29,11 @@ func (p *Publications) Commit(ctx context.Context, plan publication.CommitPlan) 
 		return 0, operationError("write publication", ctx.Err())
 	}
 	defer tx.Rollback()
+	if guard != nil {
+		if err := guard(ctx, tx); err != nil {
+			return 0, err
+		}
+	}
 
 	if err := checkPublicationExpectations(ctx, tx, plan); err != nil {
 		return 0, err

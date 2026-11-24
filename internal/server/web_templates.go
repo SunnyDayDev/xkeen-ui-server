@@ -58,29 +58,17 @@ func NewWebTemplatesHandler(origin WebOrigin, service webTemplateService, next h
 }
 
 func createWebTemplate(w http.ResponseWriter, r *http.Request, service webTemplateService) {
-	media, params, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
-	if len(r.Header.Values("Content-Type")) != 1 || err != nil || media != "application/json" || len(params) != 0 {
-		webResult(w, http.StatusUnsupportedMediaType, "unsupported_media_type", "")
-		return
-	}
-	raw, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 8<<10))
-	var sizeError *http.MaxBytesError
-	if errors.As(err, &sizeError) {
-		webResult(w, http.StatusRequestEntityTooLarge, "request_too_large", "")
-		return
-	}
 	var input struct {
 		ID string `json:"id"`
 	}
-	if err != nil || jsonv2.Unmarshal(raw, &input, jsonv2.RejectUnknownMembers(true)) != nil || input.ID == "" {
+	if !readWebJSON(w, r, 8<<10, &input) {
+		return
+	}
+	if input.ID == "" {
 		webResult(w, http.StatusBadRequest, "invalid_request", "")
 		return
 	}
-	var proof string
-	if values := r.Header.Values("X-CSRF-Token"); len(values) == 1 {
-		proof = values[0]
-	}
-	saved, err := service.Create(r.Context(), webSessionToken(r), proof, input.ID)
+	saved, err := service.Create(r.Context(), webSessionToken(r), webCSRFProof(r), input.ID)
 	switch {
 	case errors.Is(err, templates.ErrConflict):
 		webResult(w, http.StatusConflict, "template_exists", "")
@@ -93,4 +81,30 @@ func createWebTemplate(w http.ResponseWriter, r *http.Request, service webTempla
 		w.WriteHeader(http.StatusCreated)
 		_ = json.NewEncoder(w).Encode(templateSummaryResponse(saved))
 	}
+}
+
+func webCSRFProof(r *http.Request) string {
+	if values := r.Header.Values("X-CSRF-Token"); len(values) == 1 {
+		return values[0]
+	}
+	return ""
+}
+
+func readWebJSON(w http.ResponseWriter, r *http.Request, limit int64, out any) bool {
+	media, params, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	if len(r.Header.Values("Content-Type")) != 1 || err != nil || media != "application/json" || len(params) != 0 {
+		webResult(w, http.StatusUnsupportedMediaType, "unsupported_media_type", "")
+		return false
+	}
+	raw, err := io.ReadAll(http.MaxBytesReader(w, r.Body, limit))
+	var sizeError *http.MaxBytesError
+	if errors.As(err, &sizeError) {
+		webResult(w, http.StatusRequestEntityTooLarge, "request_too_large", "")
+		return false
+	}
+	if err != nil || jsonv2.Unmarshal(raw, out, jsonv2.RejectUnknownMembers(true)) != nil {
+		webResult(w, http.StatusBadRequest, "invalid_request", "")
+		return false
+	}
+	return true
 }

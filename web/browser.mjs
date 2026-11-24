@@ -20,6 +20,8 @@ let browser;
 let server;
 const first = 'synthetic browser password';
 const replacement = 'synthetic replacement password';
+const routerTemplate = 'edge / preparation';
+const workerSocket = process.env.XKEEN_TEST_F09_VALIDATOR_SOCKET;
 const sleep = () => new Promise(resolve => setTimeout(resolve, 30));
 function admin(action, password) {
   writeFileSync(secret, password + '\n', {mode: 0o600});
@@ -37,8 +39,10 @@ try {
   await new Promise(resolve => reservation.close(resolve));
   const host = `127.0.0.1:${port}`;
   const origin = `https://${host}`;
-  server = spawn(binary, ['--listen', host, '--tls-cert', cert, '--tls-key', key,
-    '--db-path', database, '--web-origin', origin], {stdio: ['ignore', 'ignore', 'pipe']});
+  const serverArgs = ['--listen', host, '--tls-cert', cert, '--tls-key', key,
+    '--db-path', database, '--web-origin', origin];
+  if (workerSocket) serverArgs.push('--validator-socket', workerSocket);
+  server = spawn(binary, serverArgs, {stdio: ['ignore', 'ignore', 'pipe']});
   let log = '';
   server.stderr.on('data', data => { log += data; });
   for (let i = 0; i < 160 && !log.includes('"listening"') && server.exitCode === null; i++) await sleep();
@@ -86,6 +90,16 @@ try {
   try {
     sql.prepare('INSERT INTO templates(id, draft, version) VALUES (?,?,?)').run(legacyID, '[]', 9223372036854775807n);
     sql.prepare('INSERT INTO templates(id, draft, version) VALUES (?,?,?)').run('branch-east', '[]', 2);
+    const preparationFixture = [{name:'outbounds',elements:[{disabled:false,record:{
+      id:'550e8400-e29b-41d4-a716-446655440000',
+      content:'{"protocol":"${protocol}","tag":"${label}"}',
+      variables:[{name:'protocol',type:'string'},{name:'label',type:'string'},
+        {name:'timeoutSeconds',type:'number',default:5}]
+    }}]}, {name:'inbounds',elements:[{disabled:true,record:{
+      id:'550e8400-e29b-41d4-a716-446655440004', content:'{"tag":"${inactiveLabel}"}',
+      variables:[{name:'inactiveLabel',type:'string'}]
+    }}]}];
+    sql.prepare('INSERT INTO templates(id, draft) VALUES (?,?)').run(routerTemplate,JSON.stringify(preparationFixture));
   } finally { sql.close(); }
   await page.goBack();
   await page.getByRole('heading', {name:'Обзор'}).waitFor();
@@ -253,6 +267,103 @@ try {
   }, process.env.XKEEN_BROWSER_SCREENSHOT);
   await page.getByRole('link',{name:'Обзор'}).click();
 
+  await page.getByRole('link',{name:'Подключить роутер'}).click();
+  await page.getByRole('heading',{name:'Подключить роутер'}).waitFor();
+  await page.getByLabel('Имя роутера').fill('Филиал Восток');
+  const sourceChoice = page.getByLabel('Шаблон',{exact:true});
+  await page.evaluate(() => {
+    const fetchNext = window.fetch;
+    window.fetch = async (target, options) => {
+      const response = await fetchNext(target, options);
+      if (typeof target === 'string' && target.startsWith('/ui/v1/routers/prepare?templateId=')) {
+        window.fetch = fetchNext;
+        await new Promise(resolve => { window.releaseOldPreparationLookup = resolve; });
+      }
+      return response;
+    };
+  });
+  await sourceChoice.selectOption(routerTemplate);
+  await page.waitForFunction(() => typeof window.releaseOldPreparationLookup === 'function');
+  await sourceChoice.selectOption('');
+  await page.evaluate(async () => {
+    window.releaseOldPreparationLookup();
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  });
+  assert.equal(await page.getByText('Черновик · версия 1',{exact:true}).count(),0,'cleared selection must ignore previous reply');
+  await sourceChoice.selectOption(routerTemplate);
+  await page.getByText('Черновик · версия 1',{exact:true}).waitFor();
+  const prepare = page.getByRole('button',{name:'Проверить и подготовить'});
+  const protocol = page.getByLabel('protocol',{exact:true});
+  const inactiveField = page.getByLabel('inactiveLabel',{exact:true});
+  assert.equal(await inactiveField.evaluate(input=>input.readOnly && !input.required),true);
+  await page.getByLabel('label',{exact:true}).fill('example-direct');
+  const beforeIncomplete = post.length;
+  await prepare.click();
+  assert.equal(post.length,beforeIncomplete,'required value must stop incomplete confirmation');
+  assert.equal(await protocol.evaluate(input => input.validity.valueMissing),true);
+  await protocol.fill('freedom');
+  const duration = page.getByLabel('timeoutSeconds',{exact:true});
+  await duration.fill('invalid');
+  await prepare.click();
+  await page.getByText('Проверьте значение и его тип.',{exact:true}).waitFor();
+  assert.equal(await duration.inputValue(),'invalid');
+  await duration.fill('9007199254740993');
+  admin('reset', first);
+  const revokedRouterForm = page.waitForResponse(response => response.url().endsWith('/ui/v1/routers/prepare') &&
+    response.request().method()==='POST' && response.status()===401);
+  await prepare.click();
+  await revokedRouterForm;
+  await page.getByRole('heading',{name:'Сессия истекла'}).waitFor();
+  const postsBeforeRouterLogin = post.length;
+  await password.fill(first);
+  await password.press('Enter');
+  await sourceChoice.waitFor();
+  assert.equal(await sourceChoice.inputValue(),routerTemplate);
+  assert.equal(await page.getByLabel('Имя роутера').inputValue(),'Филиал Восток');
+  assert.equal(await duration.inputValue(),'9007199254740993');
+  assert.deepEqual(post.slice(postsBeforeRouterLogin),['/ui/v1/login']);
+
+  if (workerSocket) {
+    await protocol.fill('not-a-supported-protocol');
+    await prepare.click();
+    await page.getByText('Xray отклонил конфигурацию. Проверьте значения шаблона.',{exact:true}).waitFor();
+    await protocol.fill('freedom');
+    await page.evaluate(() => {
+      const fetchNext = window.fetch;
+      window.fetch = async (target, options) => {
+        const response = await fetchNext(target, options);
+        if (target === '/ui/v1/routers/prepare' && options?.method === 'POST' && response.status === 201) {
+          window.fetch = fetchNext;
+          throw new Error('synthetic response loss after commit');
+        }
+        return response;
+      };
+    });
+  }
+  const exactValues = page.waitForRequest(request => request.method()==='POST' &&
+    new URL(request.url()).pathname==='/ui/v1/routers/prepare');
+  await prepare.click();
+  assert.equal((await exactValues).postDataJSON().values.find(value => value.name==='timeoutSeconds').source,'9007199254740993');
+  if (workerSocket) {
+    await page.getByText('Не удалось подтвердить результат.',{exact:true}).waitFor();
+    const beforeLookup = post.length;
+    await page.getByRole('button',{name:'Проверить результат'}).click();
+    await page.getByRole('heading',{name:'Роутер подготовлен'}).waitFor();
+    await page.getByText('Желаемая ревизия 1',{exact:true}).waitFor();
+    assert.equal(post.length,beforeLookup);
+  } else {
+    await page.getByText('Проверка Xray сейчас недоступна.',{exact:true}).waitFor();
+    assert.equal(await duration.inputValue(),'9007199254740993');
+  }
+  await page.setViewportSize({width:360,height:740});
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth),360);
+  if (process.env.XKEEN_BROWSER_SCREENSHOT) {
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    await page.screenshot({path:process.env.XKEEN_BROWSER_SCREENSHOT + '-router-preparation.png'});
+  }
+  await page.setViewportSize({width:1080,height:660});
+  await page.getByRole('link',{name:'Обзор'}).click();
+
   await page.evaluate(() => {
     const main = document.querySelector('main');
     main.dataset.tabBuffer = 'synthetic';
@@ -292,7 +403,7 @@ try {
     await page.locator('form[aria-busy="false"]').waitFor();
   }
   await page.getByText('Слишком много попыток входа. Повторите позже.').waitFor();
-  console.log('F04–F07 real HTTPS browser scenarios passed');
+  console.log('F04–F09 real HTTPS browser scenarios passed');
 } finally {
   if (browser) await browser.close();
   if (server && server.exitCode === null) {

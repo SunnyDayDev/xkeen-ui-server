@@ -15,6 +15,7 @@
 ```sh
 context=$(mktemp -d)
 CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -o "$context/check" ./cmd/xkeen-validator-run
+chmod 0755 "$context/check"
 docker build --platform linux/arm64 --pull=false --network=none \
   --build-arg "XRAY_SOURCE=$TRUSTED_SOURCE" --iidfile "$context/image-id" \
   -f lab/validator.Dockerfile "$context"
@@ -31,7 +32,7 @@ Worker проверяет версию в том же неизменяемом �
 
 ## Внешний исполнитель
 
-Укажите фиксированный HTTPS origin в серверном адаптере `validation.Remote`. Передайте отдельную доверенную CA для имени этого узла и клиентскую пару TLS. Со стороны worker задайте серверный сертификат и ключ, CA клиента и SHA-256 разрешённого конечного клиентского сертификата. Держите ключи у их владельцев, с приватными правами, вне образа и каталога заданий. Пример запуска:
+Передайте серверу фиксированный HTTPS origin через `--validator-origin`, отдельную доверенную CA через `--validator-ca` и клиентскую пару mTLS через `--validator-client-cert` и `--validator-client-key`. Для локального режима укажите абсолютный `--validator-socket`. [Подготовка роутера](server-skeleton.md#подготовка-роутера-f09) использует одну из этих настроек. Со стороны worker задайте серверный сертификат и ключ, CA клиента и SHA-256 разрешённого конечного клиентского сертификата. Держите ключи у их владельцев, с приватными правами, вне образа и каталога заданий. Пример запуска:
 
 ```sh
 ./xkeen-validator -image "$APPROVED_IMAGE_ID" -state "$WORKER_STATE" \

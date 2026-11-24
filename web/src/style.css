@@ -54,6 +54,11 @@ form button { margin-top: 6px; width: 100%; }
 }
 .console-header a[aria-current='page'] { background: #273446; }
 .console main { padding: 24px; }
+.overview-action {
+  display: inline-flex; align-items: center; min-height: 42px; margin-top: 16px;
+  background: var(--accent); color: white; border-radius: var(--radius);
+  font-size: .9rem; font-weight: 600; padding: 8px 16px; text-decoration: none;
+}
 .console main:focus { outline: none; }
 .console main .notice { margin-top: 16px; }
 [hidden] { display: none !important; }
