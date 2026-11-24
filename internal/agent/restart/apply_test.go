@@ -169,3 +169,16 @@ func TestCancellationBeforeAndAfterIntent(t *testing.T) {
 		}
 	})
 }
+
+func TestVerifiedIdenticalNewRevisionPreservesProcess(t *testing.T) {
+	f := newApplyFixture(t)
+	prior := f.first
+	f.first.Snapshot.Number++
+	f.first.Tag, _ = agentrevision.Tag(f.scope.RouterID, f.first.Snapshot)
+	f.second, f.proposed = f.first, f.first.Tag
+	f.record.Current = &Confirmed{Baseline: f.old, AttemptID: "previous", Number: prior.Snapshot.Number, Tag: prior.Tag}
+	got, err := New(f.scope, f, f, f, f).Apply(t.Context(), "ephemeral", f.proposed)
+	if err != nil || got.Number != f.first.Snapshot.Number || got.AttemptID == "previous" || got.Baseline.Runtime != f.old.Runtime || !slices.Equal(f.effects, []string{"commit"}) {
+		t.Fatalf("result %v effects %v error %v", got.Number, f.effects, err)
+	}
+}

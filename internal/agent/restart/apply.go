@@ -137,6 +137,21 @@ func (s *Service) Apply(ctx context.Context, key, tag string) (Confirmed, error)
 	var id [16]byte
 	rand.Read(id[:])
 	intent := Intent{AttemptID: hex.EncodeToString(id[:]), Previous: before, Target: fresh, TargetFiles: files, Phase: Planned}
+	// The restart-only adapter has no exclusive RoutingService writer.
+	// E07 supplies fresh rule evidence when that capability is installed.
+	plan := intent.Plan(record.Current, RuleEvidence{})
+	if plan.Unchanged {
+		again, err := s.working.Observe(ctx, record.Current)
+		if err != nil || !reflect.DeepEqual(before, again) || ctx.Err() != nil {
+			return Confirmed{}, ErrBaseline
+		}
+		confirmed := Confirmed{AttemptID: intent.AttemptID, Number: fresh.Snapshot.Number, Tag: fresh.Tag, Baseline: again}
+		record.Current = &confirmed
+		if err := s.journal.Save(record); err != nil {
+			return Confirmed{}, ErrJournal
+		}
+		return confirmed, nil
+	}
 	record.Pending = &intent
 	if err := s.journal.Save(record); err != nil {
 		return Confirmed{}, ErrJournal
