@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agentcredential"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/externalaccess"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/reporting"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/storage/sqlite"
 )
@@ -55,6 +56,7 @@ func TestProcessExternalRenameChangesOnlyDisplayMetadata(t *testing.T) {
 	p := startProcess(t, testBinary, "--listen", "127.0.0.1:0", "--db-path", path, "--tls-cert", cert, "--tls-key", key)
 	origin := "https://" + p.readyWithClient(t, client, "https")
 	resource := origin + "/api/v1/routers/name?" + url.Values{"routerId": {id.RouterID}}.Encode()
+	var bearer string
 	request := func(method, tag, body string, status int, name string) string {
 		t.Helper()
 		req, err := http.NewRequestWithContext(ctx, method, resource, strings.NewReader(body))
@@ -67,6 +69,9 @@ func TestProcessExternalRenameChangesOnlyDisplayMetadata(t *testing.T) {
 		}
 		if tag != "" {
 			req.Header.Set("If-Match", tag)
+		}
+		if bearer != "" {
+			req.Header.Set("Authorization", "Bearer "+bearer)
 		}
 		response, err := client.Do(req)
 		if err != nil {
@@ -107,6 +112,26 @@ func TestProcessExternalRenameChangesOnlyDisplayMetadata(t *testing.T) {
 	}
 	if status, err := contacts.Status(ctx, id.RouterID); err != nil || status.Desired != 1 || status.Applied != 1 {
 		t.Fatal("rename altered revision evidence")
+	}
+	retired, digest, err := externalaccess.Issue()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.ExecContext(ctx, "UPDATE external_access SET protected=1, digest=?, version=3", digest[:]); err != nil {
+		t.Fatal(err)
+	}
+	bearer = retired
+	valid := request("GET", "", "", 200, "  Лабораторный роутер  ")
+	if _, err := db.ExecContext(ctx, "UPDATE external_access SET digest=NULL, version=4"); err != nil {
+		t.Fatal(err)
+	}
+	request("PATCH", valid, `{"name":"не должно сохраниться"}`, 401, "")
+	if _, err := db.ExecContext(ctx, "UPDATE external_access SET protected=0, version=5"); err != nil {
+		t.Fatal(err)
+	}
+	bearer = ""
+	if restored := request("GET", "", "", 200, "  Лабораторный роутер  "); restored != renamed {
+		t.Fatal("revoked request changed display metadata")
 	}
 	stopAgentProcess(t, p)
 }
