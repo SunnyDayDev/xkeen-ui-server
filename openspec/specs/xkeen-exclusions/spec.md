@@ -1,7 +1,8 @@
 # xkeen-exclusions Specification
 
 ## Purpose
-TBD - created by archiving change define-xkeen-exclusions. Update Purpose after archive.
+
+Общие и персональные источники задают отдельный текстовый файл исключений для XKeen и определяют, когда устройство способно выполнить требуемый обход.
 
 ## Requirements
 
