@@ -25,6 +25,7 @@
   let removeButton = $state<HTMLButtonElement>();
   let confirmButton = $state<HTMLButtonElement>();
   let reloadButton = $state<HTMLButtonElement>();
+  let backLink = $state<HTMLAnchorElement>();
   let operation: AbortController | undefined;
   let observedEpoch: number | undefined;
   let refreshNeeded = true;
@@ -134,7 +135,7 @@
         work = undefined;
         if (focus) {
           await tick();
-          if (active && epoch === sessionEpoch) (blocked ? reloadButton : picker)?.focus();
+          if (active && epoch === sessionEpoch) ((blocked ? reloadButton : picker) ?? backLink)?.focus();
         }
       }
     }
@@ -230,7 +231,7 @@
   {#if blocked || selected?.dependenciesUnavailable}
     <button bind:this={reloadButton} disabled={!active || !!work} onclick={() => request()}>Перечитать настройки</button>
   {/if}
-  <a href={backPath} onclick={(event) => back(event,backPath)}>К роутеру</a>
+  <a bind:this={backLink} href={backPath} onclick={(event) => back(event,backPath)}>К роутеру</a>
 </div>
 
 <style>

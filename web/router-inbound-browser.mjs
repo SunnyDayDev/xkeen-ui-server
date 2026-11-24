@@ -58,6 +58,18 @@ export async function checkRouterInbound(page, routerId, database, resetSession,
     await picker.waitFor();
     assert.equal(await picker.getByRole('option').filter({hasText:'free-inbound'}).count(),0);
     assert.equal(current().generation,before+2);
+
+    const groups = stored.Groups.find(group=>group.Name==='inbounds');
+    groups.Exclusions = [used,unsupported].map(ElementID=>({TemplateID:stored.TemplateID,ElementID}));
+    db.prepare('UPDATE router_settings SET snapshot=?,generation=generation+1 WHERE id=?')
+      .run(Buffer.from(JSON.stringify(stored)),routerId);
+    await page.reload();
+    await picker.waitFor();
+    assert.equal(await picker.inputValue(),free);
+    await remove.press('Enter');
+    await page.getByRole('button',{name:'Удалить',exact:true}).press('Enter');
+    await page.getByText('Входов пока нет.',{exact:true}).waitFor();
+    await page.waitForFunction(()=>document.activeElement?.textContent?.trim()==='К роутеру');
   } finally { db.close(); }
   await page.setViewportSize({width:320,height:740});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),320);

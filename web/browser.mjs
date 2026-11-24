@@ -424,12 +424,19 @@ try {
   await page.getByText('Вы вышли из консоли.').waitFor();
   assert.equal(await page.locator('main[data-tab-buffer]').count(),0);
   if (process.env.XKEEN_BROWSER_SCREENSHOT) await page.screenshot({path:process.env.XKEEN_BROWSER_SCREENSHOT + '-login.png'});
-  // The earlier sign-in exercises may span a full limiter window.
-  for (let attempt = 0; attempt < 6; attempt++) {
+  // A limiter window may roll over between these attempts.
+  let rateLimited = false;
+  for (let attempt = 0; attempt < 11 && !rateLimited; attempt++) {
     await password.fill('wrong browser password');
-    await password.press('Enter');
+    const [response] = await Promise.all([
+      page.waitForResponse(reply=>new URL(reply.url()).pathname==='/ui/v1/login' && reply.request().method()==='POST'),
+      password.press('Enter'),
+    ]);
     await page.locator('form[aria-busy="false"]').waitFor();
+    assert.ok(response.status()===401 || response.status()===429);
+    rateLimited = response.status()===429;
   }
+  assert.ok(rateLimited,'login attempts never reached the limit');
   await page.getByText('Слишком много попыток входа. Повторите позже.').waitFor();
   console.log('F04–F11 real HTTPS browser scenarios passed');
 } finally {
