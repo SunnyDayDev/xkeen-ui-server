@@ -119,7 +119,7 @@ func TestProcessStorageRestoreAuthorityAndReturnToNewerDatabase(t *testing.T) {
 	admin("setup", previous)
 
 	cert, key, roots := fixtureServerCertificate(t)
-	client := &http.Client{Timeout: 4 * time.Second, Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: roots}}}
+	client := &http.Client{Timeout: 4 * time.Second, Transport: &http.Transport{DisableKeepAlives: true, TLSClientConfig: &tls.Config{RootCAs: roots}}}
 	defer client.CloseIdleConnections()
 	var endpoint string
 	launch := func(database string) *process {
@@ -192,7 +192,7 @@ func TestProcessStorageRestoreAuthorityAndReturnToNewerDatabase(t *testing.T) {
 	report("5")
 	command("storage", "backup", "--db-path", path, "--output", backup)
 	report("6")
-	stopRouterAgent(t, active)
+	stopAgentProcess(t, active)
 	admin("reset", current)
 	command("storage", "restore", "--backup", backup, "--output", restored)
 
@@ -201,10 +201,10 @@ func TestProcessStorageRestoreAuthorityAndReturnToNewerDatabase(t *testing.T) {
 	login(previous, http.StatusOK)
 	cursor("5")
 	login(current, http.StatusUnauthorized)
-	stopRouterAgent(t, isolated)
+	stopAgentProcess(t, isolated)
 
 	active = launch(path)
-	defer stopRouterAgent(t, active)
+	defer stopAgentProcess(t, active)
 	web("GET", "/templates", "", oldCookie, http.StatusUnauthorized)
 	login(current, http.StatusOK)
 	cursor("6")
