@@ -20,7 +20,7 @@ import (
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/templates"
 )
 
-type ExternalTemplateReader interface {
+type ExternalTemplateStore interface {
 	ReplaceExternalTemplate(context.Context, externalaccess.Permit, configuration.TemplateDraft, int64) (int64, error)
 	ReadExternalTemplate(context.Context, externalaccess.Permit, string) (*templates.Snapshot, error)
 }
@@ -71,7 +71,7 @@ func draftRepresentation(s *templates.Snapshot) ([]byte, string, error) {
 	return data, fmt.Sprintf("\"%x\"", sha256.Sum256(data)), nil
 }
 
-func NewExternalTemplates(store ExternalTemplateReader) ExternalOperation {
+func NewExternalTemplates(store ExternalTemplateStore) ExternalOperation {
 	return func(w http.ResponseWriter, r *http.Request, permit externalaccess.Permit) {
 		w.Header().Set("Cache-Control", "no-store, no-transform")
 		if r.URL.Path != "/api/v1/templates/item" {
