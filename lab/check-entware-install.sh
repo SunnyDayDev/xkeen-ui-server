@@ -13,6 +13,7 @@ go build -trimpath -o "$build/server" ./cmd/xkeen-ui-server
 go build -trimpath -o "$build/xkeen-agent-linux-arm64" ./cmd/xkeen-agent
 go build -trimpath -o "$build/xkeen-entware-installer-linux-arm64" ./cmd/xkeen-entware-installer
 go test -c -o "$build/installation.test" ./cmd/xkeen-ui-server
+go test -c -o "$build/recovery.test" ./cmd/xkeen-entware-installer
 
 image=${XKEEN_LAB_IMAGE:-xkeen-router-lab:dev}
 docker run --rm --platform linux/arm64 --network none --cap-add SYS_PTRACE \
@@ -21,3 +22,9 @@ docker run --rm --platform linux/arm64 --network none --cap-add SYS_PTRACE \
   -e XKEEN_TEST_SERVER_BINARY=/proof/server -e XKEEN_TEST_ENTWARE_INSTALLER=/scripts/install-entware.sh \
   --entrypoint /proof/installation.test "$image" \
   -test.run '^TestEntware(Bootstrap|Install)' -test.v -test.timeout 1m
+
+docker run --rm --platform linux/arm64 --network none \
+  --mount "type=bind,source=$build,target=/proof,readonly" \
+  -e XKEEN_TEST_ENTWARE_UPDATE_RECOVERY=1 \
+  --entrypoint /proof/recovery.test "$image" \
+  -test.run '^TestEntwareUpdateRecoveryRequiresDurableCurrentAndCompleteIntent$' -test.v -test.timeout 1m

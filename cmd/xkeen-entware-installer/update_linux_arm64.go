@@ -24,6 +24,8 @@ var (
 	recoveryInitScript = strings.Replace(initScript, "/current/", "/control/", 1)
 )
 
+var syncCurrent = func() error { return syncDir(executableBase) }
+
 type release struct {
 	Version  string
 	Manifest string
@@ -237,7 +239,7 @@ func pointTo(p profile) error {
 	}
 	defer os.RemoveAll(temp)
 	link := filepath.Join(temp, "current")
-	if os.Symlink("generations/"+p.Version, link) != nil || os.Rename(link, current) != nil || syncDir(executableBase) != nil {
+	if os.Symlink("generations/"+p.Version, link) != nil || os.Rename(link, current) != nil || syncCurrent() != nil {
 		return errSafety
 	}
 	return nil
@@ -259,10 +261,18 @@ func loadUpdate(base profile) (updateIntent, bool, error) {
 	if err != nil || syncDir(control) != nil {
 		return updateIntent{}, false, errRecovery
 	}
-	var intent updateIntent
-	if jsonv2.Unmarshal(raw, &intent, jsonv2.RejectUnknownMembers(true)) != nil || intent.Before.Version == intent.Next.Version {
+	var stored struct {
+		Before     profile
+		Next       profile
+		WasRunning *bool
+		Committed  *bool
+	}
+	if jsonv2.Unmarshal(raw, &stored, jsonv2.RejectUnknownMembers(true)) != nil ||
+		stored.Before.Version == stored.Next.Version || stored.WasRunning == nil || stored.Committed == nil {
 		return updateIntent{}, false, errRecovery
 	}
+	intent := updateIntent{Before: stored.Before, Next: stored.Next, WasRunning: *stored.WasRunning, Committed: *stored.Committed}
+
 	for _, p := range []profile{intent.Before, intent.Next} {
 		r, err := readRelease(base, p.Version)
 		expected := base
@@ -290,6 +300,13 @@ func recoverUpdate(base profile) error {
 	if err != nil || (active != intent.Before && active != intent.Next) {
 		return errRecovery
 	}
+	// A previous attempt can have renamed current and failed to persist the
+	// parent directory. Qualify the observed link durably before any restart
+	// or removal of the only recovery intent.
+	if syncCurrent() != nil {
+		return errRecovery
+	}
+
 	if intent.Committed {
 		if active != intent.Next {
 			return errRecovery
