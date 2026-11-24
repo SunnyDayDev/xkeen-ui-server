@@ -115,11 +115,26 @@ func TestProcessWebRouterVisibility(t *testing.T) {
 	request(http.MethodGet, path, "", false, 404)
 	heartbeat()
 	first := snapshot(true)
+	firstSession, firstProof := session, csrf
+	session, csrf = nil, ""
+	login()
+	secondSession, secondProof := session, csrf
+	if secondSession.Value == firstSession.Value {
+		t.Fatal("two windows received the same session")
+	}
+	secondBasis := snapshot(true)
+	session, csrf = firstSession, firstProof
+
 	request(http.MethodPost, path, `{"activeGeneration":"1","epoch":"0"}`, false, 400)
 	heartbeat()
 	request(http.MethodPost, path, first, false, 200)
 	overviewContains(false)
 	snapshot(false)
+	session, csrf = secondSession, secondProof
+	request(http.MethodPost, path, secondBasis, false, 409)
+	overviewContains(false)
+	session, csrf = firstSession, firstProof
+
 	heartbeat()
 	overviewContains(true)
 	second := snapshot(true)

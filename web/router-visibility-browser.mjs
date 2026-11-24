@@ -36,6 +36,7 @@ export async function checkRouterVisibility(page, {origin, dir, cert, enrolledRo
     await row.press('Enter');
     await offer.press('Enter');
     await cancel.waitFor();
+    if(process.env.XKEEN_BROWSER_SCREENSHOT) await page.screenshot({path:process.env.XKEEN_BROWSER_SCREENSHOT+'-router-hide.png'});
     assert.equal(await cancel.evaluate(node=>node===document.activeElement&&node.matches(':focus-visible')),true);
     await page.keyboard.press('Enter');
     await offer.waitFor();
