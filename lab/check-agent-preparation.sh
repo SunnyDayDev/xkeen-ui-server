@@ -38,13 +38,22 @@ export XKEEN_TEST_AGENT_BINARY=/proof/xkeen-agent
 export XKEEN_TEST_PREPARATION_BINARY=/proof/xkeen-supervisor
 uname -smr
 grep -E "^(Xray|Entware)=" /usr/local/share/router-lab/versions.txt
-if [ "${XKEEN_TEST_PREPARATION_XKEEN:-0}" = "0" ]; then
-  /proof/runner.test -test.v
+if [ "${XKEEN_TEST_APPLICATION:-0}" = "1" ]; then
+  /proof/runner.test -test.run "^TestListenerMustBelongToAttestedPID$" -test.v
+  /proof/process.test -test.run "^TestProcessAgentAppliesTwoControlledGenerations$" -test.v -test.timeout 2m
+else
+  if [ "${XKEEN_TEST_PREPARATION_XKEEN:-0}" = "0" ]; then
+    /proof/runner.test -test.v
+  fi
+  /proof/process.test -test.run "^TestProcessAgentPreparesOnlyVerifiedLocalCandidate$" -test.v
 fi
-/proof/process.test -test.run "^TestProcessAgentPreparesOnlyVerifiedLocalCandidate$" -test.v
 test "$(find /tmp/validation-cgroup/jobs -mindepth 1 -type d | wc -l)" = 0
 '
 }
 
-run_lab --read-only
-run_lab --cap-add=NET_ADMIN --env XKEEN_TEST_PREPARATION_XKEEN=1
+if [ "${XKEEN_LAB_APPLICATION:-0}" = "1" ]; then
+  run_lab --read-only --cap-add=SYS_PTRACE --env XKEEN_TEST_APPLICATION=1
+else
+  run_lab --read-only
+  run_lab --cap-add=NET_ADMIN --env XKEEN_TEST_PREPARATION_XKEEN=1
+fi

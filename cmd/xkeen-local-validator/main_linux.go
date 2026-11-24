@@ -17,6 +17,7 @@ import (
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/localvalidation"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/preparation"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/restart"
 )
 
 func main() {
@@ -35,9 +36,13 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 	flags := flag.NewFlagSet("xkeen-local-validator", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
 	configPath := flags.String("config", "", "root-owned local supervisor profile")
+	applicationConfig := flags.String("application-config", "", "root-owned dedicated application profile")
 	manifestDir := flags.String("working-manifest", "", "record a trusted working directory manifest")
 	process := flags.Int("working-process", 0, "record start tick of a trusted launch")
 	if err := flags.Parse(args); err != nil || flags.NArg() != 0 || os.Geteuid() != 0 {
+		return preparation.ErrUnavailable
+	}
+	if *applicationConfig != "" && (*configPath == "" || *manifestDir != "" || *process != 0) {
 		return preparation.ErrUnavailable
 	}
 	switch {
@@ -68,20 +73,47 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 		return err
 	}
 	defer lease.Close()
-	listener, err := lease.Listen(cfg.Socket, cfg.AgentUID, cfg.AgentGID)
+	socket, handler, ready, writeTimeout := cfg.Socket, localvalidation.Handler(cfg.Scope, cfg.Observer(), runner), "local validator ready", 18*time.Second
+	if *applicationConfig != "" {
+		app, err := localvalidation.LoadApplicationConfig(*applicationConfig, cfg)
+		if err != nil {
+			return err
+		}
+		central, err := app.OpenCentral(cfg.Scope)
+		if err != nil {
+			return err
+		}
+		defer central.CloseIdleConnections()
+		journal, err := restart.OpenJournal(app.JournalDirectory, cfg.Scope)
+		if err != nil {
+			return err
+		}
+		defer journal.Close()
+		working, err := localvalidation.NewRestartWorking(cfg, app.RuntimeUID, app.RuntimeGID)
+		if err != nil {
+			return err
+		}
+		defer working.Close()
+		if err := working.StartCommitted(ctx, journal); err != nil {
+			return err
+		}
+		service := restart.New(cfg.Scope, restart.NewCentralSource(cfg.Scope, central), journal, working, runner)
+		socket, handler, ready, writeTimeout = app.Socket, localvalidation.ApplicationHandler(cfg.Scope, service), "local application ready", 70*time.Second
+	}
+	listener, err := lease.Listen(socket, cfg.AgentUID, cfg.AgentGID)
 	if err != nil {
 		return err
 	}
 	defer listener.Close()
 	server := &http.Server{
-		Handler:           localvalidation.Handler(cfg.Scope, cfg.Observer(), runner),
-		ReadHeaderTimeout: 2 * time.Second, ReadTimeout: 4 * time.Second, WriteTimeout: 18 * time.Second, MaxHeaderBytes: 4096,
+		Handler:           handler,
+		ReadHeaderTimeout: 2 * time.Second, ReadTimeout: 4 * time.Second, WriteTimeout: writeTimeout, MaxHeaderBytes: 4096,
 		BaseContext: func(net.Listener) context.Context { return ctx },
 	}
 	defer server.Close()
 	done := make(chan error, 1)
 	go func() { done <- server.Serve(listener) }()
-	fmt.Fprintln(out, "local validator ready")
+	fmt.Fprintln(out, ready)
 	select {
 	case err := <-done:
 		return err
