@@ -78,9 +78,9 @@ func checkSharedTemplatePublication(t *testing.T, validator publication.CatalogV
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The first router keeps its own outbound. Its routing order is personalized.
+	// The first router keeps its own outbound and excludes a rule from its catalog.
 	replacer := routersettings.Draft{ID: replacerID, TemplateID: profileID, PersonalOrder: []string{ruleID},
-		Groups: []routersettings.Group{{Name: "outbounds", Overrides: []configuration.ContentOverride{{
+		Groups: []routersettings.Group{{Name: "rules", Exclusions: []configuration.ElementSource{{TemplateID: profileID, ElementID: ruleID}}}, {Name: "outbounds", Overrides: []configuration.ContentOverride{{
 			Source: configuration.ElementSource{TemplateID: profileID, ElementID: outboundID}, Mode: configuration.ContentModeReplacement,
 			Content: json.RawMessage(`{"protocol":"freedom","tag":"direct"}`),
 		}}}},
@@ -131,6 +131,19 @@ func checkSharedTemplatePublication(t *testing.T, validator publication.CatalogV
 		return value
 	}
 	beforeInvalid := snapshot()
+	for _, member := range beforeInvalid.Members {
+		var routing []byte
+		for _, file := range member.Desired.Catalog.Files {
+			if file.Name == "05_routing.json" {
+				routing = file.Content
+				break
+			}
+		}
+		inheritsRule := member.Active.Draft.ID == inheritorID
+		if routing == nil || bytes.Contains(routing, []byte(ruleID)) != inheritsRule {
+			t.Fatalf("unexpected routing catalog for %s", member.Active.Draft.ID)
+		}
+	}
 	if beforeInvalid.Members[0].Active.OrderBasis.TemplateVersion != 2 {
 		t.Fatal("unchanged catalog did not advance active order basis")
 	}
