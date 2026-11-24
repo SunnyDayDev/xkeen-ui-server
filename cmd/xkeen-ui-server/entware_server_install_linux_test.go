@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"testing"
 	"time"
@@ -69,18 +70,25 @@ func TestEntwareInstallServerKeepsTLSAndAdministrator(t *testing.T) {
 	}
 	defer mirror.Close()
 
+	var validationOptions []string
+	var calls *atomic.Int64
+	if os.Getenv("XKEEN_TEST_INSTALLED_VALIDATOR") == "1" {
+		validationOptions, calls = entwareValidatorFixture(t)
+	}
 	const initPath = "/opt/etc/init.d/S91xkeen-ui-server"
 	t.Cleanup(func() { _ = exec.Command(initPath, "stop").Run() })
-	runInstall := func(keyPath, principal string) ([]byte, error) {
+	runInstall := func(keyPath, principal string, extra ...string) ([]byte, error) {
 		t.Helper()
-		cmd := exec.CommandContext(t.Context(), "/opt/bin/sh", script, "install",
+		args := []string{script, "install",
 			"--role", "server", "--version", tag, "--manifest-sha256",
 			fmt.Sprintf("%x", sha256.Sum256([]byte(manifest.String()))), "--run-as", principal,
 			"--listen", listen, "--web-origin", origin, "--tls-cert", cert, "--tls-key", keyPath,
-			"--release-mirror", mirror.URL, "--mirror-ca-file", cert)
+			"--release-mirror", mirror.URL, "--mirror-ca-file", cert}
+		args = append(args, extra...)
+		cmd := exec.CommandContext(t.Context(), "/opt/bin/sh", args...)
 		return cmd.CombinedOutput()
 	}
-	if output, err := runInstall(otherKey, "65531:65531"); err == nil || !strings.Contains(string(output), "invalid server TLS pair") {
+	if output, err := runInstall(otherKey, "65531:65531", validationOptions...); err == nil || !strings.Contains(string(output), "invalid server TLS pair") {
 		t.Fatalf("mismatched TLS preflight: %v, %s", err, output)
 	}
 	if _, err := os.Stat(initPath); !os.IsNotExist(err) {
@@ -88,9 +96,14 @@ func TestEntwareInstallServerKeepsTLSAndAdministrator(t *testing.T) {
 	}
 
 	if _, err := os.Stat("/opt/etc/xkeen-ui/agent-transport/profile.json"); err == nil {
-		if output, err := runInstall(key, "65531:65532"); err == nil || !strings.Contains(string(output), "separate service identities") {
+		if output, err := runInstall(key, "65531:65532", validationOptions...); err == nil || !strings.Contains(string(output), "separate service identities") {
 			t.Fatalf("shared role group was accepted: %v, %s", err, output)
 		}
+	}
+
+	if output, err := runInstall(key, "65531:65531", "--validator-origin", "https://validator.example"); err == nil ||
+		!strings.Contains(string(output), "complete external validator configuration") {
+		t.Fatalf("incomplete external configuration: %v, %s", err, output)
 	}
 
 	web := &http.Client{Timeout: 4 * time.Second, Transport: &http.Transport{
@@ -100,7 +113,7 @@ func TestEntwareInstallServerKeepsTLSAndAdministrator(t *testing.T) {
 	foreign := startProcess(t, testBinary, "--db-path", filepath.Join(t.TempDir(), "foreign.sqlite"), "--listen", endpoint,
 		"--tls-cert", cert, "--tls-key", key, "--web-origin", origin)
 	foreign.readyWithClient(t, web, "https")
-	if output, err := runInstall(key, "65531:65531"); err == nil || !strings.Contains(string(output), "server did not confirm HTTPS readiness") {
+	if output, err := runInstall(key, "65531:65531", validationOptions...); err == nil || !strings.Contains(string(output), "server did not confirm HTTPS readiness") {
 		t.Fatalf("occupied TLS endpoint accepted: %v, %s", err, output)
 	}
 	if _, err := os.Stat(initPath); !os.IsNotExist(err) || foreign.cmd.Process.Signal(syscall.Signal(0)) != nil {
@@ -108,7 +121,7 @@ func TestEntwareInstallServerKeepsTLSAndAdministrator(t *testing.T) {
 	}
 	stopRouterAgent(t, foreign)
 
-	if output, err := runInstall(key, "65531:65531"); err != nil {
+	if output, err := runInstall(key, "65531:65531", validationOptions...); err != nil {
 		t.Fatalf("valid server installation: %v, %s", err, output)
 	}
 	invoke := func(args ...string) {
@@ -149,7 +162,7 @@ func TestEntwareInstallServerKeepsTLSAndAdministrator(t *testing.T) {
 	}
 	defer os.Remove(password)
 	invoke("admin", "setup", "--password-file", password)
-	login := func() {
+	login := func() (*http.Cookie, string) {
 		t.Helper()
 		raw, _ := json.Marshal(map[string]string{"password": syntheticPassword})
 		req, err := http.NewRequestWithContext(t.Context(), http.MethodPost, origin+"/ui/v1/login", strings.NewReader(string(raw)))
@@ -166,8 +179,22 @@ func TestEntwareInstallServerKeepsTLSAndAdministrator(t *testing.T) {
 		if res.StatusCode != 200 || len(res.Cookies()) != 1 || !res.Cookies()[0].Secure {
 			t.Fatalf("installed administrator login: %d", res.StatusCode)
 		}
+		var result struct{ CSRF string }
+		if err := json.NewDecoder(res.Body).Decode(&result); err != nil || result.CSRF == "" {
+			t.Fatal("missing CSRF proof")
+		}
+		return res.Cookies()[0], result.CSRF
 	}
-	login()
+	cookie, csrf := login()
+	want := http.StatusServiceUnavailable
+	if calls != nil {
+		want = http.StatusCreated
+	}
+	exerciseInstalledPreparation(t, web, origin, cookie, csrf, want)
+	if calls != nil && calls.Load() != 1 {
+		t.Fatal("configured mTLS worker did not handle exactly one publication")
+	}
+
 	dbPath := filepath.Join(state, "server.sqlite")
 	db, err := os.Stat(dbPath)
 	if err != nil || db.Sys().(*syscall.Stat_t).Uid != 65531 {
@@ -179,6 +206,28 @@ func TestEntwareInstallServerKeepsTLSAndAdministrator(t *testing.T) {
 		t.Fatal("installed TLS key is not private to root and the server group")
 	}
 	invoke("stop")
+	if calls != nil {
+		const installedKey = "/opt/etc/xkeen-ui/server/validator-client-key.pem"
+		info, err := os.Stat(installedKey)
+		if err != nil || info.Mode().Perm() != 0640 || info.Sys().(*syscall.Stat_t).Uid != 0 || info.Sys().(*syscall.Stat_t).Gid != 65531 {
+			t.Fatal("installed worker key has unexpected access")
+		}
+		original, err := os.ReadFile(installedKey)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(installedKey, append(append([]byte(nil), original...), '\n'), 0640); err != nil {
+			t.Fatal(err)
+		}
+		out, startErr := exec.CommandContext(t.Context(), initPath, "start").CombinedOutput()
+		if err := os.WriteFile(installedKey, original, 0640); err != nil {
+			t.Fatal(err)
+		}
+		if startErr == nil || !strings.Contains(string(out), "invalid external validator trust") {
+			t.Fatal("modified worker key was accepted")
+		}
+	}
+
 	invoke("start")
 	invoke("status")
 	login()

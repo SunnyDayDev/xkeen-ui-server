@@ -45,13 +45,15 @@ var (
 )
 
 type serverProfile struct {
-	Release    release
-	UID        uint32
-	GID        uint32
-	Listen     string
-	Origin     string
-	CertDigest string
-	KeyDigest  string
+	Release     release
+	UID         uint32
+	GID         uint32
+	Listen      string
+	Origin      string
+	AgentOrigin string
+	Validator   externalValidationProfile
+	CertDigest  string
+	KeyDigest   string
 }
 
 func installServer(args []string) error {
@@ -81,7 +83,21 @@ func installServer(args []string) error {
 	if _, err := validateServerCert(cert, key, string(origin)); err != nil {
 		return err
 	}
-	p := serverProfile{selected, uid, gid, listen.String(), string(origin), digest(cert), digest(key)}
+	var agentOrigin server.WebOrigin
+	if args[8] != "" {
+		agentOrigin, err = server.ParseWebOrigin(args[8])
+		if err != nil {
+			return errors.New("invalid public agent HTTPS origin")
+		}
+	}
+	validator, err := readExternalValidation(args[9], args[10], args[11], args[12])
+	if err != nil {
+		return err
+	}
+	defer clear(validator.key)
+	p := serverProfile{Release: selected, UID: uid, GID: gid, Listen: listen.String(), Origin: string(origin), AgentOrigin: string(agentOrigin),
+		CertDigest: digest(cert), KeyDigest: digest(key), Validator: validator.profile}
+
 	if err := probePIDFD(); err != nil {
 		return errProcess
 	}
@@ -113,6 +129,9 @@ func installServer(args []string) error {
 	if !hasExisting {
 		if _, err := os.Lstat(serverState); !errors.Is(err, os.ErrNotExist) {
 			return errSafety
+		}
+		if err := validator.persist(p.GID); err != nil {
+			return err
 		}
 		if err := publishServerProfile(p, cert, key); err != nil {
 			return err
@@ -217,6 +236,16 @@ func loadServerProfile() (serverProfile, error) {
 	if err != nil || listen.Port() == 0 || listen.Addr().Zone() != "" || originErr != nil || string(origin) != p.Origin {
 		return serverProfile{}, errSafety
 	}
+	if p.AgentOrigin != "" {
+		exact, err := server.ParseWebOrigin(p.AgentOrigin)
+		if err != nil || string(exact) != p.AgentOrigin {
+			return serverProfile{}, errSafety
+		}
+	}
+	if !p.Validator.structurallyValid() {
+		return serverProfile{}, errSafety
+	}
+
 	return p, nil
 }
 
@@ -269,7 +298,17 @@ func (p serverProfile) control(action string) error {
 	}
 	process := managedProcess{binary: binary, receipt: serverReceipt, uid: p.UID, gid: p.GID, notReady: errServerReady,
 		arguments: []string{"--listen", p.Listen, "--db-path", serverDB, "--tls-cert", serverCertPath, "--tls-key", serverKeyPath, "--web-origin", p.Origin}}
+	if p.AgentOrigin != "" {
+		process.arguments = append(process.arguments, "--agent-origin", p.AgentOrigin)
+	}
+
 	if action != "stop" {
+		validatorArgs, err := p.Validator.arguments(p.GID)
+		if err != nil {
+			return err
+		}
+		process.arguments = append(process.arguments, validatorArgs...)
+
 		cert, err := p.installedCertificate()
 		if err != nil {
 			return err

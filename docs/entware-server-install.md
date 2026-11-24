@@ -25,3 +25,25 @@ G15 устанавливает центральный сервер Linux ARM64 �
 `/opt/etc/init.d/S91xkeen-ui-server stop` штатно останавливает подтверждённый экземпляр. После `start` сервер использует прежние данные `/opt/var/lib/xkeen-ui/server/server.sqlite`. Точный повтор неудавшейся первичной установки использует тот же тег, манифест, адрес, права и TLS. Серверная смена версии и удаление отслеживаются отдельно. [Серверное обслуживание](https://github.com/SunnyDayDev/xkeen-ui-server/issues/120).
 
 Для публикации нужен отдельный явно выбранный доверенный валидатор Xray. Проверка TLS/SQLite подтверждает центральный сервис, а проверка действительного каталога и подключение валидатора идут через контракт публикации. [Спецификация публикации](../openspec/specs/configuration-revision-publication/spec.md).
+
+## Внешний исполнитель и адрес агента
+
+Если владелец выбрал внешний валидатор F09, добавьте к первой команде установки полный набор аргументов. Доверенная CA выделена для исполнителя. Клиентский приватный ключ передаётся по пути к исходному файлу root с режимом 0600. После установки ключ защищён режимом 0640 и доступен только root и группе сервера.
+
+```sh
+/opt/bin/sh "$INSTALLER" install \
+  --role server --version "$RELEASE_TAG" --manifest-sha256 "$MANIFEST_SHA256" \
+  --run-as 65531:65531 --listen 0.0.0.0:8443 \
+  --web-origin https://controller.example:8443 \
+  --tls-cert /opt/etc/xkeen-ui-install/controller-cert.pem \
+  --tls-key /opt/etc/xkeen-ui-install/controller-key.pem \
+  --validator-origin https://validator.example:9443 \
+--validator-ca /opt/etc/xkeen-ui-install/validator-ca.pem \
+--validator-client-cert /opt/etc/xkeen-ui-install/validator-client-cert.pem \
+--validator-client-key /opt/etc/xkeen-ui-install/validator-client-key.pem \
+--agent-origin https://agent.example:8443
+```
+
+Последний аргумент задаёт точный адрес для F10. Браузер продолжает использовать `--web-origin`. Сертификат фактического HTTPS-слушателя должен покрывать используемые имена. Для конфигурации Docker передайте те же флаги непосредственно контейнерному серверу и смонтируйте отдельные защищённые CA и клиентскую пару только для чтения. Docker socket принадлежит worker. [Развёртывание worker](catalog-validator.md).
+
+Если валидатор отсутствует или недоступен, приложение продолжает обслуживать HTTPS и черновики. Подтверждение публикации блокируется. Подмена установленной пары или CA блокирует следующий старт до восстановления согласованных файлов.
