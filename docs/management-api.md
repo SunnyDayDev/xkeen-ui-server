@@ -198,3 +198,7 @@ Offline описывает контакт. При `runtime: "unknown"` ране�
 ### Определения переменных общего элемента
 
 Передайте один сильный ETag из чтения шаблона в `If-Match` для `PATCH /api/v1/templates/item/definitions?templateId=example-profile`. Тело содержит `elementId` и массив `definitions` с текущими именами в прежнем порядке. Каждая запись задаёт `name`, `type` и необязательную строку `defaultSource` с точным исходным JSON. Пропуск поля снимает дефолт. Успех возвращает полное сохранённое представление и новый ETag, устаревшая версия — 412. Семантически неготовый черновик допускается по правилам F08. [OpenAPI операции](../openspec/changes/archive/2026-11-24-edit-external-element-definitions/openapi.json).
+
+### Исходник локального правила
+
+Через `GET /api/v1/routers/rules/local?routerId=example-router&elementId=550e8400-e29b-41d4-a716-446655440000` клиент получает буквальный JSON в поле `source` и сильный ETag. Передайте этот ETag в `If-Match` при PATCH того же ресурса с телом `{"source":"null"}`. Ссылки на переменные здесь остаются обычным текстом. Ответ содержит точное сохранённое значение. При устаревшей версии сервер возвращает 412, при неверном JSON — 422, при отсутствии локального UUID — 404. [OpenAPI операции](../openspec/changes/archive/2026-11-24-edit-external-router-local-rule/openapi.json).

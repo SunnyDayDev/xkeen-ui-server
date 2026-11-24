@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/externalaccess"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/publication"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routerdraft"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
 )
@@ -138,9 +139,15 @@ func externalRouterDocument(scope string, result any) ([]byte, string, error) {
 }
 
 func externalRouterFailure(w http.ResponseWriter, err error) {
+	var local *publication.LocalRuleSourceError
+	var order *publication.PreparationError
 	var invalid *routersettings.VariableSourceError
 	var replacement *routersettings.ReplacementSourceError
 	switch {
+	case errors.As(err, &local):
+		externalError(w, 422, "invalid_source")
+	case errors.As(err, &order), errors.Is(err, publication.ErrConflict), errors.Is(err, publication.ErrInvalidCandidate):
+		externalError(w, 409, "order_unavailable")
 	case errors.Is(err, routerdraft.ErrMissing):
 		externalError(w, http.StatusNotFound, "not_found")
 	case errors.Is(err, routerdraft.ErrConflict):
