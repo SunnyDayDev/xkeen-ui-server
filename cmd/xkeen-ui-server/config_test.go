@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"flag"
+	"io"
 	"strings"
 	"testing"
 )
@@ -78,5 +79,21 @@ func TestParseDBPath(t *testing.T) {
 		if err != nil || got.dbPath != test.path || got.createDefaultDBDir != test.createDir {
 			t.Errorf("parseArgs(%q) = %#v, %v", test.args, got, err)
 		}
+	}
+}
+
+func TestAgentEnrollmentOriginRequiresExplicitHTTPS(t *testing.T) {
+	base := []string{"--tls-cert", "cert", "--tls-key", "key"}
+	for _, invalid := range []string{"", "http://agent.example", "https://agent.example/path", "https://secret@agent.example", "https://agent.example?secret"} {
+		if _, err := parseArgs(append(base, "--agent-origin", invalid), io.Discard); err == nil || strings.Contains(err.Error(), "secret") {
+			t.Fatalf("unsafe acceptance or diagnostic %q: %v", invalid, err)
+		}
+	}
+	if _, err := parseArgs([]string{"--agent-origin", "https://agent.example"}, io.Discard); err == nil {
+		t.Fatal("origin accepted without TLS")
+	}
+	cfg, err := parseArgs(append(base, "--agent-origin", "https://AGENT.example:443"), io.Discard)
+	if err != nil || cfg.agentOrigin != "https://agent.example" {
+		t.Fatalf("valid origin: %q %v", cfg.agentOrigin, err)
 	}
 }

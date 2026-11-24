@@ -152,6 +152,10 @@ func (c *Contacts) Status(ctx context.Context, id string) (reporting.Status, err
 		return reporting.Status{}, reporting.ErrUnavailable
 	}
 	defer tx.Rollback()
+	return readContactStatus(ctx, tx, id, c.now())
+}
+
+func readContactStatus(ctx context.Context, tx *sql.Tx, id string, now time.Time) (reporting.Status, error) {
 	state, err := loadContact(ctx, tx, id)
 	if err != nil {
 		return reporting.Status{}, err
@@ -163,7 +167,7 @@ func (c *Contacts) Status(ctx context.Context, id string) (reporting.Status, err
 	if state.observed {
 		status.LastContact = time.Unix(0, state.ns)
 		status.Presence = reporting.Online
-		if c.now().Sub(status.LastContact) >= reporting.OfflineAfter {
+		if now.Sub(status.LastContact) >= reporting.OfflineAfter {
 			status.Presence = reporting.Offline
 		}
 	}

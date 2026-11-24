@@ -18,6 +18,7 @@ type config struct {
 	dbPath             string
 	tlsCert, tlsKey    string
 	webOrigin          server.WebOrigin
+	agentOrigin        server.WebOrigin
 	validator          validatorConfig
 	createDefaultDBDir bool
 }
@@ -30,6 +31,7 @@ func parseArgs(args []string, help io.Writer) (config, error) {
 	flags.StringVar(&cfg.listen, "listen", "127.0.0.1:8080", "TCP listen address (IP literal:port)")
 	flags.StringVar(&cfg.dbPath, "db-path", defaultDBPath, "path to the SQLite database file")
 	flags.StringVar(&cfg.tlsCert, "tls-cert", "", "PEM certificate chain for the HTTPS listener")
+	agentOrigin := flags.String("agent-origin", "", "explicit HTTPS origin for connecting router agents")
 	webOrigin := flags.String("web-origin", "", "explicit browser HTTPS origin")
 	flags.StringVar(&cfg.tlsKey, "tls-key", "", "PEM private key for the HTTPS listener")
 	flags.StringVar(&cfg.validator.socket, "validator-socket", "", "absolute socket of the trusted local Xray validator")
@@ -55,12 +57,13 @@ func parseArgs(args []string, help io.Writer) (config, error) {
 		return config{}, errors.New("invalid --db-path: path must be nonempty")
 	}
 	cfg.createDefaultDBDir = true
-	var tlsFlag, webFlag, validatorFlag bool
+	var tlsFlag, webFlag, agentFlag, validatorFlag bool
 	flags.Visit(func(f *flag.Flag) {
 		if f.Name == "db-path" {
 			cfg.createDefaultDBDir = false
 		}
 		webFlag = webFlag || f.Name == "web-origin"
+		agentFlag = agentFlag || f.Name == "agent-origin"
 		validatorFlag = validatorFlag || strings.HasPrefix(f.Name, "validator-")
 		tlsFlag = tlsFlag || f.Name == "tls-cert" || f.Name == "tls-key"
 	})
@@ -76,6 +79,16 @@ func parseArgs(args []string, help io.Writer) (config, error) {
 			return config{}, err
 		}
 		cfg.webOrigin = origin
+	}
+	if agentFlag {
+		if cfg.tlsCert == "" {
+			return config{}, errors.New("agent origin requires HTTPS TLS configuration")
+		}
+		origin, err := server.ParseWebOrigin(*agentOrigin)
+		if err != nil {
+			return config{}, errors.New("invalid --agent-origin: expected an HTTPS origin without a path")
+		}
+		cfg.agentOrigin = origin
 	}
 	if validatorFlag && !cfg.validator.valid() {
 		return config{}, errValidatorOptions

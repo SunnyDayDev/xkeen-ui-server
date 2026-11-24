@@ -10,10 +10,10 @@
   type Request = {controller: AbortController; epoch: number; work: Work};
   type Props = {
     canSubmit: boolean; sessionEpoch: number; csrf: string;
-    signedOut: () => void; refreshSession: () => void;
+    signedOut: () => void; refreshSession: () => void; openEnrollment: (event: MouseEvent, path: string) => void;
   };
 
-  let {canSubmit, sessionEpoch, csrf, signedOut, refreshSession}: Props = $props();
+  let {canSubmit, sessionEpoch, csrf, signedOut, refreshSession, openEnrollment}: Props = $props();
   let templates = $state<{id: string}[]>();
   let selected = $state('');
   let source = $state<Source>();
@@ -213,11 +213,13 @@
 </script>
 
 {#if prepared}
+  {@const path = '/ui/routers/enroll?' + new URLSearchParams({routerId: prepared.routerId})}
   <h1>Роутер подготовлен</h1>
   <div class="router-card">
     <strong>{prepared.name}</strong>
     <p>ID: <bdi>{prepared.routerId}</bdi></p>
     <p>Желаемая ревизия {prepared.revision}</p>
+    <a class="overview-action" href={path} onclick={event => openEnrollment(event, path)}>Подключить агента</a>
   </div>
 {:else}
   <h1>Подключить роутер</h1>
