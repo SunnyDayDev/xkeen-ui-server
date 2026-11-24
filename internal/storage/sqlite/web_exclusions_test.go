@@ -107,3 +107,33 @@ func TestExclusionPublicationRefusesUnsupportedBypass(t *testing.T) {
 		t.Fatal("partial group effects")
 	}
 }
+
+func TestCopySharedExclusionsKeepsScopedIdentity(t *testing.T) {
+	db, store, session, now := fixtureWebTemplateWriter(t)
+	ctx := t.Context()
+	if _, err := templates.New(NewTemplateRepository(db)).Create(ctx, configuration.TemplateDraft{ID: "source"}); err != nil {
+		t.Fatal(err)
+	}
+	s, err := store.SaveExclusions(ctx, session, fixedWebTime(now), "source", webadmin.ExclusionDraft{Text: "192.0.2.1\n"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Copy(ctx, session, fixedWebTime(now), "source", "target", 2); err != nil {
+		t.Fatal(err)
+	}
+	copied, err := store.ReadExclusions(ctx, session, fixedWebTime(now), "target")
+	if err != nil || copied.Version != 1 || copied.ID != s.ID || copied.Text != s.Text {
+		t.Fatal("copy omitted shared source", err)
+	}
+	copied.Text = ""
+	if _, err := store.SaveExclusions(ctx, session, fixedWebTime(now), "target", copied); err != nil {
+		t.Fatal(err)
+	}
+	original, err := store.ReadExclusions(ctx, session, fixedWebTime(now), "source")
+	if err != nil || original.Text != s.Text {
+		t.Fatal("copy aliases original", err)
+	}
+	if readText(t, db, "SELECT count(*) FROM accepted_xkeen_exclusions") != "0" {
+		t.Fatal("copy published")
+	}
+}

@@ -16,7 +16,7 @@ import (
 
 const createSharedExclusions = `CREATE TABLE shared_xkeen_exclusions (
  template_id TEXT PRIMARY KEY NOT NULL COLLATE BINARY REFERENCES templates(id),
- element_id TEXT NOT NULL UNIQUE COLLATE BINARY,
+ element_id TEXT NOT NULL COLLATE BINARY,
  version INTEGER NOT NULL CHECK(typeof(version)='integer' AND version>0),
  source TEXT NOT NULL,
  variables BLOB NOT NULL
