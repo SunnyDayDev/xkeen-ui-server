@@ -57,6 +57,8 @@ func run(args []string) error {
 	switch {
 	case args[0] == "install-stage" && len(args) == 8:
 		return install(args[1:])
+	case args[0] == "update-stage" && len(args) == 4:
+		return update(args[1], args[2], args[3])
 	case len(args) == 1 && (args[0] == "start" || args[0] == "stop" || args[0] == "status"):
 		lock, err := lockService()
 		if err != nil {
@@ -70,7 +72,7 @@ func run(args []string) error {
 		if err != nil {
 			return err
 		}
-		return lifecycle(args[0], p)
+		return installedLifecycle(args[0], p)
 	default:
 		return errUsage
 	}
@@ -95,8 +97,7 @@ func install(args []string) error {
 	if len(ca) != 0 {
 		p.CADigest = fmt.Sprintf("%x", sha256.Sum256(ca))
 	}
-	stageInfo, err := os.Lstat(stage)
-	if err != nil || filepath.Dir(stage) != "/opt/tmp" || !owned(stageInfo, 0, os.ModeDir, 0700) {
+	if !trustedStage(stage) {
 		return errSafety
 	}
 	if err := probePIDFD(); err != nil {

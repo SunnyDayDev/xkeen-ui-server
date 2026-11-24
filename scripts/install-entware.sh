@@ -11,7 +11,8 @@ refuse() {
   exit 1
 }
 
-[ "${1:-}" = install ] || refuse 'expected install command'
+action=${1:-}
+case "$action" in install|update) ;; *) refuse 'expected install or update command' ;; esac
 shift
 role='' version='' manifest='' run_as='' server='' server_ca='' invite='' mirror='' mirror_ca=''
 while [ "$#" -gt 0 ]; do
@@ -40,7 +41,11 @@ printf '%s\n' "$version" | /opt/bin/grep -Eq '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)
 case "$version" in *[!v.0-9]*) refuse 'invalid release tag' ;; esac
 case "$manifest" in ''|*[!0-9a-f]*) refuse 'invalid manifest SHA-256' ;; esac
 [ "${#manifest}" -eq 64 ] || refuse 'invalid manifest SHA-256'
-[ -n "$run_as" ] && [ -n "$server" ] || refuse 'service identity and HTTPS origin are required'
+if [ "$action" = install ]; then
+  [ -n "$run_as" ] && [ -n "$server" ] || refuse 'service identity and HTTPS origin are required'
+else
+  [ -z "$run_as$server$server_ca$invite" ] || refuse 'update uses the installed service profile'
+fi
 
 base=https://github.com/SunnyDayDev/xkeen-ui-server
 if [ -n "$mirror" ]; then
@@ -113,4 +118,14 @@ for name in "$helper" "$agent"; do
 done
 
 /opt/bin/chmod 0700 "$stage/$helper"
-"$stage/$helper" install-stage "$stage" "$version" "$manifest" "$run_as" "$server" "$server_ca" "$invite"
+if [ "$action" = update ]; then
+  format=agent-state-format.txt
+  if /opt/bin/awk -v name="$format" '$2 == name { found=1 } END { exit !found }' "$stage/SHA256SUMS"; then
+    digest=$(asset_digest "$format") || refuse 'invalid state format declaration in release manifest'
+    fetch "$format" 256
+    verify "$digest" "$stage/$format"
+  fi
+  "$stage/$helper" update-stage "$stage" "$version" "$manifest"
+else
+  "$stage/$helper" install-stage "$stage" "$version" "$manifest" "$run_as" "$server" "$server_ca" "$invite"
+fi
