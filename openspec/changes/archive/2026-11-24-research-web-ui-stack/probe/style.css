@@ -1,0 +1,5 @@
+:root { font-family: system-ui, sans-serif; color: #172033; background: #f7f8fb; }
+main { max-width: 32rem; margin: 3rem auto; padding: 1rem; }
+textarea { display: block; width: 100%; }
+button { margin: 1rem 1rem 1rem 0; }
+button:focus-visible { outline: 2px solid #285ec9; outline-offset: 3px; }

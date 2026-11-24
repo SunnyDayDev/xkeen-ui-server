@@ -1,0 +1,42 @@
+package main
+
+import (
+	"embed"
+	"flag"
+	"fmt"
+	"html/template"
+	"io"
+	"io/fs"
+	"log"
+	"net"
+	"net/http"
+)
+
+//go:embed assets
+var files embed.FS
+
+func main() {
+	address := flag.String("addr", "127.0.0.1:0", "local listen address")
+	flag.Parse()
+	assets, err := fs.Sub(files, "assets")
+	if err != nil {
+		log.Fatal(err)
+	}
+	status := template.Must(template.New("status").Parse("<span>{{.}}</span>"))
+	mux := http.NewServeMux()
+	mux.Handle("GET /", http.FileServerFS(assets))
+	mux.HandleFunc("GET /status-text", func(w http.ResponseWriter, _ *http.Request) {
+		io.WriteString(w, "Ready")
+	})
+	mux.HandleFunc("GET /status-fragment", func(w http.ResponseWriter, _ *http.Request) {
+		if err := status.Execute(w, "Ready"); err != nil {
+			log.Print(err)
+		}
+	})
+	listener, err := net.Listen("tcp", *address)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(listener.Addr())
+	log.Fatal(http.Serve(listener, mux))
+}
