@@ -1,0 +1,173 @@
+{
+  "openapi": "3.1.0",
+  "info": {"title": "XKeen Console external router rule order", "version": "1"},
+  "servers": [{"url": "https://console.example.net"}],
+  "security": [{}, {"externalBearer": []}],
+  "paths": {
+    "/api/v1/routers/rules": {
+      "parameters": [
+        {
+          "in": "query",
+          "name": "routerId",
+          "required": true,
+          "schema": {"type": "string", "minLength": 1}
+        }
+      ],
+      "get": {
+        "operationId": "readRouterRules",
+        "responses": {
+          "200": {"$ref": "#/components/responses/RuleOrder"},
+          "400": {"$ref": "#/components/responses/HTTP400"},
+          "401": {"$ref": "#/components/responses/HTTP401"},
+          "404": {"$ref": "#/components/responses/HTTP404"},
+          "409": {"$ref": "#/components/responses/HTTP409"},
+          "405": {"$ref": "#/components/responses/HTTP405"},
+          "503": {"$ref": "#/components/responses/HTTP503"}
+        }
+      },
+      "patch": {
+        "operationId": "editRouterRuleOrder",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "If-Match",
+            "required": true,
+            "schema": {"type": "string", "pattern": "^\"[0-9a-f]{64}\"$"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RuleOrderAction"}}}
+        },
+        "responses": {
+          "200": {"$ref": "#/components/responses/RuleOrder"},
+          "400": {"$ref": "#/components/responses/HTTP400"},
+          "401": {"$ref": "#/components/responses/HTTP401"},
+          "404": {"$ref": "#/components/responses/HTTP404"},
+          "409": {"$ref": "#/components/responses/HTTP409"},
+          "405": {"$ref": "#/components/responses/HTTP405"},
+          "503": {"$ref": "#/components/responses/HTTP503"},
+          "412": {"$ref": "#/components/responses/HTTP412"},
+          "413": {"$ref": "#/components/responses/HTTP413"},
+          "415": {"$ref": "#/components/responses/HTTP415"},
+          "428": {"$ref": "#/components/responses/HTTP428"},
+          "403": {"$ref": "#/components/responses/HTTP403"}
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "externalBearer": {"type": "http", "scheme": "bearer", "description": "Required when F20 enables protection"}
+    },
+    "schemas": {
+      "Error": {"type": "object", "required": ["code"], "properties": {"code": {"type": "string"}}},
+      "RuleOrder": {
+        "type": "object",
+        "required": [
+          "routerId",
+          "templateId",
+          "acceptedVersion",
+          "activeGeneration",
+          "draftGeneration",
+          "rules",
+          "personalOrder"
+        ],
+        "properties": {
+          "routerId": {"type": "string", "minLength": 1},
+          "templateId": {"type": "string", "minLength": 1},
+          "acceptedVersion": {"type": "string", "pattern": "^[1-9][0-9]*$"},
+          "activeGeneration": {"type": "string", "pattern": "^[1-9][0-9]*$"},
+          "draftGeneration": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
+          "rules": {"type": "array", "items": {"$ref": "#/components/schemas/RuleEntry"}},
+          "personalOrder": {"type": "boolean"}
+        }
+      },
+      "RuleEntry": {
+        "type": "object",
+        "required": ["id", "origin", "label", "excluded", "disabled"],
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "origin": {"enum": ["shared", "local"]},
+          "label": {"type": "string"},
+          "excluded": {"type": "boolean"},
+          "disabled": {"type": "boolean"}
+        }
+      },
+      "RuleOrderAction": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["action", "ruleId", "position"],
+            "properties": {
+              "action": {"const": "move"},
+              "ruleId": {"type": "string", "format": "uuid"},
+              "position": {"type": "integer", "minimum": 0}
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["action", "confirm"],
+            "properties": {"action": {"const": "reset"}, "confirm": {"const": true}}
+          }
+        ]
+      }
+    },
+    "responses": {
+      "HTTP400": {
+        "description": "Invalid query or body",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP401": {
+        "description": "Protected API requires current credentials",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP404": {
+        "description": "Disabled API or unavailable resource",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP409": {
+        "description": "Relative position, template or order is unavailable",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP405": {
+        "description": "Method not allowed",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP503": {
+        "description": "Service unavailable",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP412": {
+        "description": "Conditional basis is stale",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP413": {
+        "description": "Request body exceeds 16 KiB",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP415": {
+        "description": "Unsupported media type",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP428": {
+        "description": "If-Match required",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "HTTP403": {
+        "description": "Supplied browser Origin does not match the HTTPS origin",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      },
+      "RuleOrder": {
+        "description": "Exact complete router rule order",
+        "headers": {
+          "ETag": {"required": true, "schema": {"type": "string", "pattern": "^\"[0-9a-f]{64}\"$"}},
+          "Cache-Control": {"schema": {"type": "string", "example": "no-store, no-transform"}}
+        },
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RuleOrder"}}}
+      }
+    }
+  }
+}
