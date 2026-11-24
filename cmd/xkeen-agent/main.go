@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -87,9 +88,16 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	reportSocket := *applicationSocket
-	if *applicationReports && !applicationReportHandoff(store, *binding) {
-		reportSocket = ""
-		fmt.Fprintln(stderr, "agent legacy report needs resolution before enabling application reports")
+	var legacyFloor int64
+	var reportReady atomic.Bool
+	if *applicationReports {
+		floor, allowed := applicationReportHandoff(store, *binding)
+		if !allowed {
+			reportSocket = ""
+			fmt.Fprintln(stderr, "agent legacy report needs resolution before enabling application reports")
+		}
+		legacyFloor = floor
+		reportReady.Store(allowed && floor == 0)
 	}
 	contactContext, stopContact := context.WithCancel(ctx)
 	var workers sync.WaitGroup
@@ -104,7 +112,19 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 			reportScope := preparation.Scope{Origin: binding.Origin, RouterID: binding.RouterID,
 				Profile: configuration.XrayIdentityVersion, VerifierID: *verifier}
 			workers.Go(func() {
-				runApplicationReports(contactContext, reportSocket, reportScope, binding.Key, wake, reconciled, stderr)
+				handoff := func(ctx context.Context) (bool, error) {
+					if reportReady.Load() {
+						return false, nil
+					}
+					if err := applicationReportCursor(ctx, legacyFloor, func(ctx context.Context) (int64, error) {
+						return client.Cursor(ctx, binding.Key)
+					}); err != nil {
+						return false, err
+					}
+					reportReady.Store(true)
+					return true, nil
+				}
+				runApplicationReports(contactContext, reportSocket, reportScope, binding.Key, handoff, wake, reconciled, stderr)
 			})
 		}
 	} else {
@@ -126,7 +146,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
-	prepare := candidatePreparation{socket: *validatorSocket, application: reportSocket, applicationReports: *applicationReports, reportWake: wake, profile: *verifier, binding: *binding, store: store, out: stdout, diagnostics: stderr}
+	prepare := candidatePreparation{socket: *validatorSocket, application: reportSocket, applicationReports: *applicationReports, applicationReady: reportReady.Load, reportWake: wake, profile: *verifier, binding: *binding, store: store, out: stdout, diagnostics: stderr}
 	prepare.check(ctx, snapshot)
 	fmt.Fprintln(stdout, "agent authenticated")
 	var latest int64

@@ -147,7 +147,7 @@ func (s *Service) ReconcileReport(ctx context.Context, remote ReportRemote, key 
 			}
 		}
 	}
-	if delivery.Body == nil {
+	for delivery.Body == nil {
 		floor, err := remote.Cursor(ctx, key)
 		if err != nil {
 			return false, err
@@ -165,6 +165,15 @@ func (s *Service) ReconcileReport(ctx context.Context, remote ReportRemote, key 
 		record.Delivery = &reserved
 		if err := s.journal.Save(record); err != nil {
 			return false, err
+		}
+		// Network cursor reads and journal sync may outlast the first proof.
+		if delivery.Outcome.Code == "" && !s.provesCurrent(ctx, record, *delivery.Outcome) {
+			if ctx.Err() != nil {
+				return false, ctx.Err()
+			}
+			if err := s.retireUnproven(ctx, remote, key, &record, &delivery); err != nil {
+				return false, err
+			}
 		}
 	}
 	if err := remote.Contact(ctx, key, delivery.Body); err != nil {

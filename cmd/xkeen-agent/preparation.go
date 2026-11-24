@@ -22,6 +22,7 @@ type candidatePreparation struct {
 	out, diagnostics                      io.Writer
 	applicationReports                    bool
 	reportWake                            chan<- struct{}
+	applicationReady                      func() bool
 }
 
 func (p *candidatePreparation) check(ctx context.Context, snapshot *agentrevision.Snapshot) {
@@ -43,6 +44,9 @@ func (p *candidatePreparation) check(ctx context.Context, snapshot *agentrevisio
 	}
 	scope := preparation.Scope{Origin: p.binding.Origin, RouterID: p.binding.RouterID, Profile: snapshot.Profile, VerifierID: p.profile}
 	if p.application != "" {
+		if p.applicationReports && !p.applicationReady() {
+			return
+		}
 		apply := localvalidation.ApplyCurrent
 		if p.applicationReports {
 			apply = localvalidation.ApplyReportable

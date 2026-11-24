@@ -115,10 +115,19 @@ type reportStub struct {
 	fail, beforeCommit        bool
 	cursorError, contactError error
 	contactHook               func()
+	identityErr               error
+	cursorHook                func()
 }
 
-func (r *reportStub) Identity(context.Context, string) (string, error) { return "router-example", nil }
-func (r *reportStub) Cursor(context.Context, string) (int64, error)    { return r.floor, r.cursorError }
+func (r *reportStub) Identity(context.Context, string) (string, error) {
+	return "router-example", r.identityErr
+}
+func (r *reportStub) Cursor(context.Context, string) (int64, error) {
+	if r.cursorHook != nil {
+		r.cursorHook()
+	}
+	return r.floor, r.cursorError
+}
 func (r *reportStub) Contact(_ context.Context, _ string, report *reporting.Report) error {
 	r.offered = append(r.offered, *report)
 	if r.contactHook != nil {
@@ -243,5 +252,52 @@ func TestOneApplicationWaitsForInFlightReportWithoutLosingDesired(t *testing.T) 
 	}
 	if err := <-applied; err != nil {
 		t.Fatal("in-flight report lost a desired application", err)
+	}
+}
+
+func TestReportAfterLostRuntimeCanAcknowledgeAConsumedSuccess(t *testing.T) {
+	f := reportingFixture(t)
+	remote := &reportStub{fail: true}
+	makeService := func() *Service { return New(f.scope, f, f, f, f) }
+	if _, err := makeService().ReconcileReport(t.Context(), remote, "fixture", false); err == nil {
+		t.Fatal("late acceptance unexpectedly acknowledged")
+	}
+	f.observeErr = ErrBaseline
+	remote.fail = false
+	if _, err := makeService().ReconcileReport(t.Context(), remote, "fixture", false); err != nil {
+		t.Fatal(err)
+	}
+	if len(remote.offered) != 3 || remote.offered[0] != remote.offered[1] ||
+		remote.offered[2].Sequence != 2 || remote.offered[2].Code != "runtime_unknown" {
+		t.Fatal("loss of proof changed consumed success or confused it with new success")
+	}
+}
+
+func TestReportAuthorityLossKeepsReservedBody(t *testing.T) {
+	f := reportingFixture(t)
+	remote := &reportStub{fail: true}
+	svc := New(f.scope, f, f, f, f)
+	_, _ = svc.ReconcileReport(t.Context(), remote, "fixture", false)
+	before := f.record.Delivery
+	remote.identityErr = errors.New("revoked")
+	for range 2 {
+		if _, err := svc.ReconcileReport(t.Context(), remote, "fixture", false); err != ErrReportAuthority {
+			t.Fatal("unauthorized report was considered valid", err)
+		}
+	}
+	if len(remote.offered) != 1 || f.record.Delivery != before {
+		t.Fatal("revocation replaced the stored report")
+	}
+}
+
+func TestReportRechecksProofAfterCursorAndReservation(t *testing.T) {
+	f := reportingFixture(t)
+	remote := &reportStub{cursorHook: func() { f.observeErr = ErrBaseline }}
+	if _, err := New(f.scope, f, f, f, f).ReconcileReport(t.Context(), remote, "fixture", false); err != nil {
+		t.Fatal(err)
+	}
+	if len(remote.offered) != 1 || remote.offered[0].State == "applied" ||
+		remote.offered[0].Code != "runtime_unknown" || remote.offered[0].Sequence != 2 {
+		t.Fatal("proof lost during allocation allowed a first success")
 	}
 }

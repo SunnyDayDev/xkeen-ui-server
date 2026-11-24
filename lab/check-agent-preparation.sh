@@ -7,6 +7,12 @@ trap 'rm -rf "$build_dir"' EXIT
 chmod 0755 "$build_dir"
 export CGO_ENABLED=0 GOOS=linux GOARCH=arm64
 go build -trimpath -o "$build_dir/xkeen-agent" ./cmd/xkeen-agent
+if [ "${XKEEN_LAB_REPORTS:-0}" = "1" ]; then
+  legacy_dir="$build_dir/previous-agent"
+  mkdir "$legacy_dir"
+  git archive "${XKEEN_LAB_LEGACY_REF:-3b4fa60775fffe4a70d496702d18be8fa3614519}" | tar -xf - -C "$legacy_dir"
+  (cd "$legacy_dir" && go build -trimpath -o "$build_dir/xkeen-agent-previous" ./cmd/xkeen-agent)
+fi
 go build -trimpath -o "$build_dir/xkeen-server" ./cmd/xkeen-ui-server
 go build -trimpath -o "$build_dir/xkeen-supervisor" ./cmd/xkeen-local-validator
 go test -trimpath -c -o "$build_dir/runner.test" ./internal/agent/localvalidation
@@ -41,7 +47,11 @@ export XKEEN_TEST_AGENT_BINARY=/proof/xkeen-agent
 export XKEEN_TEST_PREPARATION_BINARY=/proof/xkeen-supervisor
 uname -smr
 grep -E "^(Xray|Entware)=" /usr/local/share/router-lab/versions.txt
-if [ "${XKEEN_TEST_HOT:-0}" = "1" ]; then
+if [ "${XKEEN_TEST_REPORTS:-0}" = "1" ]; then
+  /opt/sbin/iptables -I OUTPUT 1 -d 127.0.0.1 -p tcp --dport 10085 -m owner ! --uid-owner 0 -j REJECT
+  export XKEEN_TEST_LEGACY_AGENT_BINARY=/proof/xkeen-agent-previous
+  /proof/process.test -test.run "^TestProcessAgentReportsPublishedApplications$" -test.v -test.timeout 2m
+elif [ "${XKEEN_TEST_HOT:-0}" = "1" ]; then
   /opt/sbin/iptables -I OUTPUT 1 -d 127.0.0.1 -p tcp --dport 10085 -m owner ! --uid-owner 0 -j REJECT
   /proof/process.test -test.run "^TestProcessAgentAppliesGuardedHotRules$" -test.v -test.timeout 2m
 elif [ "${XKEEN_TEST_APPLICATION:-0}" = "1" ]; then
@@ -58,7 +68,9 @@ test "$(find /tmp/validation-cgroup/jobs -mindepth 1 -type d | wc -l)" = 0
 '
 }
 
-if [ "${XKEEN_LAB_HOT:-0}" = "1" ]; then
+if [ "${XKEEN_LAB_REPORTS:-0}" = "1" ]; then
+  run_lab --read-only --cap-add=SYS_PTRACE --cap-add=NET_ADMIN --cap-add=NET_RAW --env XKEEN_TEST_REPORTS=1
+elif [ "${XKEEN_LAB_HOT:-0}" = "1" ]; then
   run_lab --read-only --cap-add=SYS_PTRACE --cap-add=NET_ADMIN --cap-add=NET_RAW --env XKEEN_TEST_HOT=1
 elif [ "${XKEEN_LAB_APPLICATION:-0}" = "1" ]; then
   run_lab --read-only --cap-add=SYS_PTRACE --env XKEEN_TEST_APPLICATION=1
