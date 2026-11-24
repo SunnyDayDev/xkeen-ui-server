@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/agentcredentials"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/revisionwatch"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/server"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/storage/sqlite"
 )
@@ -69,7 +70,10 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 	handler := server.NewHandler()
 	if tlsConfig != nil {
 		listener = tls.NewListener(listener, tlsConfig)
-		handler = server.NewAgentHandler(agentcredentials.NewService(sqlite.NewAgentCredentials(db), time.Now), sqlite.NewPublications(db), sqlite.NewContacts(db, time.Now))
+		watch := revisionwatch.New(ctx, sqlite.NewPublications(db), 25*time.Second, 128)
+		publications := sqlite.NewPublications(db, watch.Notify)
+		credentials := agentcredentials.NewService(sqlite.NewAgentCredentials(db, watch.Notify), time.Now)
+		handler = server.NewAgentHandler(credentials, publications, sqlite.NewContacts(db, time.Now), watch)
 	}
 	if err := json.NewEncoder(stderr).Encode(struct {
 		Event   string `json:"event"`

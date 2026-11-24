@@ -65,6 +65,9 @@ func (p *Publications) Commit(ctx context.Context, plan publication.CommitPlan) 
 	if err := tx.Commit(); err != nil {
 		return 0, operationError("commit publication", ctx.Err())
 	}
+	if plan.NewRevision != nil {
+		p.signal(expected.RouterID)
+	}
 	return number, nil
 }
 

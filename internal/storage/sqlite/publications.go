@@ -16,9 +16,20 @@ import (
 )
 
 // Publications implements the publication store against the central SQLite file.
-type Publications struct{ db *sql.DB }
+type Publications struct {
+	db     *sql.DB
+	notify []func(string)
+}
 
-func NewPublications(db *sql.DB) *Publications { return &Publications{db: db} }
+func NewPublications(db *sql.DB, notify ...func(string)) *Publications {
+	return &Publications{db: db, notify: notify}
+}
+
+func (p *Publications) signal(routerID string) {
+	for _, fn := range p.notify {
+		fn(routerID)
+	}
+}
 
 var _ publication.Store = (*Publications)(nil)
 

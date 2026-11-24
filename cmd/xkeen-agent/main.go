@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"golang.org/x/sys/unix"
 
@@ -17,7 +18,9 @@ import (
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/contact"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/desired"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/enrollment"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/revisionloop"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/statefile"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/agentrevision"
 )
 
 func main() {
@@ -84,7 +87,8 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		stopContact()
 		<-contactDone
 	}()
-	if _, err := desired.UntilCurrent(ctx, *binding, store, client); err != nil {
+	snapshot, err := desired.UntilCurrent(ctx, *binding, store, client)
+	if err != nil {
 		if ctx.Err() != nil {
 			return 0
 		}
@@ -92,8 +96,20 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	fmt.Fprintln(stdout, "agent authenticated")
-	<-ctx.Done()
-	return 0
+	var latest int64
+	if snapshot != nil {
+		latest = snapshot.Number
+	}
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+	err = revisionloop.Run(ctx, binding.Key, latest, ticker.C, client, func(ctx context.Context) (*agentrevision.Snapshot, error) {
+		return desired.Sync(ctx, *binding, store, client)
+	})
+	if ctx.Err() != nil {
+		return 0
+	}
+	fmt.Fprintln(stderr, err)
+	return 1
 }
 
 func loadTrustedRoots(path string) (*x509.CertPool, error) {
