@@ -49,6 +49,8 @@ func TestProcessWebShellAndAssets(t *testing.T) {
 		t.Fatal("invalid script asset")
 	}
 	read("wrong.example", "/ui/", 403)
+	read(host, "/ui/templates", 200)
+	read(host, "/ui/v1/templates", 401)
 	read(host, "/ui/assets/missing.js", 404)
 	read(host, "/ui/v1/not-found", 404)
 	_, body = read(host, "/ui/v1/session", 200)

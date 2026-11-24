@@ -47,16 +47,19 @@ form button { margin-top: 6px; width: 100%; }
   background: var(--ink); color: white; display: grid; grid-template-columns: auto 1fr auto;
   align-items: center; gap: 24px; padding: 16px 24px;
 }
+.console-header nav { display: flex; flex-wrap: wrap; gap: 8px; }
 .console-header a {
-  display: inline-flex; align-items: center; background: #273446; color: white; min-height: 42px;
+  display: inline-flex; align-items: center; color: white; min-height: 42px;
   border-radius: var(--radius); padding: 8px 14px; text-decoration: none; font-size: .9rem;
 }
+.console-header a[aria-current='page'] { background: #273446; }
 .console main { padding: 24px; }
 .console main:focus { outline: none; }
 .console main .notice { margin-top: 16px; }
 [hidden] { display: none !important; }
 @media (max-width: 520px) {
   .console-header { grid-template-columns: 1fr auto; gap: 12px; padding: 14px 16px; }
+  .console-header a { padding-inline: 8px; }
   .console-header strong { grid-column: 1 / -1; }
   .console main { padding: 16px; }
   .access { padding: 16px; }
