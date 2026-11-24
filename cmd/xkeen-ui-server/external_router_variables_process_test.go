@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"crypto/tls"
+	"database/sql"
 	"encoding/json"
 	"io"
 	"net"
@@ -19,7 +20,24 @@ import (
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/storage/sqlite"
 )
 
-func TestProcessExternalRouterVariableEditing(t *testing.T) {
+const externalRouterElement = "550e8400-e29b-41d4-a716-446655440000"
+const externalRouterSelection = "?routerId=router-example&elementId=" + externalRouterElement
+
+type externalRouterResponse struct {
+	Body []byte
+	Tag  string
+}
+
+type externalRouterFixture struct {
+	db       *sql.DB
+	owner    [32]byte
+	settings externalaccess.Settings
+	access   *sqlite.ExternalAccess
+	call     func(method, route, tag, body, bearer string, want int) externalRouterResponse
+}
+
+func newExternalRouterFixture(t *testing.T) externalRouterFixture {
+	t.Helper()
 	ctx := t.Context()
 	path := filepath.Join(t.TempDir(), "server.sqlite")
 	fixtureEnrollment(t, path)
@@ -27,10 +45,8 @@ func TestProcessExternalRouterVariableEditing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
-	const element = "550e8400-e29b-41d4-a716-446655440000"
-	const pathToValues = "/api/v1/routers/variables?routerId=router-example&elementId=" + element
-	const accepted = `[{"name":"outbounds","elements":[{"disabled":false,"record":{"id":"` + element + `","content":"{\"port\":\"$` + `{port}\"}","variables":[{"name":"port","type":"number","default":443}]}}]}]`
+	t.Cleanup(func() { _ = db.Close() })
+	const accepted = `[{"name":"outbounds","elements":[{"disabled":false,"record":{"id":"` + externalRouterElement + `","content":"{\"port\":\"$` + `{port}\"}","variables":[{"name":"port","type":"number","default":443}]}}]}]`
 	if _, err := db.ExecContext(ctx, "UPDATE accepted_templates SET draft=?", []byte(accepted)); err != nil {
 		t.Fatal(err)
 	}
@@ -64,13 +80,9 @@ func TestProcessExternalRouterVariableEditing(t *testing.T) {
 	}
 	process := startProcess(t, testBinary, "--listen", listen, "--db-path", path, "--tls-cert", cert, "--tls-key", key)
 	client := &http.Client{Timeout: 5 * time.Second, Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: roots}}}
-	defer client.CloseIdleConnections()
+	t.Cleanup(client.CloseIdleConnections)
 	process.readyWithClient(t, client, "https")
-	type response struct {
-		Body []byte
-		Tag  string
-	}
-	call := func(method, route, tag, body, bearer string, want int) response {
+	call := func(method, route, tag, body, bearer string, want int) externalRouterResponse {
 		t.Helper()
 		req, err := http.NewRequestWithContext(ctx, method, "https://"+listen+route, strings.NewReader(body))
 		if err != nil {
@@ -94,8 +106,18 @@ func TestProcessExternalRouterVariableEditing(t *testing.T) {
 		if err != nil || res.StatusCode != want || !strings.Contains(res.Header.Get("Cache-Control"), "no-store") {
 			t.Fatalf("%s %s: got %d want %d (%s; %v)", method, route, res.StatusCode, want, data, err)
 		}
-		return response{data, res.Header.Get("ETag")}
+		return externalRouterResponse{data, res.Header.Get("ETag")}
 	}
+	return externalRouterFixture{db: db, owner: owner, settings: settings, access: access, call: call}
+}
+
+func TestProcessExternalRouterVariableEditing(t *testing.T) {
+	fixture := newExternalRouterFixture(t)
+	ctx := t.Context()
+	call, db, owner, settings, access := fixture.call, fixture.db, fixture.owner, fixture.settings, fixture.access
+	var err error
+	const pathToValues = "/api/v1/routers/variables" + externalRouterSelection
+	const element = externalRouterElement
 	const update = `{"values":[{"name":"port","source":" 9007199254740993 "}]}`
 	call(http.MethodGet, pathToValues, "", "", "", 404)
 	settings, _, err = access.Owner(ctx, owner, &externalaccess.Change{Version: settings.Version, Enabled: true, Protected: false})

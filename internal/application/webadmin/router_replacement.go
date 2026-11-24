@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routerdraft"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 )
 
@@ -18,13 +18,9 @@ func NewRouterReplacementEditor(store RouterDraftStore, now func() time.Time) Ro
 }
 
 type RouterReplacement struct {
-	Basis       RouterDraftBasis
-	Name        string
-	ElementID   string
-	Section     string
-	Mode        configuration.ContentMode
-	HasOverride bool
-	Source      *string
+	Basis RouterDraftBasis
+	Name  string
+	routerdraft.ReplacementSelection
 }
 
 func (e RouterReplacementEditor) Read(ctx context.Context, token, routerID, elementID string) (RouterReplacement, error) {
@@ -51,15 +47,7 @@ func (e RouterReplacementEditor) Save(ctx context.Context, token, csrf string, b
 	if snapshot.Basis != basis {
 		return RouterReplacement{}, ErrRouterDraftConflict
 	}
-	if snapshot.Editable.TemplateID != basis.TemplateID {
-		return RouterReplacement{}, ErrRouterDraftForeign
-	}
-	_, section, err := sharedRouterElement(snapshot, elementID)
-	if err != nil {
-		return RouterReplacement{}, err
-	}
-	source := configuration.ElementSource{TemplateID: basis.TemplateID, ElementID: elementID}
-	snapshot.Editable, err = routersettings.EditReplacement(snapshot.Editable, section, source, action)
+	snapshot.Editable, err = routerdraft.EditReplacement(snapshot, elementID, action)
 	if err != nil {
 		return RouterReplacement{}, err
 	}
@@ -76,26 +64,9 @@ func (e RouterReplacementEditor) Save(ctx context.Context, token, csrf string, b
 }
 
 func readRouterReplacement(snapshot RouterDraftSnapshot, elementID string) (RouterReplacement, error) {
-	if snapshot.Editable.TemplateID != snapshot.Basis.TemplateID {
-		return RouterReplacement{}, ErrRouterDraftForeign
-	}
-	_, section, err := sharedRouterElement(snapshot, elementID)
+	selection, err := routerdraft.InspectReplacement(snapshot, elementID)
 	if err != nil {
 		return RouterReplacement{}, err
 	}
-	source := configuration.ElementSource{TemplateID: snapshot.Basis.TemplateID, ElementID: elementID}
-	override, err := routersettings.SharedOverride(snapshot.Editable, section, source)
-	if err != nil {
-		return RouterReplacement{}, err
-	}
-	result := RouterReplacement{Basis: snapshot.Basis, Name: snapshot.Name, Section: section,
-		ElementID: elementID, Mode: configuration.ContentModeVariables, HasOverride: override != nil}
-	if override != nil {
-		result.Mode = override.Mode
-		if override.Mode == configuration.ContentModeReplacement {
-			content := string(override.Content)
-			result.Source = &content
-		}
-	}
-	return result, nil
+	return RouterReplacement{Basis: snapshot.Basis, Name: snapshot.Name, ReplacementSelection: selection}, nil
 }

@@ -127,6 +127,7 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 	external := sqlite.NewExternalAccess(db, time.Now)
 	externalOperations := server.NewExternalRouterVariables(external, server.NewExternalTemplates(external))
 	externalOperations = server.NewExternalAccessStatus(external, externalOperations)
+	externalOperations = server.NewExternalRouterReplacement(external, externalOperations)
 	handler = server.NewExternalAccessHandler(cfg.webOrigin, external, externalOperations, handler)
 	if err := json.NewEncoder(stderr).Encode(struct {
 		Event   string `json:"event"`
