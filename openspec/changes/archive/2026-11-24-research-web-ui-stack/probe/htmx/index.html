@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>UI stack probe</title><link rel="stylesheet" href="/assets/style.css">
+<script defer src="/assets/htmx.min.js"></script><script defer src="/assets/client.js"></script>
+<body><main>
+<h1>UI stack probe</h1>
+<label for="draft">Draft JSON</label><textarea id="draft">{}</textarea>
+<ol id="rows"><li>Rule A</li><li>Rule B</li></ol>
+<button id="swap">Swap rows</button>
+<button id="check" hx-get="/status-fragment" hx-target="#status">Check status</button>
+<p id="status" role="status">Waiting</p>
+</main></body></html>
