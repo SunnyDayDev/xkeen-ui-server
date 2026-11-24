@@ -1,4 +1,4 @@
-package webadmin
+package routerpreparation
 
 import (
 	"encoding/json"
@@ -26,7 +26,7 @@ func preparationFixture() *templates.Snapshot {
 
 func TestPreparationProjectsRequiredAndExactDefault(t *testing.T) {
 	draft := preparationFixture()
-	fields, err := describePreparation(draft)
+	fields, err := Describe(draft)
 	if err != nil || len(fields) != 2 {
 		t.Fatalf("projected %#v: %v", fields, err)
 	}
@@ -35,7 +35,7 @@ func TestPreparationProjectsRequiredAndExactDefault(t *testing.T) {
 		t.Fatalf("incorrect variable projection: %#v", fields)
 	}
 	draft.Sections[0].Elements[0].Element.Variables[1].Default = json.RawMessage("null")
-	if _, err := describePreparation(draft); !errors.Is(err, ErrInvalidPreparation) {
+	if _, err := Describe(draft); !errors.Is(err, ErrInvalidPreparation) {
 		t.Fatalf("invalid inherited default: %v", err)
 	}
 }
@@ -46,7 +46,7 @@ func TestPreparationValuesAreScopedAndLossless(t *testing.T) {
 		{ElementID: firstPreparationElement, Name: "value", Source: "9007199254740993"},
 		{ElementID: secondPreparationElement, Name: "value", Source: `"node.example"`},
 	}
-	draft, err := prepareRouterSettings(template, preparationRouter, "Филиал Восток", valid)
+	draft, err := BuildDraft(template, preparationRouter, "Филиал Восток", valid)
 	if err != nil || draft.ID != preparationRouter || draft.Name != "Филиал Восток" || draft.TemplateID != template.ID || len(draft.Groups) != 1 {
 		t.Fatalf("prepared settings: %#v %v", draft, err)
 	}
@@ -66,7 +66,7 @@ func TestPreparationValuesAreScopedAndLossless(t *testing.T) {
 		{"dup", "duplicate_value", append(append([]PersonalInput{}, valid...), valid[0])},
 	} {
 		t.Run(row.name, func(t *testing.T) {
-			_, err := prepareRouterSettings(template, preparationRouter, "Филиал Восток", row.values)
+			_, err := BuildDraft(template, preparationRouter, "Филиал Восток", row.values)
 			var issue *PreparationInputError
 			if !errors.As(err, &issue) || issue.Code != row.code {
 				t.Fatalf("value error: %v", err)
@@ -84,11 +84,11 @@ func TestPreparationLeavesSupportedDisabledDefinitionsInactive(t *testing.T) {
 					Variables: []configuration.VariableDefinition{{Name: "label", Type: "string"}},
 				}}},
 			}}}}
-			fields, err := describePreparation(snapshot)
+			fields, err := Describe(snapshot)
 			if err != nil || len(fields) != 1 || !fields[0].Inactive || len(fields[0].Variables) != 1 || fields[0].Variables[0].Required {
 				t.Fatalf("disabled field should be visible without blocking onboarding: %#v %v", fields, err)
 			}
-			draft, err := prepareRouterSettings(snapshot, preparationRouter, "Филиал", nil)
+			draft, err := BuildDraft(snapshot, preparationRouter, "Филиал", nil)
 			if err != nil || len(draft.Groups) != 0 {
 				t.Fatalf("disabled element still required input: %#v %v", draft, err)
 			}
