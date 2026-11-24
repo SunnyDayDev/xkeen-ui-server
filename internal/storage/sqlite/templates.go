@@ -49,9 +49,12 @@ func (r TemplateRepository) Insert(ctx context.Context, draft configuration.Temp
 }
 
 func (r TemplateRepository) Find(ctx context.Context, id string) (*templates.Snapshot, error) {
+	return findTemplate(ctx, r.db, id)
+}
+func findTemplate(ctx context.Context, reader rowReader, id string) (*templates.Snapshot, error) {
 	var raw []byte
 	var version int64
-	err := r.db.QueryRowContext(ctx, "SELECT draft, version FROM templates WHERE id = ?", id).Scan(&raw, &version)
+	err := reader.QueryRowContext(ctx, "SELECT draft, version FROM templates WHERE id = ?", id).Scan(&raw, &version)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, templates.ErrNotFound
 	}

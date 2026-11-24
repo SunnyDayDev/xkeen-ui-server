@@ -27,11 +27,11 @@ func NewExternalAccess(db *sql.DB, now func() time.Time) *ExternalAccess {
 	return &ExternalAccess{db, now}
 }
 
-type settingsReader interface {
+type rowReader interface {
 	QueryRowContext(context.Context, string, ...any) *sql.Row
 }
 
-func readExternalSettings(ctx context.Context, r settingsReader) (externalaccess.Settings, []byte, error) {
+func readExternalSettings(ctx context.Context, r rowReader) (externalaccess.Settings, []byte, error) {
 	var s externalaccess.Settings
 	var digest []byte
 	err := r.QueryRowContext(ctx, "SELECT enabled,protected,version,digest FROM external_access WHERE id=1").Scan(&s.Enabled, &s.Protected, &s.Version, &digest)
