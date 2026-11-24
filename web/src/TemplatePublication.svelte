@@ -32,14 +32,18 @@
   const matching = (body:Reply, state:string) => body.state === state && body.templateId === id && Array.isArray(body.members);
 
   function discard() {
+    const unresolved = work === 'confirm' || step === 'unknown';
     operation?.abort();
     operation = undefined;
     work = undefined;
-    step = 'idle';
     plan = undefined;
     result = undefined;
     names = new Map();
-    notice = '';
+    if (unresolved) unknown();
+    else {
+      step = 'idle';
+      notice = '';
+    }
   }
 
   $effect(() => {

@@ -39,7 +39,7 @@ type TemplatePublicationPreview struct {
 }
 
 type previewReceipt struct {
-	ID                string
+	TemplateHash      [sha256.Size]byte
 	Version, Accepted int64
 	Expires           int64
 	Plan              [sha256.Size]byte
@@ -66,7 +66,7 @@ func (s TemplatePublication) Preview(ctx context.Context, token, id string, vers
 		return nil, templatePublicationError(err)
 	}
 	payload, err := json.Marshal(previewReceipt{
-		ID: id, Version: preview.Version, Accepted: preview.AcceptedVersion,
+		TemplateHash: sha256.Sum256([]byte(id)), Version: preview.Version, Accepted: preview.AcceptedVersion,
 		Expires: s.now().Add(templatePreviewLifetime).UnixNano(), Plan: preview.Fingerprint,
 	})
 	if err != nil {
@@ -89,7 +89,7 @@ func (s TemplatePublication) Confirm(ctx context.Context, token, csrf, id, recei
 	}
 	raw, err := previewEncoding.DecodeString(body)
 	var claim previewReceipt
-	if err != nil || json.Unmarshal(raw, &claim) != nil || claim.ID != id || claim.Version < 1 {
+	if err != nil || json.Unmarshal(raw, &claim) != nil || claim.TemplateHash != sha256.Sum256([]byte(id)) || claim.Version < 1 {
 		return nil, ErrTemplatePreviewChanged
 	}
 	expires := time.Unix(0, claim.Expires)

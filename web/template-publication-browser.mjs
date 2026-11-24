@@ -121,11 +121,42 @@ export async function checkTemplatePublication(page, {origin, database, resetSes
     assert.equal(await publish.count(),0);
     await prepare.press('Enter');
     await proceed.press('Enter');
+    await page.evaluate(() => {
+      const next=window.fetch;
+      window.fetch=async (target,options)=>{
+        const response=await next(target,options);
+        if(String(target).startsWith('/ui/v1/templates/publication?') && options?.body?.includes('"action":"confirm"') && response.status===200) {
+          window.fetch=next;
+          await new Promise(resolve=>{window.releasePublicationReceipt=resolve;});
+        }
+        return response;
+      };
+    });
     await publish.press('Enter');
-    await page.getByText('Снимок выпуска принят · версия 6',{exact:true}).waitFor();
+    await page.waitForFunction(()=>typeof window.releasePublicationReceipt==='function');
+    await inspect('6','2');
+    resetSession();
+    await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+    await page.getByRole('heading',{name:'Сессия истекла'}).waitFor();
+    await page.evaluate(()=>{window.releasePublicationReceipt();delete window.releasePublicationReceipt;});
+    await login.fill(password);
+    await login.press('Enter');
+    const recover=page.getByRole('button',{name:'Проверить состояние',exact:true});
+    await recover.waitFor();
+    assert.equal(await publish.count(),0);
     assert.equal(afterExpiry.length,2);
+    await recover.press('Enter');
+    await page.getByText('Текущее принятое состояние · версия 6',{exact:true}).waitFor();
   } finally { page.off('request',track); }
   await inspect('6','2');
+
+  await call(item,{version:'6',elementId,source:'   '+revisedAgain});
+  await page.goto(origin+editor);
+  await review.press('Enter');
+  await proceed.press('Enter');
+  await publish.press('Enter');
+  await page.getByText('Снимок выпуска принят · версия 7',{exact:true}).waitFor();
+  await inspect('7','2');
 
   await page.setViewportSize({width:1080,height:660});
   await page.getByRole('link',{name:'К шаблону',exact:true}).press('Enter');

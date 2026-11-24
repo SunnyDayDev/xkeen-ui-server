@@ -80,7 +80,20 @@ func TestWebTemplatePublicationReceiptIsBoundAndExpires(t *testing.T) {
 	if err != nil || after.Version != 1 || after.AcceptedVersion != 1 || len(after.Routers) != 0 {
 		t.Fatalf("current state after confirmation: %+v %v", after, err)
 	}
-
+	longID := strings.Repeat("<", 7000)
+	if _, err := templates.New(NewTemplateRepository(db)).Create(ctx, configuration.TemplateDraft{ID: longID}); err != nil {
+		t.Fatal(err)
+	}
+	large, err := service.Preview(ctx, token, longID, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(large.Receipt) > 16000 {
+		t.Fatalf("valid template ID produced an unusable receipt: size=%d", len(large.Receipt))
+	}
+	if result, err := service.Confirm(ctx, token, csrf, longID, large.Receipt); err != nil || result.Version != 1 {
+		t.Fatalf("long-ID preview could not confirm: %v", err)
+	}
 }
 
 func TestWebTemplatePublicationIncludesHiddenOfflineActiveAssignment(t *testing.T) {
