@@ -13,7 +13,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/externalaccess"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/publication"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/templates"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/webadmin"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/storage/sqlite"
 )
@@ -65,6 +69,7 @@ func TestProcessWebRouterPreparation(t *testing.T) {
 	addr := p.readyWithClient(t, client, "https")
 	var session *http.Cookie
 	var csrf string
+	var externalBearer string
 	request := func(method, path string, payload []byte, status int) ([]byte, *http.Response) {
 		t.Helper()
 		req, err := http.NewRequestWithContext(ctx, method, "https://"+addr+path, bytes.NewReader(payload))
@@ -79,6 +84,9 @@ func TestProcessWebRouterPreparation(t *testing.T) {
 			req.Header.Set("Origin", origin)
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Set("X-CSRF-Token", csrf)
+		}
+		if externalBearer != "" && strings.HasPrefix(path, "/api/v1/") {
+			req.Header.Set("Authorization", "Bearer "+externalBearer)
 		}
 		res, err := client.Do(req)
 		if err != nil {
@@ -131,6 +139,30 @@ func TestProcessWebRouterPreparation(t *testing.T) {
 		t.Fatalf("unexpected zero-member commit: %s", committed)
 	}
 	request(http.MethodPost, publicationPath, confirmation, 409)
+	owner, _, err := webadmin.SessionProof(session.Value, "", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	external := sqlite.NewExternalAccess(databaseHandle, time.Now)
+	policy, _, err := external.Owner(ctx, owner, &externalaccess.Change{Version: 1, Enabled: true, Protected: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	apiPreview := "/api/v1/templates/publication/preview?templateId="
+	emptyEndpoint := apiPreview + url.QueryEscape(unpublishedID)
+	previewVersion := []byte(`{"version":"1"}`)
+	request(http.MethodPost, emptyEndpoint, previewVersion, 401)
+	policy, externalBearer, err = external.Owner(ctx, owner, &externalaccess.Change{Version: policy.Version, Rotate: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	request(http.MethodPost, emptyEndpoint, []byte(`{"version":"1","receipt":null}`), 400)
+	empty, _ := request(http.MethodPost, emptyEndpoint, previewVersion, 200)
+	if json.Unmarshal(empty, &result) != nil || result.Receipt == "" || len(result.Members) != 0 {
+		t.Fatalf("invalid external empty preview: %s", empty)
+	}
+	forbidden, _ := json.Marshal(map[string]string{"action": "confirm", "receipt": result.Receipt})
+	request(http.MethodPost, publicationPath, forbidden, 409)
 
 	request(http.MethodGet, "/ui/routers/connect", nil, 200)
 	raw, _ = request(http.MethodGet, selectedRoute, nil, 200)
@@ -171,10 +203,73 @@ func TestProcessWebRouterPreparation(t *testing.T) {
 	if err != nil || saved == nil || saved.Number != 1 {
 		t.Fatalf("missing persisted first revision: %#v %v", saved, err)
 	}
+	found := false
 	for _, file := range saved.Catalog.Files {
-		if strings.Contains(string(file.Content), "example-direct") {
-			return
+		found = found || strings.Contains(string(file.Content), "example-direct")
+	}
+	if !found {
+		t.Fatal("personal value missing from desired catalog")
+	}
+	second := routersettings.Draft{ID: "offline.example", TemplateID: templateID, Name: "Inactive site"}
+	store := sqlite.NewPublications(databaseHandle)
+	if _, err := store.Commit(ctx, publication.CommitPlan{FirstConfirmation: true, Expected: publication.Expectations{RouterID: second.ID, TemplateID: second.TemplateID, AcceptedVersion: 1},
+		Settings: second, NewRevision: fixtureDesiredCatalog("{}")}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := databaseHandle.ExecContext(ctx, `INSERT INTO agent_contacts(router_id,contact_ns,report,applied,uncertain)
+		VALUES (?,?,NULL,0,0)`, second.ID, time.Now().Add(-181*time.Second).UnixNano()); err != nil {
+		t.Fatal(err)
+	}
+	if err := sqlite.NewRouterVisibility(databaseHandle).Hide(ctx, second.ID); err != nil {
+		t.Fatal(err)
+	}
+	repo := templates.New(sqlite.NewTemplateRepository(databaseHandle))
+	snapshot, err := repo.Get(ctx, templateID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot.Sections[0].Elements[0].Element.Content = `{"protocol":"blackhole","tag":"shared.example","unknownField":9007199254740993}`
+	for i := range snapshot.Sections[0].Elements[0].Element.Variables {
+		snapshot.Sections[0].Elements[0].Element.Variables[i].Default = json.RawMessage(`"default.example"`)
+	}
+	if _, err := repo.Replace(ctx, snapshot.TemplateDraft, 1); err != nil {
+		t.Fatal(err)
+	}
+	realEndpoint := apiPreview + url.QueryEscape(templateID)
+	actual, _ := request(http.MethodPost, realEndpoint, []byte(`{"version":"2"}`), 200)
+	var members struct {
+		Receipt string
+		Members []struct {
+			RouterID, Contact, DesiredRevision, Estimate string
+			Changes                                      []struct{ Name, Kind string }
 		}
 	}
-	t.Fatal("personal value missing from desired catalog")
+	if json.Unmarshal(actual, &members) != nil || len(members.Members) != 2 || members.Receipt == "" {
+		t.Fatalf("full plan: %s", actual)
+	}
+	found = false
+	for _, member := range members.Members {
+		if member.DesiredRevision != "1" || len(member.Changes) == 0 {
+			t.Fatalf("bad preview member: %+v", member)
+		}
+		if member.RouterID == second.ID && member.Contact == "offline" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("hidden offline member excluded from read-only plan")
+	}
+	for _, id := range []string{form.RouterID, second.ID} {
+		if saved, err := store.ReadDesired(ctx, id); err != nil || saved.Number != 1 {
+			t.Fatalf("preview changed desired: %v %v", saved, err)
+		}
+	}
+	snapshot.Sections[0].Elements[0].Element.Content = `{"protocol":"unsupported-example","tag":"shared.example"}`
+	if _, err := repo.Replace(ctx, snapshot.TemplateDraft, 2); err != nil {
+		t.Fatal(err)
+	}
+	refused, _ := request(http.MethodPost, realEndpoint, []byte(`{"version":"3"}`), 422)
+	if !strings.Contains(string(refused), `"code":"catalog_rejected"`) || strings.Contains(string(refused), `"receipt"`) {
+		t.Fatalf("partial Xray rejection: %s", refused)
+	}
 }
