@@ -83,3 +83,26 @@ func TestEditDefinitionsRetainsSourceAndRequiresTheSameOrderedNames(t *testing.T
 		t.Fatalf("invalid syntax was accepted or not scoped: %v", err)
 	}
 }
+
+func TestEditDefinitionsAppliesA08ToTheSelectedLegacyElement(t *testing.T) {
+	older := []configuration.VariableDefinition{{Name: "retained", Type: "string"}}
+	raw := `{"late":"$` + "{newly.discovered}" + `","old":"$` + "{retained}" + `"}`
+	base := &Snapshot{Version: 1, TemplateDraft: configuration.TemplateDraft{ID: "older-template", Sections: []configuration.TemplateSection{{
+		Name: "outbounds", Elements: []configuration.TemplateElement{{Element: configuration.Element{
+			ID: editID, Content: raw, Variables: older,
+		}}},
+	}}}}
+	changed, err := EditElementDefinitions(base, editID, []configuration.VariableDefinition{{Name: "retained", Type: "boolean"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	item := changed.Sections[0].Elements[0].Element
+	want := []configuration.VariableDefinition{
+		{Name: "retained", Type: "boolean"},
+		{Name: "newly.discovered", Type: "string", Default: []byte(`""`)},
+	}
+	if item.Content != raw || !reflect.DeepEqual(item.Variables, want) ||
+		!reflect.DeepEqual(base.Sections[0].Elements[0].Element.Variables, older) {
+		t.Fatal("selected element did not retain ordered names and add only its missing declaration")
+	}
+}
