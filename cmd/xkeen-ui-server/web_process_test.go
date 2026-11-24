@@ -133,6 +133,21 @@ func TestProcessWebAdministratorLifecycle(t *testing.T) {
 	request("GET", "/session", "", "", "", nil, 200, "signed_out")
 	request("POST", "/login", "https://foreign.example", "", `{"password":"synthetic first password"}`, nil, 403, "invalid_origin")
 	first, firstCookie := login(pass, nil)
+	agentRequest, err := http.NewRequestWithContext(t.Context(), http.MethodGet, endpoint+"/agent/v1/identity", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	agentRequest.AddCookie(firstCookie)
+	agentRequest.Header.Set("X-CSRF-Token", first.CSRF)
+	agentResponse, err := client.Do(agentRequest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _ = io.Copy(io.Discard, agentResponse.Body)
+	agentResponse.Body.Close()
+	if agentResponse.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("browser session reached agent authority: %d", agentResponse.StatusCode)
+	}
 	second, secondCookie := login(pass, nil)
 	request("POST", "/logout", origin, second.CSRF, "", firstCookie, 403, "invalid_csrf")
 	request("POST", "/session/activity", origin, first.CSRF, "", firstCookie, 200, "active")
