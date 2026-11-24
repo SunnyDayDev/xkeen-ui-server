@@ -62,6 +62,10 @@ func TestRunnerChecksRealXrayInTheJob(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
+	if len(os.Args) > 1 && (os.Args[1] == "run" || os.Args[1] == "version") {
+		os.Exit(syntheticXray(os.Args[1:]))
+	}
+
 	if len(os.Args) > 1 && os.Args[1] == WorkerFlag {
 		os.Exit(Worker(os.Args[2:]))
 	}

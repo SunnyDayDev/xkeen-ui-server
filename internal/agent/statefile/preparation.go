@@ -62,7 +62,7 @@ func (s *Store) LoadPrepared() (*preparation.Package, error) {
 	}
 	p := &preparation.Package{Scope: record.Scope, BaselineID: record.BaselineID, Baseline: record.Baseline,
 		Candidate: candidate, CandidateTag: record.Tag}
-	if !p.Valid() {
+	if !p.Valid() || s.syncPrivateDirectories() != nil {
 		return nil, preparation.ErrState
 	}
 	return p, nil

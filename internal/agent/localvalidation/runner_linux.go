@@ -55,6 +55,9 @@ func (r Runner) Run(ctx context.Context, id string, snapshot agentrevision.Snaps
 		}
 	}()
 	group := filepath.Join(r.CgroupDir, filepath.Base(stage))
+	if err := writeMarker(stage, jobFile, group+"\n"); err != nil {
+		return preparation.ErrUnavailable
+	}
 	if err := os.Mkdir(group, 0700); err != nil {
 		return preparation.ErrUnavailable
 	}
@@ -272,5 +275,5 @@ func (d *boundedDiagnostic) configurationRejection() bool {
 			return false
 		}
 	}
-	return strings.Contains(s, "failed to load config")
+	return strings.Contains(s, "failed to load config") || strings.Contains(s, "failed to create server")
 }

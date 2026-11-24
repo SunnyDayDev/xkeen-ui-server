@@ -19,7 +19,7 @@ import (
 
 const role = "xkeen-local-agent-check-v1"
 const endpoint = "/v1/agent-check"
-const maxRequest = agentrevision.MaxBody + 128<<10
+const maxRequest = agentrevision.MaxBody + (128 << 10)
 
 type binding struct {
 	Role, Action, Nonce, Tag string

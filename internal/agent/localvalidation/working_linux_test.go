@@ -41,6 +41,17 @@ func TestWorkingManifestRejectsUnexpectedLoadedFilesAndPinsBytes(t *testing.T) {
 	if err := os.Remove(bad); err != nil {
 		t.Fatal(err)
 	}
+	toml := filepath.Join(root, "extra.toml")
+	if err := os.WriteFile(toml, []byte("[routing]\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := WorkingManifest(root); err == nil {
+		t.Fatal("additional TOML loaded by pinned Xray was accepted")
+	}
+	if err := os.Remove(toml); err != nil {
+		t.Fatal(err)
+	}
+
 	if err := os.Remove(known); err != nil {
 		t.Fatal(err)
 	}
@@ -49,5 +60,24 @@ func TestWorkingManifestRejectsUnexpectedLoadedFilesAndPinsBytes(t *testing.T) {
 	}
 	if _, err := WorkingManifest(root); err == nil {
 		t.Fatal("managed symlink was accepted")
+	}
+}
+
+func TestWorkingArgumentsUseOneExactConfdir(t *testing.T) {
+	dir := "/opt/etc/xray/configs"
+	for _, tc := range []struct {
+		args []string
+		env  string
+		want bool
+	}{
+		{[]string{"run"}, "XRAY_LOCATION_CONFDIR=" + dir + "\x00", true},
+		{[]string{"run", "-confdir", dir}, "", true},
+		{[]string{"run", "-confdir", dir, "-c", "another.json"}, "", false},
+		{[]string{"run"}, "XRAY_LOCATION_CONFDIR=" + dir + "\x00xray.location.confdir=/other\x00", false},
+		{[]string{"run"}, "XRAY_LOCATION_CONFDIR=/other\x00", false},
+	} {
+		if got := workingArguments(tc.args, []byte(tc.env), dir); got != tc.want {
+			t.Errorf("working launch verification=%t, want %t", got, tc.want)
+		}
 	}
 }

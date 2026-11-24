@@ -80,7 +80,7 @@ func workingFiles(path string) ([]preparation.BaselineFile, string, error) {
 			remaining -= int64(len(file.Content))
 		default:
 			switch strings.ToLower(filepath.Ext(e.Name())) {
-			case ".json", ".jsonc", ".json5":
+			case ".json", ".jsonc", ".json5", ".toml", ".yaml", ".yml":
 				return nil, "", preparation.ErrBaseline
 			}
 		}
@@ -154,8 +154,13 @@ func (w Working) identifyProcess() bool {
 		return false
 	}
 	args := strings.Split(string(raw[:len(raw)-1]), "\x00")
-	if !slices.Equal(args[1:], []string{"run", "-confdir", w.Directory}) &&
-		!slices.Equal(args[1:], []string{"run", "-format", "json", "-confdir", w.Directory}) {
+	env, err := readStaged(procPath(w.PID, "environ"), 64<<10)
+	if err != nil || !workingArguments(args[1:], env, w.Directory) {
+		return false
+	}
+	local, localErr := os.Stat(w.Directory)
+	visible, visibleErr := os.Stat(procPath(w.PID, "root") + w.Directory)
+	if localErr != nil || visibleErr != nil || !os.SameFile(local, visible) {
 		return false
 	}
 	// /proc/PID/exe is a kernel-managed magic link. Read the actual binary FD.
@@ -176,6 +181,31 @@ func (w Working) identifyProcess() bool {
 	}
 	after, err := ProcessStartTick(w.PID)
 	return err == nil && after == before
+}
+
+func workingArguments(args []string, rawEnv []byte, dir string) bool {
+	env := make(map[string]string)
+	for _, field := range strings.Split(string(rawEnv), "\x00") {
+		key, value, ok := strings.Cut(field, "=")
+		if !ok {
+			continue
+		}
+		key = strings.ToUpper(strings.ReplaceAll(key, ".", "_"))
+		switch key {
+		case "XRAY_LOCATION_CONFDIR", "XRAY_LOCATION_CONFIG", "XRAY_LOCATION_ASSET":
+			if _, duplicate := env[key]; duplicate {
+				return false
+			}
+			env[key] = value
+		}
+	}
+	if env["XRAY_LOCATION_CONFIG"] != "" || (env["XRAY_LOCATION_ASSET"] != "" && env["XRAY_LOCATION_ASSET"] != "/opt/etc/xray/dat") ||
+		(env["XRAY_LOCATION_CONFDIR"] != "" && env["XRAY_LOCATION_CONFDIR"] != dir) {
+		return false
+	}
+	return slices.Equal(args, []string{"run", "-confdir", dir}) ||
+		slices.Equal(args, []string{"run", "-format", "json", "-confdir", dir}) ||
+		(slices.Equal(args, []string{"run"}) && env["XRAY_LOCATION_CONFDIR"] == dir)
 }
 
 func (w Working) checkTraffic(ctx context.Context) bool {
