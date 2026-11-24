@@ -97,19 +97,19 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 			_, err := fmt.Fprintln(out, "one local retry authorized")
 			return err
 		}
-		central, err := app.OpenCentral(cfg.Scope)
-		if err != nil {
-			return err
-		}
-		defer central.CloseIdleConnections()
 		working, err := localvalidation.NewRestartWorking(cfg, app.RuntimeUID, app.RuntimeGID)
 		if err != nil {
 			return err
 		}
 		defer working.Close()
-		if err := working.StartCommitted(ctx, journal); err != nil {
+		if err := restart.RecoverStartup(ctx, journal, working); err != nil {
 			return err
 		}
+		central, err := app.OpenCentral(cfg.Scope)
+		if err != nil {
+			return err
+		}
+		defer central.CloseIdleConnections()
 		service := restart.New(cfg.Scope, restart.NewCentralSource(cfg.Scope, central), journal, working, runner)
 		socket, handler, ready, writeTimeout = app.Socket, localvalidation.ApplicationHandler(cfg.Scope, service), "local application ready", 70*time.Second
 	}

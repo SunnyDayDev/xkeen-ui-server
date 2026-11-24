@@ -43,6 +43,10 @@ func TestProcessAgentRollbackPreservesForeignWorkingData(t *testing.T) {
 	checkControlledApplication(t, "conflict")
 }
 
+func TestProcessAgentRecoversInterruptedApplication(t *testing.T) {
+	checkControlledApplication(t, "startup-recovery")
+}
+
 func checkControlledApplication(t *testing.T, mode string) {
 	t.Helper()
 	binary, xray, cgroup := os.Getenv("XKEEN_TEST_PREPARATION_BINARY"), os.Getenv("XKEEN_TEST_XRAY"), os.Getenv("XKEEN_TEST_CGROUP")
@@ -267,6 +271,17 @@ func checkControlledApplication(t *testing.T, mode string) {
 	}
 	checkTraffic(target, "target-fixture", false)
 	checkTraffic(allow, "allowed-fixture", true)
+	if mode == "startup-recovery" {
+		stop()
+		runStartupRecoveryFixture(t, binary, path, scope, runtimeUID, supervisor, startSupervisor, first, catalog(false, false), func() {
+			checkTraffic(allow, "allowed-fixture", true)
+			checkTraffic(target, "target-fixture", false)
+		})
+		if status := f.status(t); status.Applied != 0 || status.Last != nil {
+			t.Fatal("startup recovery fabricated a server report")
+		}
+		return
+	}
 	if mode != "apply" {
 		stop()
 		readRollback := func() (restart.Record, []byte) {
@@ -536,23 +551,14 @@ func checkControlledApplication(t *testing.T, mode string) {
 	// Simulate an interrupted partial file replacement before restarting the owner.
 	changed := next.Files[4]
 	mustWrite(path("work/"+changed.Name), changed.Content, 0644)
-	blocked := startProcess(t, binary, "--config", path("profile.json"), "--application-config", path("application.json"))
-	if err := blocked.wait(t); err == nil || strings.Contains(blocked.output(), "local application ready") {
-		t.Fatal("unresolved intent allowed startup against a mixed catalog")
+	recovered := startSupervisor()
+	defer stopRouterAgent(t, recovered)
+	proof, _ := committed()
+	if proof.AttemptID != final.AttemptID || proof.Number != final.Number ||
+		!reflect.DeepEqual(proof.Baseline.Files, final.Baseline.Files) {
+		t.Fatal("startup exposed the mixed generation")
 	}
-	if conn, err := net.DialTimeout("tcp", proxy, time.Second); err == nil {
-		conn.Close()
-		t.Fatal("application barrier allowed a listener for the mixed catalog")
-	}
-	recovered, err := restart.OpenJournal(app.JournalDirectory, scope)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer recovered.Close()
-	retained, err := recovered.Load()
-	if err != nil || !reflect.DeepEqual(saved, retained) {
-		t.Fatal("ordinary startup changed recovery evidence", err)
-	}
+	checkTraffic(target, "target-fixture", true)
 }
 
 func faultableApplicationProbe(t *testing.T, marker string, unavailable *atomic.Bool) string {

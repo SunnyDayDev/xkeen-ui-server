@@ -11,6 +11,9 @@ go build -trimpath -o "$build_dir/xkeen-server" ./cmd/xkeen-ui-server
 go build -trimpath -o "$build_dir/xkeen-supervisor" ./cmd/xkeen-local-validator
 go test -trimpath -c -o "$build_dir/runner.test" ./internal/agent/localvalidation
 go test -trimpath -c -o "$build_dir/process.test" ./cmd/xkeen-ui-server
+if [ "${XKEEN_LAB_APPLICATION:-0}" = "1" ]; then
+  go test -trimpath -c -o "$build_dir/restart.test" ./internal/agent/restart
+fi
 
 run_lab() {
   docker run --rm --platform linux/arm64 --cgroupns=private --network=none \
@@ -40,7 +43,8 @@ uname -smr
 grep -E "^(Xray|Entware)=" /usr/local/share/router-lab/versions.txt
 if [ "${XKEEN_TEST_APPLICATION:-0}" = "1" ]; then
   /proof/runner.test -test.run "^TestListenerMustBelongToAttestedPID$" -test.v
-  /proof/process.test -test.run "^TestProcessAgent(AppliesTwoControlledGenerations|RollbackOutcomes|RollbackPreservesForeignWorkingData)$" -test.v -test.timeout 2m
+  /proof/restart.test -test.run "^TestStartup" -test.v
+  /proof/process.test -test.run "^TestProcessAgent(AppliesTwoControlledGenerations|RollbackOutcomes|RollbackPreservesForeignWorkingData|RecoversInterruptedApplication)$" -test.v -test.timeout 2m
 else
   if [ "${XKEEN_TEST_PREPARATION_XKEEN:-0}" = "0" ]; then
     /proof/runner.test -test.v
