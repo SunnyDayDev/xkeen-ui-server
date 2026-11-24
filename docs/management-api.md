@@ -217,6 +217,10 @@ Offline описывает контакт. При `runtime: "unknown"` ране�
 
 `GET /api/v1/routers/dependencies?routerId=example` возвращает основание снимка, готовность и ссылки действующих правил на входы, выходы и балансировщики. Для ссылки доступны UUID, структурный путь, индекс, вид и состояние разрешения. Неразрешённая ссылка даёт ответ 200 с `ready: false`. При ошибке формы ответ 422 содержит только коды и позиции. Если основание изменилось во время анализа, ответ 409 позволяет запросить новый снимок. [OpenAPI анализа](../openspec/changes/archive/2026-11-24-inspect-external-router-dependencies/openapi.json).
 
+### Эффективные входы и выходы
+
+`GET /api/v1/routers/io?routerId=example-router` возвращает массивы `inbounds` и `outbounds`. Каждый элемент содержит UUID в `id` и происхождение `shared` или `local` в `origin`. Выключенные и исключённые записи пропускаются. Ошибка выбора возвращает 422 без частичного списка, смена снимка во время чтения — 409. [OpenAPI инвентаря](../openspec/changes/archive/2026-11-24-list-external-effective-router-io/openapi.json).
+
 ## Состояние применения ревизии
 
 `GET /api/v1/routers/application?routerId=router-example&revision=2` читает точный известный номер. Версии передаются каноническими десятичными строками. `latestDesiredRevision` показывает текущее назначение, а `historicallyAppliedRevision` — последний подтверждённый номер. `contact` и `runtime` сообщают состояние отдельно.

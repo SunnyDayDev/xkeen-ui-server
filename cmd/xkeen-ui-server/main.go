@@ -134,6 +134,7 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 	externalOperations = server.NewExternalRouterStatuses(external, externalOperations)
 	externalOperations = server.NewExternalLocalRuleSource(external, externalOperations)
 	externalOperations = server.NewExternalRouterDependencies(external, externalOperations)
+	externalOperations = server.NewExternalRouterIO(external, externalOperations)
 	externalOperations = server.NewExternalRuleState(external, externalOperations)
 	externalOperations = server.NewExternalRouterRules(external, externalOperations)
 	externalOperations = server.NewExternalRouterCatalog(externalaccess.NewRouterCatalog(external), externalOperations)
