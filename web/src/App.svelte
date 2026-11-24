@@ -9,11 +9,13 @@
   import RouterPreparation from './RouterPreparation.svelte';
   import RouterEnrollment from './RouterEnrollment.svelte';
   import RouterOverview from './RouterOverview.svelte';
+  import RouterVariables from './RouterVariables.svelte';
 
-  type Section = 'overview' | 'templates' | 'settings' | 'template-editor' | 'router-connect' | 'router-enroll';
+  type Section = 'overview' | 'templates' | 'settings' | 'template-editor' | 'router-connect' | 'router-enroll' | 'router-variables';
 
   function sectionForPath(): Section {
     if (location.pathname === '/ui/templates/item') return 'template-editor';
+    if (location.pathname === '/ui/routers/variables') return 'router-variables';
     if (location.pathname === '/ui/routers/enroll') return 'router-enroll';
     if (location.pathname === '/ui/routers/connect') return 'router-connect';
     if (location.pathname === '/ui/settings') return 'settings';
@@ -194,7 +196,7 @@
     <header class="console-header">
       <strong>XKeen Console</strong>
       <nav aria-label="Основная навигация">
-        <a href="/ui/" aria-current={section === 'overview' ? 'page' : undefined}
+        <a href="/ui/" aria-current={section === 'overview' || section === 'router-variables' ? 'page' : undefined}
           onclick={(event) => navigate(event, '/ui/', 'overview')}>Обзор</a>
         <a href="/ui/templates" aria-current={section === 'templates' || section === 'template-editor' ? 'page' : undefined}
           onclick={(event) => navigate(event, '/ui/templates', 'templates')}>Шаблоны</a>
@@ -221,6 +223,12 @@
         <RouterPreparation canSubmit={view === 'active' && !busy} sessionEpoch={mutation} {csrf}
           signedOut={() => { void endAccess('signed_out'); }} refreshSession={() => { void refresh(); }}
           openEnrollment={(event,path) => navigate(event,path,'router-enroll')} />
+      {:else if section === 'router-variables'}
+        {#key routerID}
+          <RouterVariables id={routerID} active={view === 'active' && !busy} sessionEpoch={mutation} {csrf}
+            signedOut={() => { void endAccess('signed_out'); }} refreshSession={() => { void refresh(); }}
+            back={(event,path) => navigate(event,path,'overview')} />
+        {/key}
       {:else if section === 'router-enroll'}
         {#if view === 'active' && !busy}
           {#key routerID + ':' + mutation}
@@ -236,6 +244,7 @@
           {#key mutation}
             <RouterOverview selectedId={routerID}
               openRouter={(event,path) => navigate(event,path,'overview')} closeRouter={closeRouterDetail}
+              openVariables={(event,path) => navigate(event,path,'router-variables')}
               signedOut={() => { void endAccess('signed_out'); }} />
           {/key}
         {/if}
