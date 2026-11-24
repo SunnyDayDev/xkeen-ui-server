@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	jsonv2 "encoding/json/v2"
 	"errors"
+	"slices"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/publication"
@@ -78,14 +80,37 @@ func (p *Publications) Read(ctx context.Context, request publication.ReadRequest
 		return nil, err
 	}
 	if (inputs.Active == nil) != (inputs.Desired == nil) ||
-		(inputs.Active != nil && (inputs.Accepted == nil ||
-			(inputs.Active.OrderBasis != nil && inputs.Active.OrderBasis.TemplateVersion > inputs.Accepted.Version))) {
+		(inputs.Active != nil && !validActiveSource(inputs.Active, inputs.Accepted)) {
 		return nil, publication.ErrStoredState
 	}
 	if err := tx.Commit(); err != nil {
 		return nil, operationError("finish reading publication", ctx.Err())
 	}
 	return inputs, nil
+}
+
+func validActiveSource(active *publication.ActiveSettings, accepted *templates.Snapshot) bool {
+	if accepted == nil {
+		return false
+	}
+	basis := active.OrderBasis
+	return basis == nil || basis.TemplateVersion < accepted.Version || basisMatchesTemplate(basis, accepted)
+}
+
+func basisMatchesTemplate(basis *publication.OrderBasis, template *templates.Snapshot) bool {
+	if template == nil || basis.TemplateVersion != template.Version || basis.TemplateID != template.ID {
+		return false
+	}
+	var order []string
+	for _, section := range template.Sections {
+		if section.Name != "rules" {
+			continue
+		}
+		for _, item := range section.Elements {
+			order = append(order, item.Element.ID)
+		}
+	}
+	return slices.Equal(order, basis.SharedRuleIDs)
 }
 
 func readPublicationTemplate(ctx context.Context, tx *sql.Tx, query, id string) (*templates.Snapshot, error) {
@@ -203,7 +228,7 @@ func validFileRecords(records []publicationFileRecord) bool {
 	}
 	seen := make(map[string]struct{}, len(records))
 	for _, record := range records {
-		if _, exists := seen[record.Name]; !validPublicationID(record.Name) || exists || len(record.Bytes) == 0 {
+		if _, exists := seen[record.Name]; !validPublicationFilename(record.Name) || exists || len(record.Bytes) == 0 {
 			return false
 		}
 		seen[record.Name] = struct{}{}
@@ -212,3 +237,7 @@ func validFileRecords(records []publicationFileRecord) bool {
 }
 
 func validPublicationID(id string) bool { return id != "" && utf8.ValidString(id) }
+
+func validPublicationFilename(name string) bool {
+	return validPublicationID(name) && name != "." && name != ".." && !strings.ContainsAny(name, "/\\\x00")
+}

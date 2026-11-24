@@ -393,3 +393,40 @@ func TestPublicationBootstrapIsAtomicAndDoesNotActivateOtherDrafts(t *testing.T)
 		t.Fatalf("other draft was activated: %#v, %v", state, err)
 	}
 }
+
+func TestPublicationRejectsUnsafeStoredFileName(t *testing.T) {
+	db, _ := openPublicationDB(t)
+	plan := storeCurrentPublication(t, db)
+	plan.NewRevision.Files[0].Name = "../01_log.json"
+	store := NewPublications(db)
+	if _, err := store.Commit(t.Context(), plan); !errors.Is(err, publication.ErrInvalidState) {
+		t.Errorf("unsafe filename was accepted for write: %v", err)
+	}
+	for _, name := range []string{"../01_log.json", "/01_log.json", "sub/01_log.json", "sub\\01_log.json", "file\x00.json"} {
+		raw, _ := json.Marshal([]publicationFileRecord{{Name: name, Bytes: []byte("{}")}})
+		if _, err := db.Exec("UPDATE desired_router_revisions SET files = ?", raw); err != nil {
+			t.Fatal(err)
+		}
+		if result, err := store.Read(t.Context(), publication.ReadRequest{RouterID: plan.Settings.ID}); result != nil ||
+			!errors.Is(err, publication.ErrStoredState) {
+			t.Errorf("unsafe filename read as state: %q, %#v, %v", name, result, err)
+		}
+	}
+}
+
+func TestPublicationRejectsStoredBasisForDifferentOrderAtCurrentVersion(t *testing.T) {
+	db, _ := openPublicationDB(t)
+	plan := storeCurrentPublication(t, db)
+	unrelatedID := "550e8400-e29b-41d4-a716-446655440000"
+	plan.Settings.PersonalOrder = []string{unrelatedID}
+	basis := publication.OrderBasis{TemplateID: "A", TemplateVersion: 1, SharedRuleIDs: []string{unrelatedID}}
+	active, _ := json.Marshal(encodeRouterDraft(plan.Settings))
+	rawBasis, _ := json.Marshal(basis)
+	if _, err := db.Exec("UPDATE active_router_publications SET settings = ?, order_basis = ?", active, rawBasis); err != nil {
+		t.Fatal(err)
+	}
+	got, err := NewPublications(db).Read(t.Context(), publication.ReadRequest{RouterID: plan.Settings.ID})
+	if got != nil || !errors.Is(err, publication.ErrStoredState) {
+		t.Fatalf("wrong basis accepted: %#v, %v", got, err)
+	}
+}

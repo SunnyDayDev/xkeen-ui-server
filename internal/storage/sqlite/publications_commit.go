@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"math"
-	"slices"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/publication"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
@@ -194,19 +193,7 @@ func checkPublicationOrderBasis(ctx context.Context, tx *sql.Tx, plan publicatio
 	if err != nil {
 		return err
 	}
-	if template == nil || plan.OrderBasis.TemplateVersion != template.Version {
-		return publication.ErrInvalidState
-	}
-	var order []string
-	for _, section := range template.Sections {
-		if section.Name != "rules" {
-			continue
-		}
-		for _, item := range section.Elements {
-			order = append(order, item.Element.ID)
-		}
-	}
-	if !slices.Equal(order, plan.OrderBasis.SharedRuleIDs) {
+	if !basisMatchesTemplate(plan.OrderBasis, template) {
 		return publication.ErrInvalidState
 	}
 	return nil
