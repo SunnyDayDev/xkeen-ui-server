@@ -86,13 +86,23 @@ func (r TemplateRepository) Replace(ctx context.Context, draft configuration.Tem
 		return 0, operationError("replace template", ctx.Err())
 	}
 	defer tx.Rollback()
+	version, err := replaceTemplate(ctx, tx, draft.ID, raw, expectedVersion)
+	if err != nil {
+		return 0, err
+	}
+	if err := tx.Commit(); err != nil {
+		return 0, operationError("commit template replacement", ctx.Err())
+	}
+	return version, nil
+}
 
+func replaceTemplate(ctx context.Context, tx *sql.Tx, id string, raw []byte, expectedVersion int64) (int64, error) {
 	var version int64
-	err = tx.QueryRowContext(ctx, `UPDATE templates SET draft = ?, version = version + 1
-		WHERE id = ? AND version = ? AND version < ? RETURNING version`, raw, draft.ID, expectedVersion, int64(math.MaxInt64)).Scan(&version)
+	err := tx.QueryRowContext(ctx, `UPDATE templates SET draft = ?, version = version + 1
+		WHERE id = ? AND version = ? AND version < ? RETURNING version`, raw, id, expectedVersion, int64(math.MaxInt64)).Scan(&version)
 	if errors.Is(err, sql.ErrNoRows) {
 		// Classify a rejected comparison while the same write transaction is held.
-		err = tx.QueryRowContext(ctx, "SELECT version FROM templates WHERE id = ?", draft.ID).Scan(&version)
+		err = tx.QueryRowContext(ctx, "SELECT version FROM templates WHERE id = ?", id).Scan(&version)
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			return 0, templates.ErrNotFound
@@ -109,18 +119,28 @@ func (r TemplateRepository) Replace(ctx context.Context, draft configuration.Tem
 	if err != nil {
 		return 0, operationError("replace template", ctx.Err())
 	}
-	if err := tx.Commit(); err != nil {
-		return 0, operationError("commit template replacement", ctx.Err())
-	}
 	return version, nil
 }
 
 func encodeTemplate(draft configuration.TemplateDraft) ([]byte, error) {
+	return encodeTemplateRecords(draft, func(item configuration.Element, location configuration.ElementLocation) ([]byte, []configuration.ElementIssue) {
+		return elementjson.Encode(item, location, nil)
+	})
+}
+
+func encodeRestoredTemplate(draft configuration.TemplateDraft) ([]byte, error) {
+	if issues := configuration.ValidateTemplateDraft(draft); len(issues) != 0 {
+		return nil, &templates.InvalidDraftError{Issues: issues}
+	}
+	return encodeTemplateRecords(draft, elementjson.EncodeRestored)
+}
+
+func encodeTemplateRecords(draft configuration.TemplateDraft, encode func(configuration.Element, configuration.ElementLocation) ([]byte, []configuration.ElementIssue)) ([]byte, error) {
 	sections := make([]templateSectionRecord, len(draft.Sections))
 	for i, section := range draft.Sections {
 		sections[i] = templateSectionRecord{Name: section.Name, Elements: make([]templateElementRecord, len(section.Elements))}
 		for j, item := range section.Elements {
-			record, issues := elementjson.Encode(item.Element, draft.ElementLocation(i, j), nil)
+			record, issues := encode(item.Element, draft.ElementLocation(i, j))
 			if len(issues) != 0 {
 				return nil, &templates.InvalidDraftError{Issues: issues}
 			}

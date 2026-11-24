@@ -29,6 +29,20 @@ func Encode(input configuration.Element, location configuration.ElementLocation,
 	if len(issues) != 0 {
 		return nil, issues
 	}
+	return encodeElement(prepared, location)
+}
+
+// EncodeRestored preserves existing declarations while validating the record.
+// A scoped editor has already applied discovery to the element it changed.
+func EncodeRestored(input configuration.Element, location configuration.ElementLocation) ([]byte, []configuration.ElementIssue) {
+	validated, issues := configuration.RestoreElement(input, location)
+	if len(issues) != 0 {
+		return nil, issues
+	}
+	return encodeElement(validated, location)
+}
+
+func encodeElement(prepared *configuration.Element, location configuration.ElementLocation) ([]byte, []configuration.ElementIssue) {
 	r := record{ID: prepared.ID, Content: prepared.Content, Variables: make([]definition, len(prepared.Variables))}
 	for i, v := range prepared.Variables {
 		r.Variables[i] = definition{v.Name, v.Type, v.Default}
