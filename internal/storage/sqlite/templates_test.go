@@ -40,7 +40,7 @@ func TestTemplatesMigrationFromC01(t *testing.T) {
 	if got := readText(t, db, "SELECT value FROM c01_probe"); got != "demo.example" {
 		t.Errorf("prior data = %q", got)
 	}
-	if err := templates.New(NewTemplateRepository(db)).Create(t.Context(), configuration.TemplateDraft{ID: "migrated"}); err != nil {
+	if _, err := templates.New(NewTemplateRepository(db)).Create(t.Context(), configuration.TemplateDraft{ID: "migrated"}); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -69,7 +69,7 @@ func TestTemplatesConcurrentCreateAndReopen(t *testing.T) {
 		name := []string{"first", "second"}[i]
 		go func() {
 			<-start
-			err := templates.New(repo).Create(ctx, configuration.TemplateDraft{
+			_, err := templates.New(repo).Create(ctx, configuration.TemplateDraft{
 				ID: "same", Sections: []configuration.TemplateSection{{Name: name}},
 			})
 			done <- outcome{name, err}
@@ -105,7 +105,7 @@ func TestTemplatesConcurrentCreateAndReopen(t *testing.T) {
 	defer reopened.Close()
 	s := templates.New(NewTemplateRepository(reopened))
 	got, err := s.Get(ctx, "same")
-	if err != nil || len(got.Sections) != 1 || got.Sections[0].Name != saved {
+	if err != nil || got.Version != 1 || len(got.Sections) != 1 || got.Sections[0].Name != saved {
 		t.Fatalf("got %#v, %v; want winning draft %q", got, err, saved)
 	}
 	if _, err := reopened.Exec("UPDATE templates SET draft = ? WHERE id = ?", []byte(`{"private":"demo-private-value"}`), "same"); err != nil {
@@ -116,7 +116,7 @@ func TestTemplatesConcurrentCreateAndReopen(t *testing.T) {
 		t.Errorf("corrupt draft: %#v, %v", got, err)
 	}
 	for _, id := range []string{"Same", "same\x00", " same "} {
-		if err := s.Create(ctx, configuration.TemplateDraft{ID: id}); err != nil {
+		if _, err := s.Create(ctx, configuration.TemplateDraft{ID: id}); err != nil {
 			t.Errorf("distinct exact ID %q: %v", id, err)
 		}
 	}
@@ -149,7 +149,7 @@ func TestTemplatesPreserveEditingState(t *testing.T) {
 			{Element: configuration.Element{ID: "550e8400-e29b-41d4-a716-446655440001", Content: `"${partial} suffix"`}},
 		}},
 	}}
-	if err := s.Create(ctx, draft); err != nil {
+	if _, err := s.Create(ctx, draft); err != nil {
 		t.Fatal(err)
 	}
 	if err := db.Close(); err != nil {
@@ -171,13 +171,13 @@ func TestTemplatesPreserveEditingState(t *testing.T) {
 	draft.Sections[2].Elements[0].Element.Variables = append(draft.Sections[2].Elements[0].Element.Variables, configuration.VariableDefinition{
 		Name: "port", Type: "string", Default: json.RawMessage(`""`),
 	})
-	if !reflect.DeepEqual(got, &draft) {
+	if got.Version != 1 || !reflect.DeepEqual(got.TemplateDraft, draft) {
 		t.Fatalf("draft changed: %#v", got)
 	}
 	got.Sections[2].Elements[0].Element.Variables[1].Default[0] = '0'
 	got.Sections[0].Name = "edited"
 	again, err := s.Get(ctx, draft.ID)
-	if err != nil || !reflect.DeepEqual(again, &draft) {
+	if err != nil || again.Version != 1 || !reflect.DeepEqual(again.TemplateDraft, draft) {
 		t.Fatalf("mutated result changed re-read: %#v, %v", again, err)
 	}
 

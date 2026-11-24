@@ -25,6 +25,8 @@ var migrations = []string{
 	createMigrationHistory,
 	"CREATE TABLE templates (id TEXT PRIMARY KEY NOT NULL, draft BLOB NOT NULL)",
 	createRouterSettings,
+	`ALTER TABLE templates ADD COLUMN version INTEGER NOT NULL DEFAULT 1
+		CHECK (typeof(version) = 'integer' AND version >= 1)`,
 }
 
 func Open(ctx context.Context, path string) (*sql.DB, error) {

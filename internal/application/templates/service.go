@@ -10,45 +10,75 @@ import (
 )
 
 var (
-	ErrConflict = errors.New("template already exists")
-	ErrNotFound = errors.New("template not found")
-	ErrCorrupt  = errors.New("invalid stored template draft")
-	ErrInvalid  = errors.New("invalid template draft")
+	ErrConflict         = errors.New("template already exists")
+	ErrNotFound         = errors.New("template not found")
+	ErrCorrupt          = errors.New("invalid stored template draft")
+	ErrInvalid          = errors.New("invalid template draft")
+	ErrInvalidVersion   = fmt.Errorf("%w: expected version must be positive", ErrInvalid)
+	ErrVersionConflict  = errors.New("version_conflict")
+	ErrVersionExhausted = errors.New("template version exhausted")
 )
 
+// Snapshot is the complete saved draft and its version for this template ID.
+type Snapshot struct {
+	configuration.TemplateDraft
+	Version int64
+}
+
+// Repository writes complete snapshots without retaining their input buffers.
+// Replace checks and advances the version in the same commit as the draft.
 type Repository interface {
 	Insert(context.Context, configuration.TemplateDraft) error
-	Find(context.Context, string) (*configuration.TemplateDraft, error)
+	Find(context.Context, string) (*Snapshot, error)
+	Replace(ctx context.Context, draft configuration.TemplateDraft, expectedVersion int64) (int64, error)
 }
 
 type Service struct{ repository Repository }
 
 func New(repository Repository) Service { return Service{repository: repository} }
 
-func (s Service) Create(ctx context.Context, draft configuration.TemplateDraft) error {
+func (s Service) Create(ctx context.Context, draft configuration.TemplateDraft) (*Snapshot, error) {
 	prepared, err := copyDraft(draft, prepareElement)
-	if err != nil {
-		return err
-	}
-	return s.repository.Insert(ctx, prepared)
-}
-
-func (s Service) Get(ctx context.Context, id string) (*configuration.TemplateDraft, error) {
-	if id == "" || !utf8.ValidString(id) {
-		return nil, ErrInvalid
-	}
-	draft, err := s.repository.Find(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if draft == nil || draft.ID != id {
+	if err := s.repository.Insert(ctx, prepared); err != nil {
+		return nil, err
+	}
+	return &Snapshot{TemplateDraft: prepared, Version: 1}, nil
+}
+
+func (s Service) Get(ctx context.Context, id string) (*Snapshot, error) {
+	if id == "" || !utf8.ValidString(id) {
+		return nil, ErrInvalid
+	}
+	snapshot, err := s.repository.Find(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if snapshot == nil || snapshot.ID != id || snapshot.Version < 1 {
 		return nil, ErrCorrupt
 	}
-	restored, err := copyDraft(*draft, configuration.RestoreElement)
+	restored, err := copyDraft(snapshot.TemplateDraft, configuration.RestoreElement)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrCorrupt, err)
 	}
-	return &restored, nil
+	return &Snapshot{TemplateDraft: restored, Version: snapshot.Version}, nil
+}
+
+func (s Service) Replace(ctx context.Context, draft configuration.TemplateDraft, expectedVersion int64) (*Snapshot, error) {
+	if expectedVersion < 1 {
+		return nil, ErrInvalidVersion
+	}
+	prepared, err := copyDraft(draft, prepareElement)
+	if err != nil {
+		return nil, err
+	}
+	version, err := s.repository.Replace(ctx, prepared, expectedVersion)
+	if err != nil {
+		return nil, err
+	}
+	return &Snapshot{TemplateDraft: prepared, Version: version}, nil
 }
 
 func prepareElement(element configuration.Element, location configuration.ElementLocation) (*configuration.Element, []configuration.ElementIssue) {
