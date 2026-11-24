@@ -47,6 +47,11 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 		}
 		tlsConfig = &tls.Config{Certificates: []tls.Certificate{certificate}, MinVersion: tls.VersionTLS12}
 	}
+	validator, err := cfg.validator.open()
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	if cfg.createDefaultDBDir {
@@ -72,10 +77,11 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 		return 1
 	}
 	handler := server.NewHandler()
+	publications := sqlite.NewPublications(db)
 	if tlsConfig != nil {
 		listener = tls.NewListener(listener, tlsConfig)
-		watch := revisionwatch.New(ctx, sqlite.NewPublications(db), 25*time.Second, 128)
-		publications := sqlite.NewPublications(db, watch.Notify)
+		watch := revisionwatch.New(ctx, publications, 25*time.Second, 128)
+		publications = sqlite.NewPublications(db, watch.Notify)
 		credentials := agentcredentials.NewService(sqlite.NewAgentCredentials(db, watch.Notify), time.Now)
 		handler = server.NewAgentHandler(credentials, publications, sqlite.NewContacts(db, time.Now), watch)
 	}
@@ -83,6 +89,8 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 		webStore := sqlite.NewWebTemplates(db)
 		sessions := webadmin.New(sqlite.NewWebAdmin(db), time.Now)
 		handler = server.NewWebShellHandler(cfg.webOrigin, handler)
+		preparation := webadmin.NewRouterPreparation(sqlite.NewWebRouterPreparation(publications), validator, time.Now)
+		handler = server.NewWebRouterPreparationHandler(ctx, cfg.webOrigin, preparation, handler)
 		handler = server.NewWebTemplatesHandler(cfg.webOrigin, webadmin.NewTemplates(webStore, time.Now), handler)
 		handler = server.NewWebTemplateEditorHandler(cfg.webOrigin, webadmin.NewTemplateEditor(webStore, time.Now), sessions, handler)
 		handler = server.NewWebAdminHandler(cfg.webOrigin, sessions, handler)
