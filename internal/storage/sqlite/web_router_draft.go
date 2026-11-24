@@ -95,7 +95,7 @@ func (w WebRouterDrafts) Write(ctx context.Context, digest [32]byte, clock func(
 }
 
 func (w WebRouterDrafts) WriteOrder(ctx context.Context, digest [32]byte, clock func() time.Time, expected webadmin.RouterDraftBasis, draft routersettings.Draft, basis *publication.OrderBasis) (int64, error) {
-	if basis == nil || basis.SharedRuleIDs == nil || (draft.PersonalOrder != nil && !validStoredBasis(draft, basis)) {
+	if basis == nil {
 		return 0, routersettings.ErrInvalidDraft
 	}
 	return w.write(ctx, digest, clock, expected, draft, basis)
@@ -111,6 +111,9 @@ func (w WebRouterDrafts) write(ctx context.Context, digest [32]byte, clock func(
 func writeRouterDraft(ctx context.Context, db *sql.DB, expected routerdraft.Basis, draft routersettings.Draft, basis *publication.OrderBasis, guard publicationGuard) (int64, error) {
 	if draft.ID != expected.RouterID || draft.TemplateID != expected.TemplateID {
 		return 0, routerdraft.ErrConflict
+	}
+	if basis != nil && (basis.SharedRuleIDs == nil || (draft.PersonalOrder != nil && !validStoredBasis(draft, basis))) {
+		return 0, routersettings.ErrInvalidDraft
 	}
 	if err := routersettings.ValidateDraft(draft); err != nil {
 		return 0, err

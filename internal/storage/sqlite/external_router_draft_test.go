@@ -45,6 +45,17 @@ func TestExternalRouterDraftRechecksPermitAndVersionsInWriteTransaction(t *testi
 	if _, err := store.WriteExternalRouterDraft(ctx, permit, input.Basis, input.Editable); !errors.Is(err, externalaccess.ErrUnauthorized) {
 		t.Fatalf("writer accepted a revoked permit: %v", err)
 	}
+	rules, err := routerdraft.PrepareRules(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	withRule, orderBasis, err := rules.Insert("550e8400-e29b-41d4-a716-446655440010", "", []byte(`{}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.WriteExternalRouterOrder(ctx, permit, input.Basis, withRule, orderBasis); !errors.Is(err, externalaccess.ErrUnauthorized) {
+		t.Fatalf("order writer accepted a revoked permit: %v", err)
+	}
 	_, secret, err := store.Owner(ctx, owner, &externalaccess.Change{Version: policy.Version, Rotate: true})
 	if err != nil {
 		t.Fatal(err)

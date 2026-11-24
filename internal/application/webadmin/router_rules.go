@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/publication"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routerdraft"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
 	"github.com/google/uuid"
 )
@@ -40,7 +41,7 @@ func (e RouterRuleEditor) Read(ctx context.Context, token, routerID string) (Rou
 	if err != nil {
 		return RouterRuleView{}, err
 	}
-	prepared, err := prepareEditableRules(snapshot)
+	prepared, err := routerdraft.PrepareRules(snapshot)
 	if err != nil {
 		return RouterRuleView{}, err
 	}
@@ -87,7 +88,7 @@ func (e RouterRuleEditor) loadEditable(ctx context.Context, token, csrf string, 
 	if snapshot.Basis != basis {
 		return digest, RouterDraftSnapshot{}, nil, ErrRouterDraftConflict
 	}
-	prepared, err := prepareEditableRules(snapshot)
+	prepared, err := routerdraft.PrepareRules(snapshot)
 	return digest, snapshot, prepared, err
 }
 
@@ -103,11 +104,4 @@ func (e RouterRuleEditor) saveEditable(ctx context.Context, digest [32]byte, sna
 	}
 	basis.DraftGeneration = generation
 	return RouterRuleView{Basis: basis, Name: snapshot.Name, Rules: result.Entries, PersonalOrder: draft.PersonalOrder != nil}, nil
-}
-
-func prepareEditableRules(snapshot RouterDraftSnapshot) (*publication.DraftRules, error) {
-	if snapshot.Editable.TemplateID != snapshot.Basis.TemplateID {
-		return nil, ErrRouterDraftForeign
-	}
-	return publication.PrepareDraftRules(snapshot.Accepted, snapshot.Editable, snapshot.OrderBasis)
 }
