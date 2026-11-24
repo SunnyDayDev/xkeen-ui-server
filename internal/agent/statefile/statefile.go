@@ -131,6 +131,11 @@ func (s *Store) writePrivate(name string, raw []byte) error {
 	if err := unix.Renameat(fd, temp, fd, name); err != nil {
 		return enrollment.ErrState
 	}
+	return s.syncPrivateDirectories()
+}
+
+func (s *Store) syncPrivateDirectories() error {
+	fd := int(s.dir.Fd())
 	if err := s.dir.Sync(); err != nil {
 		return enrollment.ErrState
 	}

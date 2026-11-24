@@ -36,13 +36,19 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	origin := flags.String("server", "", "configured HTTPS server origin")
 	stateDir := flags.String("state-dir", "", "private state directory")
 	caFile := flags.String("ca-file", "", "optional PEM file with trusted certificates")
+	validatorSocket := flags.String("local-validator-socket", "", "protected local preparation supervisor socket")
+	verifier := flags.String("local-verifier", "", "trusted local preparation profile ID")
 	if err := flags.Parse(args); errors.Is(err, flag.ErrHelp) {
-		fmt.Fprintln(stdout, "Usage: xkeen-agent --server HTTPS_ORIGIN --state-dir PATH [--ca-file PATH]")
+		fmt.Fprintln(stdout, "Usage: xkeen-agent --server HTTPS_ORIGIN --state-dir PATH [--ca-file PATH] [--local-validator-socket PATH --local-verifier ID]")
 		flags.SetOutput(stdout)
 		flags.PrintDefaults()
 		return 0
 	} else if err != nil || flags.NArg() != 0 || *origin == "" || *stateDir == "" {
 		fmt.Fprintln(stderr, "invalid agent arguments: HTTPS server and state directory are required")
+		return 2
+	}
+	if (*validatorSocket == "") != (*verifier == "") {
+		fmt.Fprintln(stderr, "invalid local preparation profile")
 		return 2
 	}
 	roots, err := loadTrustedRoots(*caFile)
@@ -95,6 +101,8 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
+	prepare := candidatePreparation{socket: *validatorSocket, profile: *verifier, binding: *binding, store: store, out: stdout, diagnostics: stderr}
+	prepare.check(ctx, snapshot)
 	fmt.Fprintln(stdout, "agent authenticated")
 	var latest int64
 	if snapshot != nil {
@@ -103,7 +111,11 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	ticker := time.NewTicker(time.Minute)
 	defer ticker.Stop()
 	err = revisionloop.Run(ctx, binding.Key, latest, ticker.C, client, func(ctx context.Context) (*agentrevision.Snapshot, error) {
-		return desired.Sync(ctx, *binding, store, client)
+		snapshot, err := desired.Sync(ctx, *binding, store, client)
+		if err == nil {
+			prepare.check(ctx, snapshot)
+		}
+		return snapshot, err
 	})
 	if ctx.Err() != nil {
 		return 0

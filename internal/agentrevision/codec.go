@@ -44,6 +44,11 @@ var catalogNames = [...]string{
 	"01_log.json", "02_api.json", "03_inbounds.json", "04_outbounds.json", "05_routing.json", "06_extra.json",
 }
 
+// Tag validates the exact named files and identifies their canonical representation.
+func Tag(routerID string, snapshot Snapshot) (string, error) {
+	return snapshotTag(routerID, snapshot.Number, snapshot.Profile, sortedFiles(snapshot.Files))
+}
+
 // Encode produces the canonical uncompressed representation and its strong tag.
 func Encode(routerID string, snapshot Snapshot) (string, []byte, error) {
 	files := sortedFiles(snapshot.Files)
