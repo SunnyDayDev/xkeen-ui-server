@@ -8,10 +8,11 @@
   type Props = {
     selectedId: string; openRouter: (event: MouseEvent, path: string) => void;
     openInbounds: (event: MouseEvent, path: string) => void;
+    openCatalog: (event: MouseEvent, path: string) => void;
     openEnrollment: (event: MouseEvent, path: string) => void;
     closeRouter: () => void; openVariables: (event: MouseEvent, path: string) => void; openRules: (event: MouseEvent, path: string) => void; signedOut: () => void;
   };
-  let {selectedId, openRouter, openEnrollment, closeRouter, openVariables, openRules, openInbounds, signedOut}: Props = $props();
+  let {selectedId, openRouter, openEnrollment, closeRouter, openVariables, openRules, openInbounds, openCatalog, signedOut}: Props = $props();
 
   let rows = $state<Router[]>();
   let failed = $state(false);
@@ -136,6 +137,8 @@
           onclick={(event) => openRules(event,event.currentTarget.pathname+event.currentTarget.search)}>Маршрутизация</a>
         <a href={'/ui/routers/inbounds?' + new URLSearchParams({routerId:detail.routerId})}
           onclick={(event) => openInbounds(event,event.currentTarget.pathname+event.currentTarget.search)}>Входы</a>
+        <a href={'/ui/routers/catalog?' + new URLSearchParams({routerId:detail.routerId})}
+          onclick={(event) => openCatalog(event,event.currentTarget.pathname+event.currentTarget.search)}>Файлы</a>
       {/if}
     </aside>
   {/if}

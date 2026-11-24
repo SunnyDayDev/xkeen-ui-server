@@ -116,6 +116,8 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 		handler = server.NewWebRouterRulesHandler(cfg.webOrigin, rules, sessions, handler)
 		inbounds := webadmin.RouterInboundEditor{Store: routerDrafts, Now: time.Now}
 		handler = server.NewWebRouterInboundHandler(cfg.webOrigin, inbounds, sessions, handler)
+		catalog := webadmin.NewRouterCatalogPreview(sqlite.NewWebRouterCatalog(publications), time.Now)
+		handler = server.NewWebRouterCatalogHandler(cfg.webOrigin, catalog, handler)
 		handler = server.NewWebTemplatesHandler(cfg.webOrigin, webadmin.NewTemplates(webStore, time.Now), handler)
 		handler = server.NewWebTemplateCopyHandler(cfg.webOrigin, webadmin.NewTemplateCopy(webStore, time.Now), sessions, handler)
 		handler = server.NewWebTemplateEditorHandler(cfg.webOrigin, webadmin.NewTemplateEditor(webStore, time.Now), sessions, handler)

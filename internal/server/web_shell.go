@@ -16,7 +16,7 @@ var webAssets embed.FS
 func NewWebShellHandler(origin WebOrigin, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		name := r.URL.Path
-		if name != "/ui" && name != "/ui/" && name != "/ui/templates" && name != "/ui/templates/item" && name != "/ui/templates/exclusions" && name != "/ui/templates/copy" && name != "/ui/settings" && name != "/ui/routers/connect" && name != "/ui/routers/enroll" && name != "/ui/routers/variables" && name != "/ui/routers/replacement" && name != "/ui/routers/exclusions" && name != "/ui/routers/rules" && name != "/ui/routers/inbounds" && !strings.HasPrefix(name, "/ui/assets/") {
+		if name != "/ui" && name != "/ui/" && name != "/ui/templates" && name != "/ui/templates/item" && name != "/ui/templates/exclusions" && name != "/ui/templates/copy" && name != "/ui/settings" && name != "/ui/routers/connect" && name != "/ui/routers/enroll" && name != "/ui/routers/variables" && name != "/ui/routers/replacement" && name != "/ui/routers/exclusions" && name != "/ui/routers/rules" && name != "/ui/routers/inbounds" && name != "/ui/routers/catalog" && !strings.HasPrefix(name, "/ui/assets/") {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -38,7 +38,7 @@ func NewWebShellHandler(origin WebOrigin, next http.Handler) http.Handler {
 		switch name {
 		case "/ui":
 			http.Redirect(w, r, "/ui/", http.StatusTemporaryRedirect)
-		case "/ui/", "/ui/templates", "/ui/templates/item", "/ui/templates/exclusions", "/ui/templates/copy", "/ui/settings", "/ui/routers/connect", "/ui/routers/enroll", "/ui/routers/variables", "/ui/routers/replacement", "/ui/routers/exclusions", "/ui/routers/rules", "/ui/routers/inbounds":
+		case "/ui/", "/ui/templates", "/ui/templates/item", "/ui/templates/exclusions", "/ui/templates/copy", "/ui/settings", "/ui/routers/connect", "/ui/routers/enroll", "/ui/routers/variables", "/ui/routers/replacement", "/ui/routers/exclusions", "/ui/routers/rules", "/ui/routers/inbounds", "/ui/routers/catalog":
 			w.Header().Set("Content-Security-Policy", "default-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; object-src 'none'")
 			serveWebAsset(w, r, "index.html")
 		default:
