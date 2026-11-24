@@ -103,9 +103,27 @@ func checkControlledApplication(t *testing.T, mode string) {
 		t.Fatal("cannot create private agent fixture")
 	}
 	var unavailable atomic.Bool
-	allow := faultableApplicationProbe(t, "allowed-fixture", &unavailable)
+	allow := faultableApplicationProbe(t, "allowed-fixture", unavailable.Load)
 	deny := localProbeEndpoint(t, "denied-fixture")
-	target := localProbeEndpoint(t, "target-fixture")
+	var failAfterReplacement atomic.Bool
+	target := faultableApplicationProbe(t, "target-fixture", func() bool {
+		if !failAfterReplacement.Load() {
+			return false
+		}
+		raw, err := exec.Command(xray, "api", "lsrules", "--server=127.0.0.1:10085", "--timeout=1").Output()
+		var list struct {
+			Rules []struct{ RuleTag, Tag string }
+		}
+		if err != nil || json.Unmarshal(raw, &list) != nil {
+			return false
+		}
+		for _, r := range list.Rules {
+			if r.RuleTag == "switch" && r.Tag == "block" {
+				return failAfterReplacement.CompareAndSwap(true, false)
+			}
+		}
+		return false
+	})
 	_, deniedPort, _ := net.SplitHostPort(deny)
 	_, targetPort, _ := net.SplitHostPort(target)
 	free, err := net.Listen("tcp4", "127.0.0.1:0")
@@ -335,6 +353,22 @@ func checkControlledApplication(t *testing.T, mode string) {
 		}
 		checkTraffic(target, "target-fixture", true)
 		checkTraffic(deny, "denied-fixture", false)
+		failAfterReplacement.Store(true)
+		publish(catalog(true, false), 4)
+		failed, output := launchAgent()
+		failed()
+		var record restart.Record
+		raw, err := os.ReadFile(path("journal/application.json"))
+		if err != nil || json.Unmarshal(raw, &record) != nil || failAfterReplacement.Load() || record.LastRollback == nil || record.LastRollback.FailedPhase != restart.HotDispatch || record.Current == nil || record.Current.AttemptID != revived.AttemptID || record.Current.Baseline.Runtime == revived.Baseline.Runtime || record.Pending != nil || !strings.Contains(output.String(), "previous runtime restored") {
+			t.Fatalf("hot post-command rollback failed, invoked=%t log=%s", !failAfterReplacement.Load(), output.String())
+		}
+		checkTraffic(target, "target-fixture", true)
+		for _, file := range candidate.Files {
+			raw, err := os.ReadFile(path("work/" + file.Name))
+			if err != nil || !bytes.Equal(raw, file.Content) {
+				t.Fatal("hot rollback lost previous bytes")
+			}
+		}
 		stopRouterAgent(t, supervisor)
 		return
 	}
@@ -634,14 +668,14 @@ func checkControlledApplication(t *testing.T, mode string) {
 	checkTraffic(target, "target-fixture", true)
 }
 
-func faultableApplicationProbe(t *testing.T, marker string, unavailable *atomic.Bool) string {
+func faultableApplicationProbe(t *testing.T, marker string, unavailable func() bool) string {
 	t.Helper()
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
 	}
 	server := &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		if unavailable.Load() {
+		if unavailable() {
 			w.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
