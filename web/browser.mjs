@@ -1,3 +1,4 @@
+import { checkExternalAccess } from './external-access-browser.mjs';
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
 import { createHash, X509Certificate } from 'node:crypto';
@@ -67,6 +68,7 @@ try {
   await page.getByRole('heading', {name:'Обзор'}).waitFor();
   assert.equal(await page.getByRole('link',{name:'Обзор'}).getAttribute('aria-current'),'page');
 
+  await checkExternalAccess(page, () => admin('reset',first), first);
   const templates = page.getByRole('link', {name:'Шаблоны'});
   await page.route('**/ui/v1/templates', async route => {
     await new Promise(resolve => setTimeout(resolve, 220));

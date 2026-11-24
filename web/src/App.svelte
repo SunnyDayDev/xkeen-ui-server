@@ -1,12 +1,14 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
+  import ExternalSettings from './ExternalSettings.svelte';
   import { sessionRequest, type Session } from './session';
 
   import TemplateList from './TemplateList.svelte';
 
-  type Section = 'overview' | 'templates';
+  type Section = 'overview' | 'templates' | 'settings';
 
   function sectionForPath(): Section {
+    if (location.pathname === '/ui/settings') return 'settings';
     return location.pathname === '/ui/templates' ? 'templates' : 'overview';
   }
 
@@ -18,7 +20,7 @@
   let expired = $state(false);
   let busy = $state(false);
   let password = $state('');
-  let csrf = '';
+  let csrf = $state('');
   let passwordField = $state<HTMLInputElement>();
   let workspace = $state<HTMLElement>();
   let reading = false;
@@ -173,11 +175,17 @@
           onclick={(event) => navigate(event, '/ui/', 'overview')}>Обзор</a>
         <a href="/ui/templates" aria-current={section === 'templates' ? 'page' : undefined}
           onclick={(event) => navigate(event, '/ui/templates', 'templates')}>Шаблоны</a>
+        <a href="/ui/settings" aria-current={section === 'settings' ? 'page' : undefined}
+          onclick={(event) => navigate(event, '/ui/settings', 'settings')}>Настройки</a>
       </nav>
       <button onclick={logout} disabled={busy}>Выйти</button>
     </header>
     <main bind:this={workspace} tabindex="-1">
-      <h1>{section === 'templates' ? 'Шаблоны' : 'Обзор'}</h1>
+      {#if section === 'settings'}
+        {#if view === 'active'}{#key csrf}<ExternalSettings {csrf} refreshSession={refresh} />{/key}{/if}
+      {:else}
+        <h1>{section === 'templates' ? 'Шаблоны' : 'Обзор'}</h1>
+      {/if}
       {#if section === 'templates'}
         <TemplateList active={view === 'active'} signedOut={() => { void endAccess('signed_out'); }} />
       {/if}

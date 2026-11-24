@@ -16,7 +16,7 @@ var webAssets embed.FS
 func NewWebShellHandler(origin WebOrigin, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		name := r.URL.Path
-		if name != "/ui" && name != "/ui/" && name != "/ui/templates" && !strings.HasPrefix(name, "/ui/assets/") {
+		if name != "/ui" && name != "/ui/" && name != "/ui/templates" && name != "/ui/settings" && !strings.HasPrefix(name, "/ui/assets/") {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -38,7 +38,7 @@ func NewWebShellHandler(origin WebOrigin, next http.Handler) http.Handler {
 		switch name {
 		case "/ui":
 			http.Redirect(w, r, "/ui/", http.StatusTemporaryRedirect)
-		case "/ui/", "/ui/templates":
+		case "/ui/", "/ui/templates", "/ui/settings":
 			w.Header().Set("Content-Security-Policy", "default-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; object-src 'none'")
 			serveWebAsset(w, r, "index.html")
 		default:
