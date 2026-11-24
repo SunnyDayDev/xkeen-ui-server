@@ -25,11 +25,17 @@ func TestProcessWebRouterEnrollment(t *testing.T) {
 	database := filepath.Join(dir, "server.sqlite")
 	_, credentials := fixtureEnrollment(t, database)
 	const elementID = "550e8400-e29b-41d4-a716-446655440000"
+	const usedInbound = "550e8400-e29b-41d4-a716-446655440011"
+	const freeInbound = "550e8400-e29b-41d4-a716-446655440012"
+	const localInbound = "550e8400-e29b-41d4-a716-446655440013"
 	db, err := sqlite.Open(t.Context(), database)
 	if err != nil {
 		t.Fatal(err)
 	}
-	draft := []byte(`[{"name":"outbounds","elements":[{"disabled":false,"record":{"id":"` + elementID + `","content":"{\"tag\":\"example\",\"test\":\"$` + "{port}" + `\"}","variables":[{"name":"port","type":"number","default":443}]}}]}]`)
+	draft := []byte(`[{"name":"outbounds","elements":[{"disabled":false,"record":{"id":"` + elementID + `","content":"{\"tag\":\"example\",\"test\":\"$` + "{port}" + `\"}","variables":[{"name":"port","type":"number","default":443}]}}]},
+		{"name":"inbounds","elements":[
+		{"disabled":false,"record":{"id":"` + usedInbound + `","content":"{\"tag\":\"used-inbound\"}","variables":[]}},
+		{"disabled":false,"record":{"id":"` + freeInbound + `","content":"{\"tag\":\"free-inbound\"}","variables":[]}}]}]`)
 	if _, err := db.ExecContext(t.Context(), "UPDATE accepted_templates SET draft=?", draft); err != nil {
 		t.Fatal(err)
 	}
@@ -213,7 +219,7 @@ func TestProcessWebRouterEnrollment(t *testing.T) {
 	if !bytes.Contains(body, []byte(`"rules":[]`)) {
 		t.Fatal("empty full rule order did not round-trip")
 	}
-	ruleSource := " \r\n{\"ruleTag\":\"new-rule\",\"weight\":9007199254740993}\n"
+	ruleSource := " \r\n{\"ruleTag\":\"new-rule\",\"weight\":9007199254740993,\"inboundTag\":42}\n"
 	insertRule, _ := json.Marshal(map[string]string{"templateId": "template-example", "activeGeneration": "1", "acceptedVersion": "1",
 		"draftGeneration": "6", "afterId": "", "source": ruleSource})
 	body, _ = request(http.MethodPost, rulePath, insertRule, http.StatusOK)
@@ -232,7 +238,7 @@ func TestProcessWebRouterEnrollment(t *testing.T) {
 	}
 	firstLocal := ordered.Rules[0].ID
 	secondInsert, _ := json.Marshal(map[string]string{"templateId": "template-example", "activeGeneration": "1", "acceptedVersion": "1",
-		"draftGeneration": "7", "afterId": firstLocal, "source": `{"ruleTag":"second-local"}`})
+		"draftGeneration": "7", "afterId": firstLocal, "source": `{"ruleTag":"second-local","inboundTag":["used-inbound"]}`})
 	body, _ = request(http.MethodPost, rulePath, secondInsert, http.StatusOK)
 	if json.Unmarshal(body, &ordered) != nil || ordered.DraftGeneration != "8" || len(ordered.Rules) != 2 {
 		t.Fatal("second local rule missing")
@@ -254,6 +260,45 @@ func TestProcessWebRouterEnrollment(t *testing.T) {
 	body, _ = request(http.MethodPatch, rulePath, reset, http.StatusOK)
 	if json.Unmarshal(body, &ordered) != nil || ordered.DraftGeneration != "10" || ordered.Rules[0].ID != secondLocal || ordered.Rules[1].ID != firstLocal {
 		t.Fatal("template reset moved positional local rules")
+	}
+	disabled, _ := json.Marshal([]string{firstLocal})
+	localGroup := `{"Name":"inbounds","Local":[{"ID":"` + localInbound + `","Content":"` +
+		base64.StdEncoding.EncodeToString([]byte(`{"tag":"local-inbound"}`)) + `"}],"Overrides":null,"Exclusions":null}`
+	if _, err := db.ExecContext(t.Context(), `UPDATE router_settings
+		SET snapshot=json_insert(json_set(CAST(snapshot AS TEXT), '$.DisabledRules', json(?)), '$.Groups[#]', json(?)),
+			generation=generation+1 WHERE id='router-example'`, string(disabled), localGroup); err != nil {
+		t.Fatal(err)
+	}
+	const inboundsPath = "/ui/v1/routers/inbounds?routerId=router-example&elementId="
+	body, _ = request(http.MethodGet, inboundsPath+usedInbound, nil, http.StatusOK)
+	if !bytes.Contains(body, []byte(`"tag":"used-inbound"`)) ||
+		!bytes.Contains(body, []byte(`"ruleId":"`+secondLocal+`"`)) || bytes.Contains(body, []byte(`"weight"`)) {
+		t.Fatalf("dependency read did not return the exact effective rule: %s", body)
+	}
+	changeInbound := func(id, generation, action string, want int) []byte {
+		raw := []byte(basisJSON + `"draftGeneration":"` + generation + `","action":"` + action + `"}`)
+		body, _ := request(http.MethodPost, inboundsPath+id, raw, want)
+		return body
+	}
+	for _, action := range []string{"disable", "remove"} {
+		blocked := changeInbound(usedInbound, "11", action, http.StatusConflict)
+		if !bytes.Contains(blocked, []byte(`"state":"inbound_in_use"`)) ||
+			!bytes.Contains(blocked, []byte(`"ruleId":"`+secondLocal+`"`)) {
+			t.Fatalf("used inbound was not guarded: %s", blocked)
+		}
+	}
+	changeInbound(freeInbound, "11", "disable", http.StatusOK)
+	changeInbound(freeInbound, "11", "remove", http.StatusConflict)
+	changeInbound(freeInbound, "12", "remove", http.StatusOK)
+	request(http.MethodGet, inboundsPath+freeInbound, nil, http.StatusNotFound)
+	changeInbound(localInbound, "13", "disable", http.StatusOK)
+	changeInbound(localInbound, "14", "remove", http.StatusOK)
+	request(http.MethodGet, inboundsPath+localInbound, nil, http.StatusNotFound)
+	var stored, storedOrder []byte
+	if err := db.QueryRowContext(t.Context(), "SELECT snapshot, order_basis FROM router_settings WHERE id='router-example'").Scan(&stored, &storedOrder); err != nil ||
+		!bytes.Contains(stored, []byte(`"Exclusions":[{"TemplateID":"template-example","ElementID":"`+freeInbound+`"}]`)) ||
+		bytes.Contains(stored, []byte(localInbound)) || storedOrder == nil {
+		t.Fatalf("inbound change rewrote source, local data or ordering: %s / %v", stored, err)
 	}
 	var desired int
 	if err := db.QueryRowContext(t.Context(), "SELECT max(revision) FROM desired_router_revisions").Scan(&desired); err != nil || desired != 1 {

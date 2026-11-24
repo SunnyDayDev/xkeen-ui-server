@@ -31,6 +31,7 @@ type parsedInboundReference struct {
 type InboundAnalysis struct {
 	FullRules  []RuleOrderEntry
 	References []InboundReference
+	Tags       map[string]string // Effective tag by inbound UUID.
 	Ready      bool
 }
 
@@ -204,7 +205,11 @@ func analyzePreparedInbounds(input RouterSelectionInput, full []RuleOrderEntry, 
 			ready = false
 		}
 	}
-	return &InboundAnalysis{FullRules: full, References: references, Ready: ready}, nil
+	tags := make(map[string]string, len(providers))
+	for tag, provider := range providers {
+		tags[provider.id] = tag
+	}
+	return &InboundAnalysis{FullRules: full, References: references, Tags: tags, Ready: ready}, nil
 }
 
 type inboundProvider struct {

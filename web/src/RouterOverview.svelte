@@ -7,10 +7,11 @@
   };
   type Props = {
     selectedId: string; openRouter: (event: MouseEvent, path: string) => void;
+    openInbounds: (event: MouseEvent, path: string) => void;
     openEnrollment: (event: MouseEvent, path: string) => void;
     closeRouter: () => void; openVariables: (event: MouseEvent, path: string) => void; openRules: (event: MouseEvent, path: string) => void; signedOut: () => void;
   };
-  let {selectedId, openRouter, openEnrollment, closeRouter, openVariables, openRules, signedOut}: Props = $props();
+  let {selectedId, openRouter, openEnrollment, closeRouter, openVariables, openRules, openInbounds, signedOut}: Props = $props();
 
   let rows = $state<Router[]>();
   let failed = $state(false);
@@ -133,6 +134,8 @@
         <a href={keys} onclick={event => openEnrollment(event,keys)}>Рабочий ключ</a>
         <a href={'/ui/routers/rules?' + new URLSearchParams({routerId:detail.routerId})}
           onclick={(event) => openRules(event,event.currentTarget.pathname+event.currentTarget.search)}>Маршрутизация</a>
+        <a href={'/ui/routers/inbounds?' + new URLSearchParams({routerId:detail.routerId})}
+          onclick={(event) => openInbounds(event,event.currentTarget.pathname+event.currentTarget.search)}>Входы</a>
       {/if}
     </aside>
   {/if}
