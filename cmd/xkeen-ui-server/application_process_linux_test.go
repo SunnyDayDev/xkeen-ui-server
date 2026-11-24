@@ -35,6 +35,12 @@ func TestProcessAgentAppliesTwoControlledGenerations(t *testing.T) {
 	checkControlledApplication(t, "apply")
 }
 
+func TestProcessAgentAppliesGuardedHotRules(t *testing.T) {
+	if os.Getenv("XKEEN_TEST_HOT") != "1" {
+		t.Skip("isolated hot application lab required")
+	}
+	checkControlledApplication(t, "hot")
+}
 func TestProcessAgentRollbackOutcomes(t *testing.T) {
 	checkControlledApplication(t, "rollback")
 }
@@ -117,6 +123,17 @@ func checkControlledApplication(t *testing.T, mode string) {
 			ports += "," + targetPort
 		}
 		c.Files[4].Content = []byte(fmt.Sprintf(`{"routing":{"rules":[{"type":"field","port":%q,"outboundTag":"block"}]}}`, ports))
+		if mode == "hot" {
+			c.Files[0].Content = []byte(`{"log":{"loglevel":"warning"}}`)
+			c.Files[1].Content = []byte(`{"api":{"tag":"api","listen":"127.0.0.1:10085","services":["RoutingService","StatsService"]},"stats":{}}`)
+			c.Files[2].Content = []byte(fmt.Sprintf(`{"inbounds":[{"port":%s,"listen":"127.0.0.1","protocol":"socks","tag":"fixture-socks","settings":{"auth":"noauth","udp":false}}]}`, proxyPort))
+			out := "direct"
+			if denyTarget {
+				out = "block"
+			}
+			c.Files[4].Content = []byte(fmt.Sprintf(`{"routing":{"domainStrategy":"AsIs","rules":[{"type":"field","ruleTag":"health","inboundTag":["fixture-socks"],"port":%q,"outboundTag":"block"},{"type":"field","ruleTag":"switch","inboundTag":["fixture-socks"],"port":%q,"outboundTag":%q}]}}`, deniedPort, targetPort, out))
+			return c
+		}
 		if extra {
 			c.Files = append(c.Files, configuration.CatalogFile{Name: "06_extra.json", Content: []byte("{ \"stats\": {} }\n")})
 		}
@@ -149,6 +166,14 @@ func checkControlledApplication(t *testing.T, mode string) {
 		WorkerUID: workerUID, WorkerGID: workerUID, Xray: xray, XraySHA256: hex.EncodeToString(digest[:]),
 		WorkingDirectory: path("work"), WorkingManifest: manifest, WorkingPID: oldPID, WorkingStartTick: oldTick,
 		SOCKS: proxy, AllowURL: "http://" + allow, AllowMarker: "allowed-fixture", DenyURL: "http://" + deny, DenyMarker: "denied-fixture"}
+	if mode == "hot" {
+		filter, err := os.ReadFile("/opt/sbin/iptables")
+		if err != nil {
+			t.Fatal(err)
+		}
+		sum := sha256.Sum256(filter)
+		cfg.Hot = &localvalidation.HotConfig{API: "127.0.0.1:10085", ProbeURL: "http://" + target, ProbeMarker: "target-fixture", FirewallSHA256: hex.EncodeToString(sum[:])}
+	}
 	app := localvalidation.ApplicationConfig{Version: 1, Mode: "direct-xray-lab", Socket: path("socket/apply.sock"),
 		JournalDirectory: path("journal"), CA: path("trusted-ca.pem"), RuntimeUID: runtimeUID, RuntimeGID: runtimeUID}
 	writeConfig := func(name string, value any) {
@@ -264,6 +289,52 @@ func checkControlledApplication(t *testing.T, mode string) {
 	first, _ := committed()
 	if first.Number != 2 || first.Baseline.Runtime.PID == oldPID || first.Baseline.Runtime.BootID == "" {
 		t.Fatal("first restart did not commit a new runtime")
+	}
+	if mode == "hot" {
+		if first.Guard == "" {
+			t.Fatal("protected launcher did not prove guarded startup")
+		}
+		stop()
+		checkTraffic(target, "target-fixture", false)
+		candidate := catalog(false, false)
+		publish(candidate, 3)
+		stop2, out := launchAgent()
+		stop2()
+		next, _ := committed()
+		if next.Number != 3 || next.Hot == nil || next.Hot.Outcome != "direct" || next.Baseline.Runtime != first.Baseline.Runtime {
+			t.Fatalf("hot application failed number=%d hot=%t log=%s", next.Number, next.Hot != nil, out.String())
+		}
+		checkTraffic(target, "target-fixture", true)
+		checkTraffic(allow, "allowed-fixture", true)
+		checkTraffic(deny, "denied-fixture", false)
+		for _, file := range candidate.Files {
+			raw, err := os.ReadFile(path("work/" + file.Name))
+			if err != nil || string(raw) != string(file.Content) {
+				t.Fatal("target file mismatch")
+			}
+		}
+		stopRouterAgent(t, supervisor)
+		supervisor = startSupervisor()
+		stop3, out := launchAgent()
+		stop3()
+		replay, _ := committed()
+		if replay.AttemptID != next.AttemptID || replay.Baseline.Runtime != next.Baseline.Runtime || !strings.Contains(out.String(), "agent revision verified locally") {
+			t.Fatal("reopened hot receipt did not verify")
+		}
+		stopRouterAgent(t, supervisor)
+		if err := syscall.Kill(next.Baseline.Runtime.PID, syscall.SIGTERM); err != nil {
+			t.Fatal(err)
+		}
+		waitRecovery(t, 6*time.Second, "hot process did not terminate", func() bool { _, err := localvalidation.ProcessStartTick(next.Baseline.Runtime.PID); return err != nil })
+		supervisor = startSupervisor()
+		revived, _ := committed()
+		if revived.Hot == nil || revived.AttemptID != next.AttemptID || revived.Baseline.Runtime == next.Baseline.Runtime {
+			t.Fatal("hot generation cold restart proof")
+		}
+		checkTraffic(target, "target-fixture", true)
+		checkTraffic(deny, "denied-fixture", false)
+		stopRouterAgent(t, supervisor)
+		return
 	}
 	extra, err := os.Stat(path("work/06_extra.json"))
 	if err != nil || extra.Mode().Perm() != 0640 || extra.Sys().(*syscall.Stat_t).Gid != runtimeUID {

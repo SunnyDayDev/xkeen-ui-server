@@ -15,6 +15,7 @@ import (
 )
 
 type Config struct {
+	Hot                                               *HotConfig `json:",omitempty"`
 	Version                                           int
 	Scope                                             preparation.Scope
 	Socket, StageDirectory, CgroupDirectory           string

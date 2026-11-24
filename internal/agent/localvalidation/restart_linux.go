@@ -25,6 +25,9 @@ import (
 // RestartWorking manages a dedicated direct Xray service. The owning supervisor
 // holds the persistent scope lock for all supported starts and mutations.
 type RestartWorking struct {
+	hot            *HotConfig
+	guardedRuntime preparation.Runtime
+	guardedPolicy  string
 	scope          preparation.Scope
 	initial        Working
 	binary, bootID string
@@ -57,7 +60,7 @@ func NewRestartWorking(cfg Config, uid, gid uint32) (*RestartWorking, error) {
 		lease.Close()
 		return nil, restart.ErrBaseline
 	}
-	return &RestartWorking{scope: cfg.Scope, initial: cfg.Observer(), binary: cfg.Xray,
+	return &RestartWorking{hot: cfg.Hot, scope: cfg.Scope, initial: cfg.Observer(), binary: cfg.Xray,
 		bootID: strings.TrimSpace(string(raw)), uid: uid, gid: gid, directory: dir, lease: lease}, nil
 }
 
@@ -77,7 +80,11 @@ func (w *RestartWorking) Observe(ctx context.Context, current *restart.Confirmed
 		}
 		probe.Manifest = expected
 	}
-	return w.observe(ctx, probe)
+	observed, err := w.observe(ctx, probe)
+	if err == nil && current != nil && current.Hot != nil && !current.Hot.Matches(w.RuleEvidence(ctx, current)) {
+		return preparation.Baseline{}, restart.ErrBaseline
+	}
+	return observed, err
 }
 
 func (w *RestartWorking) observe(ctx context.Context, probe Working) (preparation.Baseline, error) {
@@ -182,6 +189,12 @@ func (w *RestartWorking) StartCommitted(ctx context.Context, journal restart.Jou
 	}
 	if record.Current != nil {
 		current.Baseline = observed
+		current.Guard = w.LaunchGuard(observed.Runtime)
+		if current.Hot != nil {
+			if current.Guard != current.Hot.Guard || !current.Hot.Matches(w.RuleEvidence(ctx, current)) {
+				return restart.ErrBaseline
+			}
+		}
 	} else {
 		record.LocalBaseline = &observed
 	}
@@ -202,6 +215,7 @@ func (w *RestartWorking) launch(ctx context.Context, files []preparation.Baselin
 	command.Env = []string{"PATH=/usr/bin:/bin", "XRAY_LOCATION_ASSET=/opt/etc/xray/dat"}
 	command.Dir = "/"
 	command.SysProcAttr = &syscall.SysProcAttr{Credential: &syscall.Credential{Uid: w.uid, Gid: w.gid}}
+	guard := w.policy(ctx)
 	if err := command.Start(); err != nil {
 		return preparation.Baseline{}, restart.ErrEffects
 	}
@@ -223,6 +237,7 @@ func (w *RestartWorking) launch(ctx context.Context, files []preparation.Baselin
 		return preparation.Baseline{}, restart.ErrEffects
 	}
 	runtime := w.fixedRuntime(command.Process.Pid, tick)
+	w.guardedRuntime, w.guardedPolicy = runtime, guard
 	if err := started(runtime); err != nil {
 		abort()
 		return preparation.Baseline{}, err

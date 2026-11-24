@@ -31,6 +31,8 @@ type Desired struct {
 }
 
 type Confirmed struct {
+	Guard     string      `json:",omitempty"`
+	Hot       *HotReceipt `json:",omitempty"`
 	AttemptID string
 	Number    int64
 	Tag       string
@@ -49,6 +51,7 @@ const (
 )
 
 type Intent struct {
+	Hot         *HotReceipt `json:",omitempty"`
 	AttemptID   string
 	Previous    preparation.Baseline
 	Target      Desired
@@ -169,13 +172,26 @@ func (s *Service) Apply(ctx context.Context, key, tag string) (Confirmed, error)
 		next.RetryApproved = false
 		record.LastRollback = &next
 	}
-	plan := intent.Plan(record.Current, RuleEvidence{})
+	var evidence RuleEvidence
+	hot, canHot := s.working.(hotWorking)
+	if canHot && record.Current != nil && record.Current.Guard != "" {
+		evidence = hot.RuleEvidence(ctx, record.Current)
+	}
+	plan := intent.Plan(record.Current, evidence)
+	if plan.Rules != nil {
+		check, err := s.read(ctx, key, tag)
+		if err != nil || !reflect.DeepEqual(check, fresh) || ctx.Err() != nil {
+			return Confirmed{}, ErrDesired
+		}
+		intent.Hot = &HotReceipt{AllowPort: evidence.AllowPort, DenyPort: evidence.DenyPort, ProbePort: evidence.ProbePort, Guard: record.Current.Guard, Expected: plan.Rules.Expected, Outcome: plan.Rules.Outcome}
+		intent.Phase = HotDispatch
+	}
 	if plan.Unchanged {
 		again, err := s.working.Observe(ctx, record.Current)
 		if err != nil || !reflect.DeepEqual(before, again) || ctx.Err() != nil {
 			return Confirmed{}, ErrBaseline
 		}
-		confirmed := Confirmed{AttemptID: intent.AttemptID, Number: fresh.Snapshot.Number, Tag: fresh.Tag, Baseline: again}
+		confirmed := Confirmed{AttemptID: intent.AttemptID, Number: fresh.Snapshot.Number, Tag: fresh.Tag, Baseline: again, Guard: record.Current.Guard, Hot: record.Current.Hot}
 		record.Current = &confirmed
 		if err := s.journal.Save(record); err != nil {
 			return Confirmed{}, ErrJournal
@@ -186,8 +202,14 @@ func (s *Service) Apply(ctx context.Context, key, tag string) (Confirmed, error)
 	if err := s.journal.Save(record); err != nil {
 		return Confirmed{}, ErrJournal
 	}
-	now, err := s.working.Install(ctx, intent, func(phase Phase, runtime *preparation.Runtime) error {
+	install := s.working.Install
+	if intent.Hot != nil {
+		install = hot.InstallHot
+	}
+	now, err := install(ctx, intent, func(phase Phase, runtime *preparation.Runtime) error {
 		switch {
+		case intent.Phase == HotDispatch && phase == HotVerified && runtime == nil:
+		case intent.Phase == HotVerified && phase == HotFiles && runtime != nil && *runtime == before.Runtime:
 		case intent.Phase == Planned && phase == Stopped && runtime == nil:
 		case intent.Phase == Stopped && phase == FilesVerified && runtime == nil:
 		case intent.Phase == FilesVerified && phase == RuntimeStarted && runtime != nil:
@@ -203,7 +225,7 @@ func (s *Service) Apply(ctx context.Context, key, tag string) (Confirmed, error)
 		intent = next
 		return nil
 	})
-	if err != nil || ctx.Err() != nil || intent.Phase != RuntimeStarted || intent.Started == nil ||
+	if err != nil || ctx.Err() != nil || (intent.Phase != RuntimeStarted && intent.Phase != HotFiles) || intent.Started == nil ||
 		*intent.Started != now.Runtime || !validInstallation(intent, now, s.scope.VerifierID) {
 		rollbackCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 25*time.Second)
 		defer cancel()
@@ -212,7 +234,10 @@ func (s *Service) Apply(ctx context.Context, key, tag string) (Confirmed, error)
 		}
 		return Confirmed{}, ErrRolledBack
 	}
-	confirmed := Confirmed{AttemptID: intent.AttemptID, Number: fresh.Snapshot.Number, Tag: fresh.Tag, Baseline: now}
+	confirmed := Confirmed{AttemptID: intent.AttemptID, Number: fresh.Snapshot.Number, Tag: fresh.Tag, Baseline: now, Guard: launchGuard(s.working, now.Runtime), Hot: intent.Hot}
+	if intent.Hot != nil {
+		confirmed.Guard = intent.Hot.Guard
+	}
 	record.Current, record.Pending, record.LocalBaseline = &confirmed, nil, nil
 	if err := s.journal.Save(record); err != nil {
 		return Confirmed{}, ErrJournal
@@ -233,7 +258,7 @@ func (s *Service) read(ctx context.Context, key, tag string) (Desired, error) {
 }
 
 func validInstallation(intent Intent, actual preparation.Baseline, verifier string) bool {
-	if actual.Runtime == intent.Previous.Runtime || actual.Runtime.VerifierID != verifier || actual.Runtime.PID < 1 ||
+	if (actual.Runtime == intent.Previous.Runtime) != (intent.Hot != nil) || actual.Runtime.VerifierID != verifier || actual.Runtime.PID < 1 ||
 		actual.Runtime.StartTick == 0 || !reflect.DeepEqual(actual.Files, intent.TargetFiles) {
 		return false
 	}
