@@ -12,9 +12,10 @@
   };
   type Reply = Snapshot & { state?: string; name?: string; code?: string; offset?: number };
   type Row = Value & { inherited: boolean; display: string; source: string };
-  let { id, active, sessionEpoch, csrf, signedOut, refreshSession, back }: {
-    id: string; active: boolean; sessionEpoch: number; csrf: string; signedOut: () => void;
+  let { id, initialElementId, active, sessionEpoch, csrf, signedOut, refreshSession, back, openReplacement }: {
+    id: string; initialElementId: string; active: boolean; sessionEpoch: number; csrf: string; signedOut: () => void;
     refreshSession: () => void; back: (event: MouseEvent, path: string) => void;
+    openReplacement: (event: MouseEvent, path: string) => void;
   } = $props();
 
   const labels: Record<string, string> = {
@@ -32,6 +33,7 @@
   };
   const backPath = $derived('/ui/?' + new URLSearchParams({routerId:id}));
   let snapshot = $state<Snapshot>();
+  const ownPath = $derived(snapshot?.selection && '/ui/routers/replacement?' + new URLSearchParams({routerId:id,elementId:snapshot.selection.id}));
   let rows = $state<Row[]>([]);
   let section = $state('');
   let message = $state('');
@@ -162,7 +164,7 @@
         busy = false;
         loading = false;
       }
-      if (ready && !snapshot && !controller) void load();
+      if (ready && !snapshot && !controller) void load(initialElementId || undefined);
     });
   });
 
@@ -344,6 +346,15 @@
         <button type="submit" disabled={!active || loading || busy || unavailable || !dirty()}>Сохранить черновик</button>
       {/if}
       <a href={backPath} onclick={(event) => back(event,backPath)}>К роутеру</a>
+      {#if ownPath && !unavailable && !conflict && !busy && !loading}
+        <a href={ownPath} onclick={(event) => {
+          if (dirty() && !window.confirm('Продолжить без несохранённых значений?')) {
+            event.preventDefault();
+            return;
+          }
+          openReplacement(event,ownPath);
+        }}>Свой JSON</a>
+      {/if}
     </div>
   </form>
 {:else}

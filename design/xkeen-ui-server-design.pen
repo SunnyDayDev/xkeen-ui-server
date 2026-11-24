@@ -35615,6 +35615,21 @@
                       "fill": "$ink"
                     }
                   }
+                },
+                {
+                  "id": "FYSWJ",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Перейти к буквальному JSON",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Свой JSON",
+                      "fill": "$ink"
+                    }
+                  }
                 }
               ]
             }
@@ -37495,6 +37510,21 @@
                       "fill": "$ink"
                     }
                   }
+                },
+                {
+                  "id": "eLHf1",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Перейти к буквальному JSON",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Свой JSON",
+                      "fill": "$ink"
+                    }
+                  }
                 }
               ]
             }
@@ -37763,6 +37793,21 @@
                   "descendants": {
                     "GyrRR": {
                       "content": "К роутеру",
+                      "fill": "$ink"
+                    }
+                  }
+                },
+                {
+                  "id": "fMgg2",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Перейти к буквальному JSON",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Свой JSON",
                       "fill": "$ink"
                     }
                   }
@@ -38363,6 +38408,21 @@
                   "descendants": {
                     "GyrRR": {
                       "content": "К роутеру",
+                      "fill": "$ink"
+                    }
+                  }
+                },
+                {
+                  "id": "o2cBIK",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Перейти к буквальному JSON",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Свой JSON",
                       "fill": "$ink"
                     }
                   }
@@ -40345,6 +40405,2261 @@
                       }
                     }
                   ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "kcJ0s",
+      "x": 0,
+      "y": 74020,
+      "name": "29 / Роутер / Свой JSON · Наследование и начало замены",
+      "width": 1080,
+      "height": 680,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "T86lz",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "gAa25",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "va4bX",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "hGs35",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "M1fYcO",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "tSdon",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "F9iKxT",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "xznbr",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "V2sPU",
+              "name": "Текущий шаблон",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Филиал Восток / edge-example",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "KYViL",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Свой JSON элемента",
+              "fontFamily": "$font",
+              "fontSize": 29,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "text",
+              "id": "D5Naw5",
+              "name": "UUID элемента",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "UUID  550e8400-e29b-41d4-a716-446655440000",
+              "fontFamily": "$mono",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "x49aZu",
+              "name": "Действующий режим черновика",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Сейчас: только переменные",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "txUCy",
+              "name": "Подпись редактора",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "JSON",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "medium"
+            },
+            {
+              "id": "itCm8",
+              "type": "ref",
+              "ref": "XyQQc",
+              "name": "Исходный JSON",
+              "width": "fill_container",
+              "stroke": "$line",
+              "padding": 16,
+              "descendants": {
+                "FrJzT": {
+                  "content": " ",
+                  "fontSize": 14
+                }
+              }
+            },
+            {
+              "type": "text",
+              "id": "uujoZ",
+              "name": "Сообщение редактора",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Введите содержимое блока целиком.",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "fAk4F",
+              "name": "Действия редактора",
+              "width": "fill_container",
+              "gap": 12,
+              "children": [
+                {
+                  "id": "fQ6O7",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Сохранить буквальный JSON",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Сохранить черновик"
+                    }
+                  }
+                },
+                {
+                  "id": "KqNKk",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Запросить сброс",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Сбросить переопределение",
+                      "fill": "$ink"
+                    }
+                  }
+                },
+                {
+                  "id": "LIULK",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Вернуться к текущему элементу",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "К переменным",
+                      "fill": "$ink"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "D8Uy9",
+      "x": 1160,
+      "y": 74020,
+      "name": "29 / Роутер / Свой JSON · Сохранённая замена",
+      "width": 1080,
+      "height": 680,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "USVPC",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "PykZO",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "N66h0y",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "kpEhc",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "O416B",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "FxRDM",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "gNy0Q",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "qVplG",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "mhjDv",
+              "name": "Текущий шаблон",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Филиал Восток / edge-example",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "s9WAxv",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Свой JSON элемента",
+              "fontFamily": "$font",
+              "fontSize": 29,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "text",
+              "id": "bA0AY",
+              "name": "UUID элемента",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "UUID  550e8400-e29b-41d4-a716-446655440000",
+              "fontFamily": "$mono",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "ae2Qn",
+              "name": "Действующий режим черновика",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Сейчас: свой JSON",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "mE5S5",
+              "name": "Подпись редактора",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "JSON",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "medium"
+            },
+            {
+              "id": "H8DSSe",
+              "type": "ref",
+              "ref": "XyQQc",
+              "name": "Исходный JSON",
+              "width": "fill_container",
+              "stroke": "$line",
+              "padding": 16,
+              "descendants": {
+                "FrJzT": {
+                  "content": "{\n  \"protocol\": \"freedom\",\n  \"tag\": \"example-outbound\",\n  \"metadata\": \"${literal}\"\n}",
+                  "fontSize": 14
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "f0ohw4",
+              "name": "Действия редактора",
+              "width": "fill_container",
+              "gap": 12,
+              "children": [
+                {
+                  "id": "U1pD2",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Сохранить буквальный JSON",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Сохранить черновик"
+                    }
+                  }
+                },
+                {
+                  "id": "GscX6",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Запросить возврат",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Вернуть переменные",
+                      "fill": "$ink"
+                    }
+                  }
+                },
+                {
+                  "id": "d4l5hv",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Запросить сброс",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Сбросить переопределение",
+                      "fill": "$ink"
+                    }
+                  }
+                },
+                {
+                  "id": "rV3bN",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Вернуться к текущему элементу",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "К переменным",
+                      "fill": "$ink"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "qUqJv",
+      "x": 0,
+      "y": 74820,
+      "name": "29 / Роутер / Свой JSON · Ошибка JSON",
+      "width": 1080,
+      "height": 680,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "PQHdN",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "LlUhU",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "t3yV6",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "TRCKI",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "NREYI",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "iKtJ1",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "b1pQU",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "EDikh",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "E0uwj",
+              "name": "Текущий шаблон",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Филиал Восток / edge-example",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "Hb7JR",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Свой JSON элемента",
+              "fontFamily": "$font",
+              "fontSize": 29,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "text",
+              "id": "dmwUk",
+              "name": "UUID элемента",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "UUID  550e8400-e29b-41d4-a716-446655440000",
+              "fontFamily": "$mono",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "FC7to",
+              "name": "Действующий режим черновика",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Сейчас: свой JSON",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "ItY8h",
+              "name": "Подпись редактора",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "JSON",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "medium"
+            },
+            {
+              "id": "oaxNL",
+              "type": "ref",
+              "ref": "XyQQc",
+              "name": "Исходный JSON",
+              "width": "fill_container",
+              "stroke": "$line",
+              "padding": 16,
+              "descendants": {
+                "FrJzT": {
+                  "content": "{ \"protocol\": }",
+                  "fontSize": 14
+                }
+              }
+            },
+            {
+              "type": "text",
+              "id": "kxYHf",
+              "name": "Сообщение редактора",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Ошибка JSON в строке 1, столбце 15.",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "X47XSc",
+              "name": "Действия редактора",
+              "width": "fill_container",
+              "gap": 12,
+              "children": [
+                {
+                  "id": "knrNk",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Сохранить буквальный JSON",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Сохранить черновик"
+                    }
+                  }
+                },
+                {
+                  "id": "yVxPn",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Запросить возврат",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Вернуть переменные",
+                      "fill": "$ink"
+                    }
+                  }
+                },
+                {
+                  "id": "yZCW3",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Запросить сброс",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Сбросить переопределение",
+                      "fill": "$ink"
+                    }
+                  }
+                },
+                {
+                  "id": "M5wCY",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Вернуться к текущему элементу",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "К переменным",
+                      "fill": "$ink"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "OyFMs",
+      "x": 1160,
+      "y": 74820,
+      "name": "29 / Роутер / Свой JSON · Конфликт",
+      "width": 1080,
+      "height": 680,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "BaRYW",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "TNnpo",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "aeEke",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "BtnCj",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "rEr0T",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "VPDnh",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "GUnKh",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "lVn0h",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "pldow",
+              "name": "Текущий шаблон",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Филиал Восток / edge-example",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "CFTZ7",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Свой JSON элемента",
+              "fontFamily": "$font",
+              "fontSize": 29,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "text",
+              "id": "a8GD9g",
+              "name": "UUID элемента",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "UUID  550e8400-e29b-41d4-a716-446655440000",
+              "fontFamily": "$mono",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "VO1Dp",
+              "name": "Действующий режим черновика",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Сейчас: свой JSON",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "iWoAX",
+              "name": "Подпись редактора",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "JSON",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "medium"
+            },
+            {
+              "id": "jnbqx",
+              "type": "ref",
+              "ref": "XyQQc",
+              "name": "Исходный JSON",
+              "width": "fill_container",
+              "stroke": "$line",
+              "padding": 16,
+              "descendants": {
+                "FrJzT": {
+                  "content": "{\n  \"protocol\": \"freedom\",\n  \"tag\": \"example-outbound\",\n  \"metadata\": \"${literal}\"\n}",
+                  "fontSize": 14
+                }
+              }
+            },
+            {
+              "type": "text",
+              "id": "WGvhc",
+              "name": "Сообщение редактора",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Настройки изменились. Ваш JSON остался в редакторе.",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "x8k63",
+              "name": "Действия редактора",
+              "width": "fill_container",
+              "gap": 12,
+              "children": [
+                {
+                  "id": "eqDpH",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Перечитать текущий черновик",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Перечитать настройки"
+                    }
+                  }
+                },
+                {
+                  "id": "lKckW",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Вернуться к текущему элементу",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "К переменным",
+                      "fill": "$ink"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "EF00I",
+      "x": 0,
+      "y": 75620,
+      "name": "29 / Роутер / Свой JSON · Подтверждение возврата",
+      "width": 1080,
+      "height": 680,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "nNS8Z",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "Jlylc",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "m1AoSL",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "lXQNc",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "XLUp1",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "pxkHa",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "UItlP",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "P1dl2r",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "Jz6sL",
+              "name": "Текущий шаблон",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Филиал Восток / edge-example",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "SGDQc",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Свой JSON элемента",
+              "fontFamily": "$font",
+              "fontSize": 29,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "text",
+              "id": "m9xmTf",
+              "name": "UUID элемента",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "UUID  550e8400-e29b-41d4-a716-446655440000",
+              "fontFamily": "$mono",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "Heog2",
+              "name": "Действующий режим черновика",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Сейчас: свой JSON",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "ZNUIz",
+              "name": "Подпись редактора",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "JSON",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "medium"
+            },
+            {
+              "id": "NAkV0",
+              "type": "ref",
+              "ref": "XyQQc",
+              "name": "Исходный JSON",
+              "width": "fill_container",
+              "stroke": "$line",
+              "padding": 16,
+              "descendants": {
+                "FrJzT": {
+                  "content": "{\n  \"protocol\": \"freedom\",\n  \"tag\": \"example-outbound\",\n  \"metadata\": \"${literal}\"\n}",
+                  "fontSize": 14
+                }
+              }
+            },
+            {
+              "type": "text",
+              "id": "kBOvI",
+              "name": "Сообщение редактора",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Вернуть режим переменных? Собственный JSON будет удалён из черновика. Персональные значения сохранятся.",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "Yg7jB",
+              "name": "Действия редактора",
+              "width": "fill_container",
+              "gap": 12,
+              "children": [
+                {
+                  "id": "u5Fuf",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Подтвердить возврат",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Вернуть переменные"
+                    }
+                  }
+                },
+                {
+                  "id": "QHDNH",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Отмена возврата",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Отмена",
+                      "fill": "$ink"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "JsnZS",
+      "x": 1160,
+      "y": 75620,
+      "name": "29 / Роутер / Свой JSON · Подтверждение полного сброса",
+      "width": 1080,
+      "height": 680,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "bgqBM",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "U0g3q5",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "HUDUR",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "wZjUs",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "VVHKx",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "ttsaC",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "YhMG6",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "QlZ8D",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "X2uPw2",
+              "name": "Текущий шаблон",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Филиал Восток / edge-example",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "ISTrg",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Свой JSON элемента",
+              "fontFamily": "$font",
+              "fontSize": 29,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "text",
+              "id": "N2mKZy",
+              "name": "UUID элемента",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "UUID  550e8400-e29b-41d4-a716-446655440000",
+              "fontFamily": "$mono",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "gcqR3",
+              "name": "Действующий режим черновика",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Сейчас: свой JSON",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "iBXKS",
+              "name": "Подпись редактора",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "JSON",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "medium"
+            },
+            {
+              "id": "alkLq",
+              "type": "ref",
+              "ref": "XyQQc",
+              "name": "Исходный JSON",
+              "width": "fill_container",
+              "stroke": "$line",
+              "padding": 16,
+              "descendants": {
+                "FrJzT": {
+                  "content": "{\n  \"protocol\": \"freedom\",\n  \"tag\": \"example-outbound\",\n  \"metadata\": \"${literal}\"\n}",
+                  "fontSize": 14
+                }
+              }
+            },
+            {
+              "type": "text",
+              "id": "FUc95",
+              "name": "Сообщение редактора",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Сбросить переопределение? Собственный JSON и персональные значения будут удалены.",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "zxsJ9",
+              "name": "Действия редактора",
+              "width": "fill_container",
+              "gap": 12,
+              "children": [
+                {
+                  "id": "P1U7r7",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Подтвердить полный сброс",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Сбросить"
+                    }
+                  }
+                },
+                {
+                  "id": "P7ZUpb",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Отмена сброса",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Отмена",
+                      "fill": "$ink"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "TRNuH",
+      "x": 0,
+      "y": 76420,
+      "name": "29 / Роутер / Свой JSON · Черновик сохранён",
+      "width": 1080,
+      "height": 680,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "sTRmD",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "eK5Xs",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "yA7ex",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "xXiwI",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "WTNX5",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "e06MgP",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "juk7a",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "wcCdY",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "HBNwA",
+              "name": "Текущий шаблон",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Филиал Восток / edge-example",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "dcxLl",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Свой JSON элемента",
+              "fontFamily": "$font",
+              "fontSize": 29,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "text",
+              "id": "YtreC",
+              "name": "UUID элемента",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "UUID  550e8400-e29b-41d4-a716-446655440000",
+              "fontFamily": "$mono",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "MKL6U",
+              "name": "Действующий режим черновика",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Сейчас: свой JSON",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "H9N8LD",
+              "name": "Подпись редактора",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "JSON",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "medium"
+            },
+            {
+              "id": "pXyMD",
+              "type": "ref",
+              "ref": "XyQQc",
+              "name": "Исходный JSON",
+              "width": "fill_container",
+              "stroke": "$line",
+              "padding": 16,
+              "descendants": {
+                "FrJzT": {
+                  "content": "{\n  \"protocol\": \"freedom\",\n  \"tag\": \"example-outbound\",\n  \"metadata\": \"${literal}\"\n}",
+                  "fontSize": 14
+                }
+              }
+            },
+            {
+              "type": "text",
+              "id": "oMFi2",
+              "name": "Сообщение редактора",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Черновик сохранён. Действующая конфигурация не изменилась.",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "JPlQs",
+              "name": "Действия редактора",
+              "width": "fill_container",
+              "gap": 12,
+              "children": [
+                {
+                  "id": "U9vtE",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Сохранить буквальный JSON",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Сохранить черновик"
+                    }
+                  }
+                },
+                {
+                  "id": "p3Gk2D",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Запросить возврат",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Вернуть переменные",
+                      "fill": "$ink"
+                    }
+                  }
+                },
+                {
+                  "id": "mYiKW",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Запросить сброс",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Сбросить переопределение",
+                      "fill": "$ink"
+                    }
+                  }
+                },
+                {
+                  "id": "C79c9g",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Вернуться к текущему элементу",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "К переменным",
+                      "fill": "$ink"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "gZETv",
+      "x": 1160,
+      "y": 76420,
+      "name": "29 / Роутер / Свой JSON · Роутер недоступен",
+      "width": 1080,
+      "height": 680,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "P5A6KU",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "t3xx4H",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "dIvVN",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "#273446",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "u5c1zU",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "qcjsS",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "TU7Hx",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "Cx5VO",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "hPDkh",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "Nk8OR",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Свой JSON элемента",
+              "fontFamily": "$font",
+              "fontSize": 29,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "text",
+              "id": "qIVp5",
+              "name": "Недоступный роутер",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Роутер недоступен в текущем обзоре.",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "PEWrG",
+              "name": "Действия редактора",
+              "width": "fill_container",
+              "gap": 12,
+              "children": [
+                {
+                  "id": "bz50W",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Вернуться к текущему элементу",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "К переменным",
+                      "fill": "$ink"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "fMZsP",
+      "x": 2320,
+      "y": 74020,
+      "name": "29 / Роутер / Свой JSON · узкий экран",
+      "width": 390,
+      "height": 1050,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "WQbQb",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "layout": "vertical",
+          "gap": 12,
+          "padding": [
+            14,
+            16
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "i2glA",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "Mw8h0",
+              "name": "Действия консоли",
+              "width": "fill_container",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "ilHlx",
+                  "name": "Ссылки консоли",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "E1Vs8",
+                      "name": "Первая строка навигации",
+                      "width": "fill_container",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "id": "EVN3Y",
+                          "type": "ref",
+                          "ref": "oQHGq",
+                          "name": "Текущий раздел",
+                          "width": 94,
+                          "fill": "#273446",
+                          "descendants": {
+                            "uzKPJ": {
+                              "fill": "#FFFFFF",
+                              "icon": "layout-dashboard"
+                            },
+                            "G2nPu4": {
+                              "fill": "#FFFFFF",
+                              "content": "Обзор"
+                            }
+                          }
+                        },
+                        {
+                          "id": "Nd2GL",
+                          "type": "ref",
+                          "ref": "oQHGq",
+                          "name": "Текущий раздел",
+                          "width": 108,
+                          "fill": "$ink",
+                          "descendants": {
+                            "uzKPJ": {
+                              "fill": "#FFFFFF",
+                              "icon": "layers"
+                            },
+                            "G2nPu4": {
+                              "fill": "#FFFFFF",
+                              "content": "Шаблоны"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "zlcTv",
+                      "type": "ref",
+                      "ref": "oQHGq",
+                      "name": "Настройки",
+                      "width": 112,
+                      "fill": "$ink",
+                      "descendants": {
+                        "uzKPJ": {
+                          "fill": "#FFFFFF",
+                          "icon": "settings"
+                        },
+                        "G2nPu4": {
+                          "fill": "#FFFFFF",
+                          "content": "Настройки"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "b3aTQH",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Завершить сессию",
+                  "fill": "$accent",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Выйти"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "UIDWC",
+          "name": "Редактор шаблона",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "fDMft",
+              "name": "Текущий шаблон",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Филиал Восток / edge-example",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "X2srmi",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Свой JSON элемента",
+              "fontFamily": "$font",
+              "fontSize": 24,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "text",
+              "id": "rD4qx",
+              "name": "UUID элемента",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "UUID  550e8400-e29b-41d4-a716-446655440000",
+              "fontFamily": "$mono",
+              "fontSize": 11,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "kqB4F",
+              "name": "Действующий режим черновика",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Сейчас: свой JSON",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "LMlLr",
+              "name": "Подпись редактора",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "JSON",
+              "fontFamily": "$font",
+              "fontSize": 13,
+              "fontWeight": "medium"
+            },
+            {
+              "id": "E7Zzt",
+              "type": "ref",
+              "ref": "XyQQc",
+              "name": "Исходный JSON",
+              "width": "fill_container",
+              "stroke": "$line",
+              "padding": 16,
+              "descendants": {
+                "FrJzT": {
+                  "content": "{\n  \"protocol\": \"freedom\",\n  \"tag\": \"example-outbound\",\n  \"metadata\": \"${literal}\"\n}",
+                  "fontSize": 12
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "o6l4OO",
+              "name": "Действия редактора",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 12,
+              "children": [
+                {
+                  "id": "XzEUz",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Сохранить буквальный JSON",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Сохранить черновик"
+                    }
+                  }
+                },
+                {
+                  "id": "J70Lxu",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Запросить возврат",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Вернуть переменные",
+                      "fill": "$ink"
+                    }
+                  }
+                },
+                {
+                  "id": "NNVuU",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Запросить сброс",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Сбросить переопределение",
+                      "fill": "$ink"
+                    }
+                  }
+                },
+                {
+                  "id": "EZQ8R",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Вернуться к текущему элементу",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "К переменным",
+                      "fill": "$ink"
+                    }
+                  }
                 }
               ]
             }

@@ -163,6 +163,48 @@ func TestProcessWebRouterEnrollment(t *testing.T) {
 	if !bytes.Contains(body, []byte(`"draftGeneration":"2"`)) || bytes.Contains(body, []byte(`"personalSource"`)) {
 		t.Fatal("explicit inheritance did not remove the stored personal source")
 	}
+	values["draftGeneration"] = "2"
+	values["values"] = []map[string]string{{"name": "port", "source": "9"}}
+	personal, _ := json.Marshal(values)
+	request(http.MethodPost, variablePath, personal, http.StatusOK)
+	const replacementPath = "/ui/v1/routers/replacement?routerId=router-example&elementId=" + elementID
+	body, _ = request(http.MethodGet, replacementPath, nil, http.StatusOK)
+	if !bytes.Contains(body, []byte(`"mode":"variables"`)) || bytes.Contains(body, []byte(`"source"`)) {
+		t.Fatal("inherited editor exposed a replacement")
+	}
+	replacement := map[string]string{"templateId": "template-example", "activeGeneration": "1", "acceptedVersion": "1", "draftGeneration": "3", "action": "replace", "source": "malformed"}
+	change := func(want int) []byte {
+		raw, _ := json.Marshal(replacement)
+		body, _ := request(http.MethodPost, replacementPath, raw, want)
+		return body
+	}
+	change(http.StatusUnprocessableEntity)
+	literalReplacement := " \r\n{\"v\":\"$" + "{port}\"}\n"
+	replacement["source"] = literalReplacement
+	body = change(http.StatusOK)
+	var storedReplacement struct {
+		Source    string
+		ElementID string
+	}
+	if json.Unmarshal(body, &storedReplacement) != nil || storedReplacement.Source != literalReplacement || storedReplacement.ElementID != elementID {
+		t.Fatal("replacement was interpreted or identity changed")
+	}
+	change(http.StatusConflict)
+	replacement["draftGeneration"] = "4"
+	replacement["action"] = "variables"
+	delete(replacement, "source")
+	change(http.StatusOK)
+	body, _ = request(http.MethodGet, variablePath, nil, http.StatusOK)
+	if !bytes.Contains(body, []byte(`"personalSource":"9"`)) {
+		t.Fatal("return lost the previous personal value")
+	}
+	replacement["draftGeneration"] = "5"
+	replacement["action"] = "reset"
+	change(http.StatusOK)
+	body, _ = request(http.MethodGet, variablePath, nil, http.StatusOK)
+	if bytes.Contains(body, []byte(`"personalSource"`)) {
+		t.Fatal("full reset retained the personal value")
+	}
 	var desired int
 	if err := db.QueryRowContext(t.Context(), "SELECT max(revision) FROM desired_router_revisions").Scan(&desired); err != nil || desired != 1 {
 		t.Fatal("editing changed the desired revision")
