@@ -1,8 +1,6 @@
 package publication
 
 import (
-	"slices"
-
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 )
@@ -22,7 +20,7 @@ type RouterCatalogPreview struct {
 
 // PreviewRouterFiles uses the same accepted input and assembler as publication.
 // No validator or writer is involved. Desired mode copies the persisted bytes.
-func PreviewRouterFiles(inputs *Inputs, mode RouterPreviewMode, draftOrderBasis *OrderBasis) (*RouterCatalogPreview, error) {
+func PreviewRouterFiles(inputs *Inputs, mode RouterPreviewMode) (*RouterCatalogPreview, error) {
 	if inputs == nil || inputs.Active == nil || inputs.Accepted == nil || inputs.Desired == nil {
 		return nil, ErrSourceMissing
 	}
@@ -50,10 +48,7 @@ func PreviewRouterFiles(inputs *Inputs, mode RouterPreviewMode, draftOrderBasis 
 		if saved.Generation < 1 {
 			return nil, ErrStoredState
 		}
-		draftGeneration, draft, basis = saved.Generation, saved.Draft, draftOrderBasis
-		if basis == nil && draft.PersonalOrder != nil && legacyOrderMatches(draft, inputs.Active.Draft) {
-			basis = inputs.Active.OrderBasis
-		}
+		draftGeneration, draft, basis = saved.Generation, saved.Draft, EditableRuleOrderBasis(saved, inputs.Active)
 	}
 	expected.RouterDraftGeneration = &draftGeneration
 	if draft.ID != expected.RouterID || draft.TemplateID != expected.TemplateID {
@@ -67,24 +62,4 @@ func PreviewRouterFiles(inputs *Inputs, mode RouterPreviewMode, draftOrderBasis 
 		return nil, &PreparationError{Issues: issues}
 	}
 	return &RouterCatalogPreview{Mode: mode, Expected: expected, Files: prepared.Catalog.Files}, nil
-}
-
-func legacyOrderMatches(draft, active routersettings.Draft) bool {
-	return active.PersonalOrder != nil && slices.Equal(draft.PersonalOrder, active.PersonalOrder) &&
-		slices.Equal(localRuleIDs(draft), localRuleIDs(active))
-}
-
-func localRuleIDs(draft routersettings.Draft) []string {
-	for _, group := range draft.Groups {
-		if group.Name != "rules" {
-			continue
-		}
-		ids := make([]string, len(group.Local))
-		for i, local := range group.Local {
-			ids[i] = local.ID
-		}
-		slices.Sort(ids)
-		return ids
-	}
-	return nil
 }

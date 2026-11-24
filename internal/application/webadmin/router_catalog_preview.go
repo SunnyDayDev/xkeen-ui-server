@@ -8,7 +8,7 @@ import (
 )
 
 type RouterCatalogPreviewStore interface {
-	ReadCatalog(context.Context, [32]byte, func() time.Time, string, publication.RouterPreviewMode) (*publication.Inputs, *publication.OrderBasis, error)
+	ReadCatalog(context.Context, [32]byte, func() time.Time, string, publication.RouterPreviewMode) (*publication.Inputs, error)
 	CheckCatalog(context.Context, [32]byte, func() time.Time, publication.RouterPreviewMode, publication.Expectations) error
 }
 
@@ -29,11 +29,11 @@ func (s RouterCatalogPreview) Read(ctx context.Context, token, routerID string, 
 	if mode != publication.PreviewDesired && mode != publication.PreviewPersonal {
 		return nil, publication.ErrInvalidCommand
 	}
-	inputs, basis, err := s.store.ReadCatalog(ctx, digest, s.now, routerID, mode)
+	inputs, err := s.store.ReadCatalog(ctx, digest, s.now, routerID, mode)
 	if err != nil {
 		return nil, err
 	}
-	preview, err := publication.PreviewRouterFiles(inputs, mode, basis)
+	preview, err := publication.PreviewRouterFiles(inputs, mode)
 	if err != nil {
 		return nil, err
 	}

@@ -18,13 +18,13 @@ type stubCatalogPreview struct {
 	checked           bool
 }
 
-func (s *stubCatalogPreview) ReadCatalog(_ context.Context, _ [32]byte, _ func() time.Time, id string, mode publication.RouterPreviewMode) (*publication.Inputs, *publication.OrderBasis, error) {
+func (s *stubCatalogPreview) ReadCatalog(_ context.Context, _ [32]byte, _ func() time.Time, id string, mode publication.RouterPreviewMode) (*publication.Inputs, error) {
 	return &publication.Inputs{
 		RouterID: id, TemplateID: "template-a", Accepted: &templates.Snapshot{TemplateDraft: configuration.TemplateDraft{ID: "template-a"}, Version: 3},
 		Active:               &publication.ActiveSettings{Draft: routersettings.Draft{ID: id, TemplateID: "template-a"}, Generation: 5},
 		Desired:              &publication.Revision{Number: 9, Catalog: publication.VerifiedFiles{Profile: configuration.XrayIdentityVersion}},
 		RouterDraftRequested: mode == publication.PreviewPersonal,
-	}, nil, s.readErr
+	}, s.readErr
 }
 func (s *stubCatalogPreview) CheckCatalog(_ context.Context, _ [32]byte, _ func() time.Time, mode publication.RouterPreviewMode, scope publication.Expectations) error {
 	s.checked = mode == publication.PreviewPersonal && scope.RouterID == "router" && scope.DesiredNumber == 9 && scope.AcceptedVersion == 3 &&

@@ -22,7 +22,7 @@ func TestPreviewRouterFilesKeepsDesiredAndAssemblesOnlySelectedSource(t *testing
 		Desired:              &Revision{Number: 9, Catalog: VerifiedFiles{Profile: configuration.XrayIdentityVersion, Files: []configuration.CatalogFile{{Name: "04_outbounds.json", Content: json.RawMessage(exact)}}}},
 		RouterDraftRequested: true, RouterDraft: &VersionedRouterDraft{Draft: *draft, Generation: 7},
 	}
-	view, err := PreviewRouterFiles(input, PreviewDesired, nil)
+	view, err := PreviewRouterFiles(input, PreviewDesired)
 	if err != nil || len(view.Files) != 1 || string(view.Files[0].Content) != exact || view.Expected.RouterDraftGeneration != nil {
 		t.Fatalf("desired view: %+v %v", view, err)
 	}
@@ -30,7 +30,7 @@ func TestPreviewRouterFilesKeepsDesiredAndAssemblesOnlySelectedSource(t *testing
 	if string(input.Desired.Catalog.Files[0].Content) != exact {
 		t.Fatal("preview exposed aliased desired bytes")
 	}
-	view, err = PreviewRouterFiles(input, PreviewPersonal, nil)
+	view, err = PreviewRouterFiles(input, PreviewPersonal)
 	if err != nil || len(view.Files) != 5 || view.Expected.RouterDraftGeneration == nil || *view.Expected.RouterDraftGeneration != 7 {
 		t.Fatalf("editable preview: %+v %v", view, err)
 	}
@@ -40,7 +40,7 @@ func TestPreviewRouterFilesKeepsDesiredAndAssemblesOnlySelectedSource(t *testing
 	changed := *input.RouterDraft
 	changed.Draft.TemplateID = "other"
 	input.RouterDraft = &changed
-	if preview, err := PreviewRouterFiles(input, PreviewPersonal, nil); preview != nil || !errors.Is(err, ErrSourceMismatch) {
+	if preview, err := PreviewRouterFiles(input, PreviewPersonal); preview != nil || !errors.Is(err, ErrSourceMismatch) {
 		t.Fatalf("foreign preview: %+v %v", preview, err)
 	}
 }
@@ -56,21 +56,23 @@ func TestPreviewRouterFilesNeedsMatchingRuleOrderBasis(t *testing.T) {
 		Active:               &ActiveSettings{Draft: routersettings.Draft{ID: draft.ID, TemplateID: accepted.ID}, Generation: 1},
 		Desired:              &Revision{Number: 1, Catalog: VerifiedFiles{Profile: configuration.XrayIdentityVersion}},
 		RouterDraftRequested: true, RouterDraft: &VersionedRouterDraft{Draft: *draft, Generation: 1}}
-	preview, err := PreviewRouterFiles(input, PreviewPersonal, nil)
+	preview, err := PreviewRouterFiles(input, PreviewPersonal)
 	var diagnostic *PreparationError
 	if preview != nil || !errors.As(err, &diagnostic) || len(diagnostic.Issues) == 0 || diagnostic.Issues[0].Code != "order_basis_required" {
 		t.Fatalf("unproven basis: %+v %v", preview, err)
 	}
-	if result, err := PreviewRouterFiles(input, PreviewPersonal, basis); err != nil || result == nil {
+	input.RouterDraft.OrderBasis = basis
+	if result, err := PreviewRouterFiles(input, PreviewPersonal); err != nil || result == nil {
 		t.Fatalf("draft basis: %+v %v", result, err)
 	}
+	input.RouterDraft.OrderBasis = nil
 	input.Active.Draft.PersonalOrder = []string{firstID}
 	input.Active.OrderBasis = basis
-	if result, err := PreviewRouterFiles(input, PreviewPersonal, nil); err != nil || result == nil {
+	if result, err := PreviewRouterFiles(input, PreviewPersonal); err != nil || result == nil {
 		t.Fatalf("proven legacy basis: %+v %v", result, err)
 	}
 	input.RouterDraft.Draft.Groups = []routersettings.Group{{Name: "rules", Local: []routersettings.LocalElement{{ID: thirdID, Content: json.RawMessage(`{}`)}}}}
-	if result, err := PreviewRouterFiles(input, PreviewPersonal, nil); err == nil || result != nil {
+	if result, err := PreviewRouterFiles(input, PreviewPersonal); err == nil || result != nil {
 		t.Fatalf("unproven local members: %+v %v", result, err)
 	}
 }
