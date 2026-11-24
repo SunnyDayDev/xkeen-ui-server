@@ -1,7 +1,6 @@
 package sqlite
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -49,16 +48,72 @@ func (r *RouterSettings) Get(ctx context.Context, id string) (routersettings.Dra
 		}
 		return routersettings.Draft{}, false, errors.New("read router draft")
 	}
-	if _, issue := jsonvalue.Parse(raw); issue != nil {
+	tree, issue := jsonvalue.Parse(raw)
+	if issue != nil || !validRouterRecord(tree) {
 		return routersettings.Draft{}, false, routersettings.ErrStoredDraft
 	}
 	var stored storedRouterDraft
-	decoder := json.NewDecoder(bytes.NewReader(raw))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&stored); err != nil {
+	if err := json.Unmarshal(raw, &stored); err != nil {
 		return routersettings.Draft{}, false, routersettings.ErrStoredDraft
 	}
 	return stored.draft(id), true, nil
+}
+
+// Check the exact stored field names before decoding. encoding/json accepts
+// case-insensitive aliases and treats a missing slice as nil.
+func validRouterRecord(tree any) bool {
+	record := routerRecord(tree, "Name", "TemplateID", "Groups", "PersonalOrder", "DisabledRules", "DisabledInbounds")
+	if record == nil {
+		return false
+	}
+	if _, ok := record["Name"].(string); !ok {
+		return false
+	}
+	return routerRecords(record["Groups"], func(value any) bool {
+		group := routerRecord(value, "Name", "Local", "Overrides", "Exclusions")
+		return group != nil &&
+			routerRecords(group["Local"], func(item any) bool {
+				return routerRecord(item, "ID", "Content") != nil
+			}) &&
+			routerRecords(group["Overrides"], func(item any) bool {
+				override := routerRecord(item, "Source", "Mode", "Values", "Content")
+				return override != nil && validRouterSource(override["Source"])
+			}) &&
+			routerRecords(group["Exclusions"], validRouterSource)
+	})
+}
+
+func validRouterSource(value any) bool {
+	return routerRecord(value, "TemplateID", "ElementID") != nil
+}
+
+func routerRecord(value any, fields ...string) map[string]any {
+	record, ok := value.(map[string]any)
+	if !ok || len(record) != len(fields) {
+		return nil
+	}
+	for _, field := range fields {
+		if _, ok := record[field]; !ok {
+			return nil
+		}
+	}
+	return record
+}
+
+func routerRecords(value any, valid func(any) bool) bool {
+	if value == nil {
+		return true
+	}
+	items, ok := value.([]any)
+	if !ok {
+		return false
+	}
+	for _, item := range items {
+		if !valid(item) {
+			return false
+		}
+	}
+	return true
 }
 
 // Store raw JSON as bytes. Embedding RawMessage would compact it and may rewrite

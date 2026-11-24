@@ -108,12 +108,24 @@ func TestRouterSettingsCorruptSnapshotDoesNotLookAbsent(t *testing.T) {
 	if err := service.Save(ctx, draft); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.ExecContext(ctx, "UPDATE router_settings SET snapshot = ? WHERE id = ?", []byte(`{"private-fixture":`), draft.ID); err != nil {
-		t.Fatal(err)
+	records := []struct {
+		name, snapshot string
+	}{
+		{"broken syntax", `{"private-fixture":`},
+		{"missing order", `{"Name":"","TemplateID":"fixture.example","Groups":null,"DisabledRules":null,"DisabledInbounds":null}`},
+		{"case alias for order", `{"Name":"","TemplateID":"fixture.example","Groups":null,"PersonalOrder":[],"PERSONALORDER":null,"DisabledRules":null,"DisabledInbounds":null}`},
+		{"nested alias", `{"Name":"","TemplateID":"fixture.example","Groups":[{"Name":"rules","Local":null,"LOCAL":null,"Overrides":null,"Exclusions":null}],"PersonalOrder":null,"DisabledRules":null,"DisabledInbounds":null}`},
 	}
-	got, found, err := service.Get(ctx, draft.ID)
-	if found || got.ID != "" || !errors.Is(err, routersettings.ErrStoredDraft) || strings.Contains(err.Error(), "private-fixture") {
-		t.Fatalf("damaged router: found=%v got=%+v err=%v", found, got, err)
+	for _, record := range records {
+		t.Run(record.name, func(t *testing.T) {
+			if _, err := db.ExecContext(ctx, "UPDATE router_settings SET snapshot = ? WHERE id = ?", []byte(record.snapshot), draft.ID); err != nil {
+				t.Fatal(err)
+			}
+			got, found, err := service.Get(ctx, draft.ID)
+			if found || got.ID != "" || !errors.Is(err, routersettings.ErrStoredDraft) || strings.Contains(err.Error(), "private-fixture") {
+				t.Fatalf("damaged router: found=%v got=%+v err=%v", found, got, err)
+			}
+		})
 	}
 }
 

@@ -38,6 +38,8 @@ type LocalElement struct {
 	Content json.RawMessage
 }
 
+// Repository persists complete snapshots. Save does not retain or modify the
+// input buffers. Get transfers a complete, independent snapshot to the caller.
 type Repository interface {
 	Save(ctx context.Context, draft Draft) error
 	Get(ctx context.Context, id string) (Draft, bool, error)
