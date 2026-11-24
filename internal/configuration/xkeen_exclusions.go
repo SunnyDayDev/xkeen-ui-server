@@ -9,6 +9,7 @@ import (
 
 // ExclusionSource keeps authored text separate from the JSON Xray catalog.
 type ExclusionSource struct {
+	ElementID string
 	Text      string
 	Variables []VariableDefinition
 }

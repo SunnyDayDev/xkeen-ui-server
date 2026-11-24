@@ -58,7 +58,11 @@ func (w WebRouterDrafts) Read(ctx context.Context, digest [32]byte, clock func()
 	if draft != nil {
 		editable = draft.Draft
 	}
-	return webadmin.RouterDraftSnapshot{Basis: basis, Name: name, Accepted: accepted, Editable: editable, OrderBasis: publication.EditableRuleOrderBasis(draft, active)}, nil
+	source, err := publicationExclusions(ctx, tx, basis.TemplateID, &basis.AcceptedVersion)
+	if err != nil {
+		return result, err
+	}
+	return webadmin.RouterDraftSnapshot{Exclusions: source, OrderBasis: publication.EditableRuleOrderBasis(draft, active), Basis: basis, Name: name, Accepted: accepted, Editable: editable}, nil
 }
 
 func readVisibleRouterDraftBasis(ctx context.Context, tx *sql.Tx, id string) (webadmin.RouterDraftBasis, error) {

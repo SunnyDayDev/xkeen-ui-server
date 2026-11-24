@@ -12,16 +12,18 @@
   import RouterEnrollment from './RouterEnrollment.svelte';
   import RouterOverview from './RouterOverview.svelte';
   import RouterVariables from './RouterVariables.svelte';
+  import RouterExclusions from './RouterExclusions.svelte';
   import RouterReplacement from './RouterReplacement.svelte';
   import RouterRules from './RouterRules.svelte';
 
-  type Section = 'template-exclusions' | 'overview' | 'templates' | 'settings' | 'template-editor' | 'template-copy' | 'router-connect' | 'router-enroll' | 'router-variables' | 'router-replacement' | 'router-rules';
+  type Section = 'router-exclusions' | 'template-exclusions' | 'overview' | 'templates' | 'settings' | 'template-editor' | 'template-copy' | 'router-connect' | 'router-enroll' | 'router-variables' | 'router-replacement' | 'router-rules';
 
   function sectionForPath(): Section {
     if (location.pathname === '/ui/templates/copy') return 'template-copy';
     if (location.pathname === '/ui/templates/exclusions') return 'template-exclusions';
     if (location.pathname === '/ui/templates/item') return 'template-editor';
     if (location.pathname === '/ui/routers/rules') return 'router-rules';
+    if (location.pathname === '/ui/routers/exclusions') return 'router-exclusions';
     if (location.pathname === '/ui/routers/replacement') return 'router-replacement';
     if (location.pathname === '/ui/routers/variables') return 'router-variables';
     if (location.pathname === '/ui/routers/enroll') return 'router-enroll';
@@ -251,6 +253,8 @@
             signedOut={() => { void endAccess('signed_out'); }} refreshSession={() => { void refresh(); }}
             back={(event,path) => navigate(event,path,'overview')} />
         {/key}
+      {:else if section === 'router-exclusions'}
+        {#if view === 'active' && !busy}{#key routerID + ':' + mutation}<RouterExclusions id={routerID} {csrf} signedOut={()=>{void endAccess('signed_out')}} refreshSession={()=>{void refresh()}} />{/key}{/if}
       {:else if section === 'router-replacement'}
         {#key JSON.stringify([routerID,routerElementID])}
           <RouterReplacement id={routerID} elementId={routerElementID} active={view === 'active' && !busy} sessionEpoch={mutation} {csrf}

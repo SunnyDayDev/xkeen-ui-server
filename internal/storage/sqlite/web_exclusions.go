@@ -126,13 +126,13 @@ func (w WebTemplates) SaveExclusions(ctx context.Context, session [32]byte, cloc
 }
 
 func publicationExclusions(ctx context.Context, tx *sql.Tx, id string, acceptedVersion *int64) (*configuration.ExclusionSource, error) {
-	var text string
+	var elementID, text string
 	var raw []byte
 	var err error
 	if acceptedVersion == nil {
-		err = tx.QueryRowContext(ctx, "SELECT source,variables FROM shared_xkeen_exclusions WHERE template_id=?", id).Scan(&text, &raw)
+		err = tx.QueryRowContext(ctx, "SELECT element_id,source,variables FROM shared_xkeen_exclusions WHERE template_id=?", id).Scan(&elementID, &text, &raw)
 	} else {
-		err = tx.QueryRowContext(ctx, "SELECT source,variables FROM accepted_xkeen_exclusions WHERE template_id=? AND template_version=?", id, *acceptedVersion).Scan(&text, &raw)
+		err = tx.QueryRowContext(ctx, "SELECT element_id,source,variables FROM accepted_xkeen_exclusions WHERE template_id=? AND template_version=?", id, *acceptedVersion).Scan(&elementID, &text, &raw)
 	}
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
@@ -145,5 +145,6 @@ func publicationExclusions(ctx context.Context, tx *sql.Tx, id string, acceptedV
 		return nil, templates.ErrCorrupt
 	}
 	source := draft.Source()
+	source.ElementID = elementID
 	return &source, nil
 }

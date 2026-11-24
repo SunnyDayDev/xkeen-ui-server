@@ -89,6 +89,8 @@ var migrations = []string{
 	)`,
 	createSharedExclusions,
 	`ALTER TABLE router_settings ADD COLUMN order_basis BLOB`,
+	// Older readers reject personal exclusion records in the existing snapshot columns.
+	`SELECT 1`,
 }
 
 func Open(ctx context.Context, path string) (*sql.DB, error) {

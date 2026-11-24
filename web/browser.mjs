@@ -1,5 +1,6 @@
 import { checkTemplateCopy } from './template-copy-browser.mjs';
 import { checkAgentKeys } from './agent-keys-browser.mjs';
+import {checkRouterExclusions} from './router-exclusions-browser.mjs';
 import { checkExclusionsBrowser } from './exclusions-browser.mjs';
 import { checkRouterOverview } from './router-overview-browser.mjs';
 import { checkTemplateVariables } from './template-variables-browser.mjs';
@@ -411,6 +412,7 @@ try {
   await page.setViewportSize({width: 360, height: 640});
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 360);
   if (process.env.XKEEN_BROWSER_SCREENSHOT) await page.screenshot({path:process.env.XKEEN_BROWSER_SCREENSHOT + '-active.png'});
+  await checkRouterExclusions(page.context(),origin,database);
   await page.route('**/ui/v1/logout', route => route.abort(), {times: 1});
   await page.getByRole('button',{name:'Выйти'}).click();
   await page.getByText('Сервер сейчас недоступен. Попробуйте ещё раз.').waitFor();
