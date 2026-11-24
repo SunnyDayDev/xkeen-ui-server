@@ -65,18 +65,28 @@ func (s *Service) Login(ctx context.Context, password []byte, prior string) (tok
 }
 
 func (s *Service) Session(ctx context.Context, token, proof string, action SessionAction) (string, error) {
-	raw, ok := decodeToken(token)
-	if !ok {
-		return "", ErrSignedOut
+	digest, csrf, err := SessionProof(token, proof, action != SessionRead)
+	if err != nil {
+		return "", err
 	}
-	csrf := csrfFor(raw)
-	if action != SessionRead && subtle.ConstantTimeCompare([]byte(csrf), []byte(proof)) != 1 {
-		return "", ErrCSRF
-	}
-	if err := s.store.Session(ctx, sha256.Sum256(raw), s.now, action); err != nil {
+	if err := s.store.Session(ctx, digest, s.now, action); err != nil {
 		return "", err
 	}
 	return csrf, nil
+}
+
+// SessionProof derives the session digest and verifies the CSRF proof for a
+// mutation. The store checks liveness and expiry inside the operation transaction.
+func SessionProof(token, proof string, mutation bool) ([32]byte, string, error) {
+	raw, ok := decodeToken(token)
+	if !ok {
+		return [32]byte{}, "", ErrSignedOut
+	}
+	csrf := csrfFor(raw)
+	if mutation && subtle.ConstantTimeCompare([]byte(csrf), []byte(proof)) != 1 {
+		return [32]byte{}, "", ErrCSRF
+	}
+	return sha256.Sum256(raw), csrf, nil
 }
 
 func (s *Service) Configured(ctx context.Context) (bool, error) {
