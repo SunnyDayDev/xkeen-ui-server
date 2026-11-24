@@ -6,14 +6,16 @@
   import TemplateList from './TemplateList.svelte';
   import TemplateCreate from './TemplateCreate.svelte';
   import TemplateEditor from './TemplateEditor.svelte';
+  import TemplateCopy from './TemplateCopy.svelte';
   import RouterPreparation from './RouterPreparation.svelte';
   import RouterEnrollment from './RouterEnrollment.svelte';
   import RouterOverview from './RouterOverview.svelte';
   import RouterVariables from './RouterVariables.svelte';
 
-  type Section = 'overview' | 'templates' | 'settings' | 'template-editor' | 'router-connect' | 'router-enroll' | 'router-variables';
+  type Section = 'overview' | 'templates' | 'settings' | 'template-editor' | 'template-copy' | 'router-connect' | 'router-enroll' | 'router-variables';
 
   function sectionForPath(): Section {
+    if (location.pathname === '/ui/templates/copy') return 'template-copy';
     if (location.pathname === '/ui/templates/item') return 'template-editor';
     if (location.pathname === '/ui/routers/variables') return 'router-variables';
     if (location.pathname === '/ui/routers/enroll') return 'router-enroll';
@@ -57,6 +59,10 @@
   function navigate(event: MouseEvent, path: string, destination: Section) {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
+    goTo(path,destination);
+  }
+
+  function goTo(path: string, destination: Section) {
     if (location.pathname + location.search !== path) history.pushState({}, '', path);
     editorID = new URLSearchParams(location.search).get('templateId') ?? '';
     routerID = new URLSearchParams(location.search).get('routerId') ?? '';
@@ -198,7 +204,7 @@
       <nav aria-label="Основная навигация">
         <a href="/ui/" aria-current={section === 'overview' || section === 'router-variables' ? 'page' : undefined}
           onclick={(event) => navigate(event, '/ui/', 'overview')}>Обзор</a>
-        <a href="/ui/templates" aria-current={section === 'templates' || section === 'template-editor' ? 'page' : undefined}
+        <a href="/ui/templates" aria-current={section === 'templates' || section === 'template-editor' || section === 'template-copy' ? 'page' : undefined}
           onclick={(event) => navigate(event, '/ui/templates', 'templates')}>Шаблоны</a>
         <a href="/ui/settings" aria-current={section === 'settings' ? 'page' : undefined}
           onclick={(event) => navigate(event, '/ui/settings', 'settings')}>Настройки</a>
@@ -216,7 +222,12 @@
       {:else if section === 'template-editor'}
         {#key editorID}<TemplateEditor id={editorID} active={view === 'active'} sessionEpoch={mutation} {csrf}
           changed={() => { templateRevision++; }} signedOut={() => { void endAccess('signed_out'); }}
-          refreshSession={() => { void refresh(); }} />{/key}
+          refreshSession={() => { void refresh(); }} openCopy={(path) => goTo(path,'template-copy')} />{/key}
+      {:else if section === 'template-copy'}
+        {#key editorID}<TemplateCopy id={editorID} active={view === 'active'} sessionEpoch={mutation} {csrf}
+          signedOut={() => { void endAccess('signed_out'); }} refreshSession={() => { void refresh(); }}
+          saved={() => { templateRevision++; }}
+          openTemplate={(event,path) => navigate(event,path,'template-editor')} />{/key}
       {:else if section === 'settings'}
         {#if view === 'active'}{#key csrf}<ExternalSettings {csrf} refreshSession={refresh} />{/key}{/if}
       {:else if section === 'router-connect'}

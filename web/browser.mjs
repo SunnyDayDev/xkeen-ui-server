@@ -1,3 +1,4 @@
+import { checkTemplateCopy } from './template-copy-browser.mjs';
 import { checkRouterOverview } from './router-overview-browser.mjs';
 import { checkTemplateVariables } from './template-variables-browser.mjs';
 import { checkRouterEnrollment } from './router-enrollment-browser.mjs';
@@ -272,6 +273,7 @@ try {
   await checkTemplateVariables(page, first, () => admin("reset", first), process.env.XKEEN_BROWSER_SCREENSHOT);
   await page.reload();
   await checkAppendTemplateElement(page, exactID, first, () => admin("reset", first), process.env.XKEEN_BROWSER_SCREENSHOT);
+  await checkTemplateCopy(page,exactID,database);
   await page.getByRole('link',{name:'Обзор'}).click();
 
   await page.getByRole('link',{name:'Подключить роутер'}).click();
