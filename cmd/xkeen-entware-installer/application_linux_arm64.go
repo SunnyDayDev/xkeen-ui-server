@@ -267,7 +267,7 @@ func (p applicationProfileRecord) control(action string, first bool) error {
 	}
 	agent := managedProcess{binary: filepath.Join(dir, agentAsset), receipt: applicationAgentReceipt, uid: p.Agent.UID, gid: p.Agent.GID,
 		useReadyPipe: true, notReady: errNotReady,
-		arguments: []string{"--server", p.Agent.Origin, "--state-dir", applicationState, "--ca-file", applicationCA,
+		arguments: []string{"--server", p.Agent.Origin, "--expected-router-id", p.RouterID, "--state-dir", applicationState, "--ca-file", applicationCA,
 			"--local-application-socket", p.Socket, "--local-verifier", p.Verifier, "--local-application-reports"},
 	}
 	if action == "stop" {

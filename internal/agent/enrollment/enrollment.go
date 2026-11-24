@@ -42,10 +42,35 @@ type Remote interface {
 	Identity(ctx context.Context, key string) (string, error)
 }
 
+type ScopedRemote interface {
+	Remote
+	EnrollForRouter(context.Context, string, string, string) (string, error)
+}
+
+type routerRemote struct {
+	ScopedRemote
+	id string
+}
+
+func (r routerRemote) Enroll(ctx context.Context, invitation, key string) (string, error) {
+	return r.EnrollForRouter(ctx, invitation, key, r.id)
+}
+
 const attempts = 3
 
 // Connect authenticates one registration. Retries reuse the persisted candidate.
 func Connect(ctx context.Context, origin string, store Store, remote Remote) error {
+	return connect(ctx, origin, "", store, remote)
+}
+
+func ConnectForRouter(ctx context.Context, origin, expectedRouter string, store Store, remote ScopedRemote) error {
+	if !validID(expectedRouter) {
+		return ErrIdentity
+	}
+	return connect(ctx, origin, expectedRouter, store, routerRemote{remote, expectedRouter})
+}
+
+func connect(ctx context.Context, origin, expectedRouter string, store Store, remote Remote) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -66,6 +91,9 @@ func Connect(ctx context.Context, origin string, store Store, remote Remote) err
 	} else if err := checkStoredState(*state, origin); err != nil {
 		return err
 	}
+	if expectedRouter != "" && state.RouterID != "" && state.RouterID != expectedRouter {
+		return ErrIdentity
+	}
 	// A prior rename may have succeeded before its directory sync failed.
 	// Re-establish the durability barrier when recovering a pending record.
 	if state.RouterID == "" {
@@ -80,6 +108,9 @@ func Connect(ctx context.Context, origin string, store Store, remote Remote) err
 		}
 		id, err := connectOnce(ctx, store, remote, *state, invitation)
 		if err == nil {
+			if expectedRouter != "" && id != expectedRouter {
+				return ErrIdentity
+			}
 			if state.RouterID != "" {
 				return nil
 			}

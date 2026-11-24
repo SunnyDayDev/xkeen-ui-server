@@ -35,7 +35,7 @@ type Identity struct {
 // Repository compares proofs and performs atomic transitions for a single router.
 type Repository interface {
 	Issue(ctx context.Context, routerID string, purpose Purpose, proof agentcredential.Proof, now func() time.Time) error
-	Redeem(ctx context.Context, invitation, working agentcredential.Proof, now func() time.Time) (Identity, error)
+	Redeem(ctx context.Context, invitation, working agentcredential.Proof, expectedRouter string, now func() time.Time) (Identity, error)
 	Identity(ctx context.Context, proof agentcredential.Proof) (Identity, error)
 	Revoke(ctx context.Context, routerID string) error
 }
@@ -63,12 +63,17 @@ func (s *Service) Issue(ctx context.Context, routerID string, purpose Purpose) (
 }
 
 func (s *Service) Enroll(ctx context.Context, invitation, working string) (Identity, error) {
+	return s.EnrollForRouter(ctx, invitation, working, "")
+}
+
+// EnrollForRouter additionally binds redemption to a locally expected identity.
+func (s *Service) EnrollForRouter(ctx context.Context, invitation, working, expectedRouter string) (Identity, error) {
 	invitationToken, invitationOK := agentcredential.Parse(invitation, agentcredential.Invitation)
 	workingToken, workingOK := agentcredential.Parse(working, agentcredential.Working)
-	if !invitationOK || !workingOK {
+	if !invitationOK || !workingOK || !utf8.ValidString(expectedRouter) {
 		return Identity{}, ErrUnauthorized
 	}
-	identity, err := s.repo.Redeem(ctx, invitationToken.Proof(), workingToken.Proof(), s.now)
+	identity, err := s.repo.Redeem(ctx, invitationToken.Proof(), workingToken.Proof(), expectedRouter, s.now)
 	if err != nil {
 		return Identity{}, safeError(err)
 	}

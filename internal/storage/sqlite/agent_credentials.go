@@ -64,7 +64,7 @@ type credentialInvitation struct {
 	redeemed sql.NullInt64
 }
 
-func (s *AgentCredentials) Redeem(ctx context.Context, invitation, working agentcredential.Proof, now func() time.Time) (agentcredentials.Identity, error) {
+func (s *AgentCredentials) Redeem(ctx context.Context, invitation, working agentcredential.Proof, expectedRouter string, now func() time.Time) (agentcredentials.Identity, error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return agentcredentials.Identity{}, credentialDatabaseError(ctx)
@@ -74,7 +74,7 @@ func (s *AgentCredentials) Redeem(ctx context.Context, invitation, working agent
 	if err != nil {
 		return agentcredentials.Identity{}, err
 	}
-	if now().UnixNano() >= record.expires {
+	if (expectedRouter != "" && record.routerID != expectedRouter) || now().UnixNano() >= record.expires {
 		return agentcredentials.Identity{}, agentcredentials.ErrUnauthorized
 	}
 	if record.redeemed.Valid {
