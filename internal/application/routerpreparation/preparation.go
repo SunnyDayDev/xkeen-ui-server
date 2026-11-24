@@ -3,8 +3,6 @@ package routerpreparation
 import (
 	"encoding/json"
 	"errors"
-	"strings"
-	"unicode/utf8"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/publication"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
@@ -116,7 +114,7 @@ func BuildDraft(snapshot *templates.Snapshot, id, name string, personal []Person
 	if snapshot == nil || !configuration.ValidElementID(id) {
 		return routersettings.Draft{}, ErrInvalidPreparation
 	}
-	if strings.TrimSpace(name) == "" || !utf8.ValidString(name) {
+	if !routersettings.ValidDisplayName(name) {
 		return routersettings.Draft{}, &PreparationInputError{Code: "router_name_required"}
 	}
 	values := make(map[string]map[string]json.RawMessage)

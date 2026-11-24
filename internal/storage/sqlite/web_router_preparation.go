@@ -80,7 +80,11 @@ func (w WebRouterPreparation) ReadPrepared(ctx context.Context, digest [32]byte,
 	if err := tx.QueryRowContext(ctx, "SELECT MIN(revision) FROM desired_router_revisions WHERE router_id = ?", id).Scan(&number); err != nil || number != 1 {
 		return webadmin.PreparedRouter{}, publication.ErrStoredState
 	}
-	return webadmin.PreparedRouter{RouterID: id, Name: active.Draft.Name, TemplateID: active.Draft.TemplateID, Revision: number}, nil
+	name, err := displayedRouterName(ctx, tx, id, active.Draft.Name)
+	if err != nil {
+		return webadmin.PreparedRouter{}, err
+	}
+	return webadmin.PreparedRouter{RouterID: id, Name: name, TemplateID: active.Draft.TemplateID, Revision: number}, nil
 }
 
 type guardedWebPublication struct {

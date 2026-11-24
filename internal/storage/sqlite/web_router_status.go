@@ -9,6 +9,7 @@ import (
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/externalaccess"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/publication"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/webadmin"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/reporting"
 )
@@ -47,6 +48,7 @@ func (s *ExternalAccess) ReadExternalRouterStatuses(ctx context.Context, permit 
 func readRouterStatuses(ctx context.Context, tx *sql.Tx, now time.Time, includeRecovery bool) ([]reporting.RouterStatus, error) {
 	rows, err := tx.QueryContext(ctx, `SELECT active.router_id, active.template_id,
 		json_extract(CAST(active.settings AS TEXT), '$.Name', '$.TemplateID'),
+		(SELECT name FROM router_display_names WHERE router_id=active.router_id),
 		contact.contact_ns, contact.applied, contact.uncertain, CASE WHEN ? THEN contact.report END,
 		coalesce((SELECT max(revision) FROM desired_router_revisions WHERE router_id=active.router_id), 0)`+
 		visibleRouterSource+` ORDER BY active.router_id COLLATE BINARY`, includeRecovery)
@@ -59,8 +61,9 @@ func readRouterStatuses(ctx context.Context, tx *sql.Tx, now time.Time, includeR
 	for rows.Next() {
 		var row reporting.RouterStatus
 		var metadata, report []byte
+		var displayed sql.NullString
 		contact := contactRecord{observed: true}
-		if err := rows.Scan(&row.RouterID, &row.TemplateID, &metadata, &contact.ns, &contact.applied, &contact.uncertain, &report, &row.Desired); err != nil {
+		if err := rows.Scan(&row.RouterID, &row.TemplateID, &metadata, &displayed, &contact.ns, &contact.applied, &contact.uncertain, &report, &row.Desired); err != nil {
 			return nil, err
 		}
 		var names [2]*string
@@ -72,6 +75,12 @@ func readRouterStatuses(ctx context.Context, tx *sql.Tx, now time.Time, includeR
 		row.Name = row.RouterID
 		if names[0] != nil && *names[0] != "" {
 			row.Name = *names[0]
+		}
+		if displayed.Valid {
+			if !routersettings.ValidDisplayName(displayed.String) {
+				return nil, publication.ErrStoredState
+			}
+			row.Name = displayed.String
 		}
 		status := projectContactStatus(contact, row.Desired, now)
 		row.Contact, row.Applied, row.Runtime = status.Presence, status.Applied, status.Runtime
