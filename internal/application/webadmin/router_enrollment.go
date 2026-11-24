@@ -11,13 +11,15 @@ import (
 var ErrEnrollmentMissing = errors.New("prepared router missing")
 
 type EnrollmentState struct {
-	RouterID, Name string
-	Phase          string
-	Epoch, Desired int64
-	Expires        time.Time
-	Contact        string
-	Applied        int64
-	Runtime        string
+	RouterID, Name     string
+	Phase              string
+	Epoch, Desired     int64
+	Expires            time.Time
+	ReplacementExpires time.Time
+	ReplacementPending bool
+	Contact            string
+	Applied            int64
+	Runtime            string
 }
 
 var ErrEnrollmentConflict = errors.New("router invitation changed")

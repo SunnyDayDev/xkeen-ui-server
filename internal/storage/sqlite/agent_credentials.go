@@ -200,6 +200,18 @@ func (s *AgentCredentials) Revoke(ctx context.Context, routerID string) error {
 		return credentialDatabaseError(ctx)
 	}
 	defer tx.Rollback()
+	if err := revokeCredentials(ctx, tx, routerID); err != nil {
+		return err
+	}
+	if err := commitCredentials(ctx, tx); err != nil {
+		return err
+	}
+	for _, fn := range s.notify {
+		fn(routerID)
+	}
+	return nil
+}
+func revokeCredentials(ctx context.Context, tx *sql.Tx, routerID string) error {
 	disable, err := tx.ExecContext(ctx, `UPDATE agent_registrations SET active = 0 WHERE router_id = ? AND active = 1`, routerID)
 	if err != nil {
 		return credentialDatabaseError(ctx)
@@ -225,12 +237,6 @@ func (s *AgentCredentials) Revoke(ctx context.Context, routerID string) error {
 		WHERE router_id = ? AND redeemed_generation IS NULL)`, routerID, routerID).Scan(&outstanding)
 	if err != nil || outstanding {
 		return credentialDatabaseError(ctx)
-	}
-	if err := commitCredentials(ctx, tx); err != nil {
-		return err
-	}
-	for _, fn := range s.notify {
-		fn(routerID)
 	}
 	return nil
 }

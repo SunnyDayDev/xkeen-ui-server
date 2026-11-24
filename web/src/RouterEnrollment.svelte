@@ -2,11 +2,12 @@
   import { onMount } from 'svelte';
 
   type Phase = 'missing' | 'pending' | 'expired' | 'registered' | 'revoked';
+  type Action = 'issue' | 'replace' | 'rotate' | 'recover' | 'revoke';
   type Contact = 'unobserved' | 'online' | 'offline';
   type Snapshot = {
     routerId: string; name: string; origin: string; phase: Phase; epoch: string;
     desiredRevision: string; expires?: string; contact: Contact; appliedRevision?: string;
-    runtime?: 'unknown' | 'verified';
+    runtime?: 'unknown' | 'verified'; replacementExpires?: string; replacementPending?: boolean;
   };
   type Receipt = { epoch: string; expires: string; invitation: string };
   type Props = { id: string; csrf: string; signedOut: () => void; refreshSession: () => void };
@@ -16,13 +17,14 @@
   let secret = $state<Receipt>();
   let message = $state('');
   let awaitingRead = $state(false);
-  let confirming = $state(false);
+  let confirming = $state<Action>();
   let working = $state(false);
   let copied = $state(false);
   let pending: AbortController | undefined;
   let expiration: ReturnType<typeof setTimeout> | undefined;
   let presentation = 0;
   let deadline = 0;
+  let replacement = false;
 
   const date = new Intl.DateTimeFormat('ru', {
     dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC',
@@ -37,6 +39,7 @@
     clearTimeout(expiration);
     secret = undefined;
     copied = false;
+    replacement = false;
   }
 
   function expire() {
@@ -44,12 +47,12 @@
     void read();
   }
 
-  async function request(method: 'GET' | 'POST', payload?: object) {
+  async function request(method: 'GET' | 'POST', payload?: object, path = endpoint()) {
     const controller = new AbortController();
     pending = controller;
     let reply: {status:number; body:unknown; responseTime:number} | undefined;
     try {
-      const response = await fetch(endpoint(), {
+      const response = await fetch(path, {
         method, signal: AbortSignal.any([controller.signal,AbortSignal.timeout(8000)]), cache: 'no-store',
         ...(payload ? {headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify(payload)} : {}),
       });
@@ -92,9 +95,10 @@
       awaitingRead = true;
       return;
     }
-    if (secret && (next.phase !== 'pending' || next.epoch !== secret.epoch || performance.now() >= deadline)) dismiss();
-    if (confirming && next.epoch !== snapshot?.epoch) {
-      confirming = false;
+    if (secret && ((replacement ? !next.replacementPending : next.phase !== 'pending') ||
+        next.epoch !== secret.epoch || performance.now() >= deadline)) dismiss();
+    if (confirming && (next.epoch !== snapshot?.epoch || next.desiredRevision !== snapshot?.desiredRevision)) {
+      confirming = undefined;
       message = 'Состояние изменилось. Перечитайте параметры.';
       awaitingRead = true;
     } else {
@@ -104,20 +108,28 @@
     snapshot = next;
   }
 
-  async function issue(action: 'issue' | 'replace') {
-    if (!snapshot?.origin || working || awaitingRead || document.hidden) return;
+  async function issue(action: Action) {
+    if (!snapshot || (action !== 'revoke' && !snapshot.origin) || working || awaitingRead || document.hidden) return;
     pending?.abort();
     dismiss();
     const shownIn = presentation;
-    confirming = false;
+    confirming = undefined;
     working = true;
     const requestStarted = performance.now();
-    const promise = request('POST',{epoch:snapshot.epoch,desiredRevision:snapshot.desiredRevision,action});
+    const management = action === 'rotate' || action === 'recover' || action === 'revoke';
+    const path = management ? '/ui/v1/routers/keys?' + new URLSearchParams({routerId:id}) : endpoint();
+    const promise = request('POST',{epoch:snapshot.epoch,desiredRevision:snapshot.desiredRevision,action},path);
     const active = pending;
     const reply = await promise;
     if (pending !== active) return;
     pending = undefined;
     working = false;
+    if (action === 'revoke' && reply?.status === 200 && reply.body) {
+      const receipt = reply.body as Receipt;
+      snapshot = {...snapshot, epoch:receipt.epoch, phase:'revoked', replacementPending:false, replacementExpires:undefined};
+      void read();
+      return;
+    }
     if (reply?.status === 201 && reply.body) {
       const receipt = reply.body as Receipt;
       // HTTP Date is rounded to seconds. Count the entire request against the lifetime.
@@ -125,16 +137,19 @@
       const remaining = deadline - performance.now();
       if (shownIn === presentation && !document.hidden && Number.isFinite(remaining) && remaining > 0) {
         secret = receipt;
+        replacement = management;
         expiration = setTimeout(expire,remaining);
       }
-      snapshot = {...snapshot, epoch:receipt.epoch, expires:receipt.expires, phase:'pending'};
+      snapshot = management
+        ? {...snapshot, epoch:receipt.epoch, replacementExpires:receipt.expires, replacementPending:true}
+        : {...snapshot, epoch:receipt.epoch, expires:receipt.expires, phase:'pending'};
       if (!secret) void read();
       return;
     }
     awaitingRead = true;
     message = reply?.status === 409
       ? 'Состояние изменилось. Перечитайте параметры.'
-      : 'Не удалось подтвердить выдачу.';
+      : action === 'revoke' ? 'Не удалось подтвердить отзыв.' : 'Не удалось подтвердить выдачу.';
   }
 
   async function copyInvitation() {
@@ -183,6 +198,7 @@
 {#if snapshot}
   <section class="enrollment-card">
     <strong>{snapshot.name || snapshot.routerId}</strong>
+    <p>ID: <bdi>{snapshot.routerId}</bdi></p>
     <p>Адрес сервера</p>
     {#if snapshot.origin}<p><bdi>{snapshot.origin}</bdi></p>
     {:else}<p class="notice error">Адрес агента не настроен.</p>{/if}
@@ -201,18 +217,43 @@
     {:else if working}
       <button disabled>Выдаём приглашение…</button>
     {:else if confirming}
-      <strong>Заменить приглашение?</strong>
-      <p>Прежнее приглашение перестанет действовать.</p>
+      {@const action = confirming}
+      {#if action === 'revoke'}
+        <strong>Отозвать доступ агента?</strong>
+        <p>Текущий ключ и ожидающее приглашение прекратят действовать.</p>
+        <p>До локальной настройки нового ключа агент не сможет синхронизироваться.</p>
+      {:else if action === 'replace'}
+        <strong>Заменить приглашение?</strong>
+        <p>Прежнее приглашение перестанет действовать.</p>
+      {:else if action === 'rotate'}
+        <strong>Выдать приглашение для нового рабочего ключа?</strong>
+        <p>Прежний ключ действует до успешной замены.</p>
+      {:else}
+        <strong>Восстановить подключение?</strong>
+        <p>Сверьте ID и адрес сервера перед локальной настройкой нового ключа.</p>
+      {/if}
       <div class="enrollment-actions">
-        <button onclick={()=>{ void issue('replace'); }}>Заменить</button>
-        <button class="secondary" onclick={()=>{ confirming=false; }}>Отмена</button>
+        <button onclick={()=>{ void issue(action); }}>{action === 'revoke' ? 'Отозвать доступ' : action === 'replace' ? 'Заменить' : 'Выдать приглашение'}</button>
+        <button class="secondary" onclick={()=>{ confirming=undefined; }}>Отмена</button>
       </div>
     {:else if awaitingRead}
       <button onclick={()=>{ void read(true); }}>Проверить состояние</button>
-    {:else if snapshot.phase === 'registered'}
-      <p>Агент зарегистрирован.</p>
-    {:else if snapshot.phase === 'revoked'}
-      <p>Рабочий ключ отозван.</p>
+    {:else if snapshot.phase === 'registered' || snapshot.phase === 'revoked'}
+      <p>{snapshot.phase === 'registered' ? 'Агент зарегистрирован.' : 'Рабочий ключ отозван.'}</p>
+      {#if snapshot.replacementExpires}
+        <p>{snapshot.replacementPending ? 'Приглашение для рабочего ключа действует.' : 'Срок приглашения для рабочего ключа истёк.'}</p>
+        <p>Срок: {date.format(new Date(snapshot.replacementExpires))} UTC.</p>
+      {/if}
+      <div class="enrollment-actions">
+        {#if snapshot.origin && snapshot.phase === 'registered'}
+          <button onclick={()=>{ confirming='rotate'; }}>Выдать приглашение для замены</button>
+        {:else if snapshot.origin}
+          <button onclick={()=>{ confirming='recover'; }}>Восстановить подключение</button>
+        {/if}
+        {#if snapshot.phase === 'registered' || snapshot.replacementExpires}
+          <button class="secondary" onclick={()=>{ confirming='revoke'; }}>Отозвать ключ</button>
+        {/if}
+      </div>
     {:else if snapshot.origin}
       {#if snapshot.phase === 'missing'}
         <button onclick={()=>{ void issue('issue'); }}>Выдать приглашение</button>
@@ -222,7 +263,7 @@
           <p>Приглашение действует.</p>
           {#if snapshot.expires}<p>Действует до {date.format(new Date(snapshot.expires))} UTC.</p>{/if}
         {/if}
-        <button class="secondary" onclick={()=>{ confirming=true; }}>Заменить приглашение</button>
+        <button class="secondary" onclick={()=>{ confirming='replace'; }}>Заменить приглашение</button>
       {/if}
     {/if}
     {#if message}<p role="alert">{message}</p>{/if}

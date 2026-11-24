@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/statefile"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/agentcredential"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/storage/sqlite"
 )
 
@@ -218,4 +220,105 @@ func TestProcessWebRouterEnrollment(t *testing.T) {
 	if strings.Contains(server.output(), receipt.Invitation) || strings.Contains(worker.output(), receipt.Invitation) {
 		t.Fatal("invitation exposed in process output")
 	}
+	readKey := func(path string) string {
+		t.Helper()
+		store, err := statefile.Open(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer store.Close()
+		binding, err := store.Load()
+		if err != nil || binding == nil || binding.RouterID != "router-example" || binding.Key == "" {
+			t.Fatal("agent did not persist exact router identity")
+		}
+		return binding.Key
+	}
+	agentRequest := func(method, path, key, body string, want int) []byte {
+		t.Helper()
+		req, err := http.NewRequestWithContext(t.Context(), method, origin+path, strings.NewReader(body))
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Authorization", "Bearer "+key)
+		if body != "" {
+			req.Header.Set("Content-Type", "application/json")
+		}
+		res, err := client.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer res.Body.Close()
+		out, err := io.ReadAll(res.Body)
+		if err != nil || res.StatusCode != want {
+			t.Fatalf("%s %s got %d: %v", method, path, res.StatusCode, err)
+		}
+		return out
+	}
+	oldKey := readKey(agentState)
+	const contact = "/agent/v1/contact"
+	agentRequest(http.MethodPost, contact, oldKey, `{"report":{"sequence":"7","revision":"1","state":"applied"}}`, 204)
+	action := func(name string, want int) string {
+		t.Helper()
+		state, _ := request(http.MethodGet, enrollment, nil, 200)
+		var coordinates struct{ Epoch, DesiredRevision string }
+		if json.Unmarshal(state, &coordinates) != nil {
+			t.Fatal("missing coordinates")
+		}
+		intent, _ := json.Marshal(map[string]string{"action": name, "epoch": coordinates.Epoch, "desiredRevision": coordinates.DesiredRevision})
+		raw, _ := request(http.MethodPost, "/ui/v1/routers/keys?routerId=router-example", intent, want)
+		var receipt struct{ Invitation string }
+		if json.Unmarshal(raw, &receipt) != nil || (want == 201) != (receipt.Invitation != "") {
+			t.Fatal("invalid key operation receipt")
+		}
+		return receipt.Invitation
+	}
+	startReplacement := func(label, token string) string {
+		t.Helper()
+		dir := filepath.Join(dir, label)
+		if err := os.Mkdir(dir, 0700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "invitation"), []byte(token+"\n"), 0600); err != nil {
+			t.Fatal(err)
+		}
+		candidate := startProcess(t, agent, "--server", origin, "--expected-router-id", "router-example", "--state-dir", dir, "--ca-file", cert)
+		waitForAgentAuthentication(t, candidate)
+		stopRouterAgent(t, candidate)
+		if strings.Contains(candidate.output(), token) {
+			t.Fatal("agent logs include a secret")
+		}
+		return readKey(dir)
+	}
+	rotation := action("rotate", 201)
+	agentRequest(http.MethodGet, "/agent/v1/identity", oldKey, "", 200)
+	newKey := startReplacement("rotated", rotation)
+	if newKey == oldKey {
+		t.Fatal("rotation reused a working secret")
+	}
+	agentRequest(http.MethodGet, "/agent/v1/identity", oldKey, "", 401)
+	if raw := agentRequest(http.MethodGet, contact, newKey, "", 200); !bytes.Contains(raw, []byte(`"sequence":"7"`)) {
+		t.Fatal("rotated key lost report cursor")
+	}
+	pending := action("rotate", 201)
+	action("revoke", 200)
+	agentRequest(http.MethodGet, "/agent/v1/identity", newKey, "", 401)
+	redeem, _ := json.Marshal(map[string]string{"credential": agentcredential.Generate(agentcredential.Working).Encode()})
+	agentRequest(http.MethodPost, "/agent/v1/enroll", pending, string(redeem), 401)
+	recovery := action("recover", 201)
+	recovered := startReplacement("recovered", recovery)
+	if raw := agentRequest(http.MethodGet, contact, recovered, "", 200); !bytes.Contains(raw, []byte(`"sequence":"7"`)) {
+		t.Fatal("recovered key lost report cursor")
+	}
+	log := server.output()
+	for _, token := range []string{oldKey, newKey, recovered, rotation, pending, recovery} {
+		if strings.Contains(log, token) {
+			t.Fatal("agent key action audit includes a secret")
+		}
+	}
+	for _, action := range []string{"rotate", "revoke", "recover"} {
+		if !strings.Contains(log, `"action":"`+action+`"`) {
+			t.Fatal("missing agent key audit event")
+		}
+	}
+
 }

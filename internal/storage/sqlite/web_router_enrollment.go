@@ -10,10 +10,13 @@ import (
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/webadmin"
 )
 
-type WebRouterEnrollment struct{ db *sql.DB }
+type WebRouterEnrollment struct {
+	db     *sql.DB
+	notify []func(string)
+}
 
-func NewWebRouterEnrollment(db *sql.DB) WebRouterEnrollment {
-	return WebRouterEnrollment{db: db}
+func NewWebRouterEnrollment(db *sql.DB, notify ...func(string)) WebRouterEnrollment {
+	return WebRouterEnrollment{db: db, notify: notify}
 }
 
 func (w WebRouterEnrollment) Read(ctx context.Context, digest [32]byte, clock func() time.Time, id string) (webadmin.EnrollmentState, error) {
@@ -72,6 +75,10 @@ func readWebEnrollment(ctx context.Context, tx *sql.Tx, now time.Time, id string
 			state.Phase = "expired"
 		}
 	}
+	if registration.Valid && expires.Valid {
+		state.ReplacementExpires = time.Unix(0, expires.Int64).UTC()
+		state.ReplacementPending = now.Before(state.ReplacementExpires)
+	}
 	return state, nil
 }
 
@@ -110,6 +117,65 @@ func (w WebRouterEnrollment) Issue(ctx context.Context, digest [32]byte, clock f
 	}
 	if err := commitCredentials(ctx, tx); err != nil {
 		return webadmin.EnrollmentReceipt{}, err
+	}
+	return webadmin.EnrollmentReceipt{Epoch: state.Epoch + 1, Expires: expires}, nil
+}
+
+func (w WebRouterEnrollment) Manage(ctx context.Context, digest [32]byte, clock func() time.Time, command webadmin.AgentKeyCommand, proof agentcredential.Proof) (webadmin.EnrollmentReceipt, error) {
+	if !validPublicationID(command.RouterID) || command.Desired < 1 || command.Epoch < 0 {
+		return webadmin.EnrollmentReceipt{}, webadmin.ErrInvalidEnrollment
+	}
+	tx, err := w.db.BeginTx(ctx, nil)
+	if err != nil {
+		return webadmin.EnrollmentReceipt{}, err
+	}
+	defer tx.Rollback()
+	now := clock()
+	if err := touchActiveWebSession(ctx, tx, now, activeWebSessionArgs(digest, now)); err != nil {
+		return webadmin.EnrollmentReceipt{}, err
+	}
+	state, err := readWebEnrollment(ctx, tx, now, command.RouterID)
+	if err != nil {
+		return webadmin.EnrollmentReceipt{}, err
+	}
+	if state.Epoch != command.Epoch || state.Desired != command.Desired {
+		return webadmin.EnrollmentReceipt{}, webadmin.ErrEnrollmentConflict
+	}
+	var expires time.Time
+	switch command.Action {
+	case webadmin.RevokeAgentKey:
+		if state.Phase != "registered" && (state.Phase != "revoked" || state.ReplacementExpires.IsZero()) {
+			return webadmin.EnrollmentReceipt{}, webadmin.ErrEnrollmentConflict
+		}
+		if err := revokeCredentials(ctx, tx, command.RouterID); err != nil {
+			return webadmin.EnrollmentReceipt{}, err
+		}
+	case webadmin.RotateAgentKey, webadmin.RecoverAgentKey:
+		if (command.Action == webadmin.RotateAgentKey && state.Phase != "registered") ||
+			(command.Action == webadmin.RecoverAgentKey && state.Phase != "revoked") {
+			return webadmin.EnrollmentReceipt{}, webadmin.ErrEnrollmentConflict
+		}
+		registration, err := readRegistration(ctx, tx, command.RouterID)
+		if err != nil {
+			return webadmin.EnrollmentReceipt{}, err
+		}
+		if !registration.permits(agentcredentials.Replacement) {
+			return webadmin.EnrollmentReceipt{}, webadmin.ErrEnrollmentConflict
+		}
+		expires, err = issueCredential(ctx, tx, command.RouterID, agentcredentials.Replacement, proof, registration, now)
+		if err != nil {
+			return webadmin.EnrollmentReceipt{}, err
+		}
+	default:
+		return webadmin.EnrollmentReceipt{}, webadmin.ErrInvalidEnrollment
+	}
+	if err := commitCredentials(ctx, tx); err != nil {
+		return webadmin.EnrollmentReceipt{}, err
+	}
+	if command.Action == webadmin.RevokeAgentKey {
+		for _, notify := range w.notify {
+			notify(command.RouterID)
+		}
 	}
 	return webadmin.EnrollmentReceipt{Epoch: state.Epoch + 1, Expires: expires}, nil
 }

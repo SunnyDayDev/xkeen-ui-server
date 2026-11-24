@@ -1,4 +1,5 @@
 import { checkTemplateCopy } from './template-copy-browser.mjs';
+import { checkAgentKeys } from './agent-keys-browser.mjs';
 import { checkRouterOverview } from './router-overview-browser.mjs';
 import { checkTemplateVariables } from './template-variables-browser.mjs';
 import { checkRouterEnrollment } from './router-enrollment-browser.mjs';
@@ -361,7 +362,10 @@ try {
     await page.getByText('Желаемая ревизия 1',{exact:true}).waitFor();
     assert.equal(post.length,beforeLookup);
     const enrolledRouter = await checkRouterEnrollment(page, {origin, dir, cert, post});
-    if (enrolledRouter) await checkRouterOverview(page,{origin, database, enrolledRouter, resetSession: () => admin('reset',first), password:first});
+    if (enrolledRouter) {
+      await checkAgentKeys(page,{origin,dir,cert,database,enrolledRouter});
+      await checkRouterOverview(page,{origin, database, enrolledRouter, resetSession: () => admin('reset',first), password:first});
+    }
   } else {
     await page.getByText('Проверка Xray сейчас недоступна.',{exact:true}).waitFor();
     assert.equal(await duration.inputValue(),'9007199254740993');
