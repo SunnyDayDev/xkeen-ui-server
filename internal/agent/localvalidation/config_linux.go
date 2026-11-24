@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 
@@ -52,7 +53,7 @@ func LoadConfig(path string) (Config, error) {
 func (c Config) valid() bool {
 	_, binaryOK := decodeDigest(c.XraySHA256)
 	_, manifestOK := decodeDigest(c.WorkingManifest)
-	return c.Version == 1 && c.Scope.Origin != "" && c.Scope.RouterID != "" && c.Scope.VerifierID != "" &&
+	return runtime.GOARCH == "arm64" && c.Version == 1 && c.Scope.Origin != "" && c.Scope.RouterID != "" && c.Scope.VerifierID != "" &&
 		c.Scope.Profile == configuration.XrayIdentityVersion && c.AgentUID > 0 && c.AgentGID > 0 &&
 		c.WorkerUID > 0 && c.WorkerUID != c.AgentUID && c.WorkerGID > 0 && c.WorkerGID != c.AgentGID &&
 		c.WorkingPID > 0 && c.WorkingStartTick > 0 && binaryOK && manifestOK &&
