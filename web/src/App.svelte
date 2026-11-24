@@ -8,6 +8,7 @@
   import TemplateEditor from './TemplateEditor.svelte';
   import RouterPreparation from './RouterPreparation.svelte';
   import RouterEnrollment from './RouterEnrollment.svelte';
+  import RouterOverview from './RouterOverview.svelte';
 
   type Section = 'overview' | 'templates' | 'settings' | 'template-editor' | 'router-connect' | 'router-enroll';
 
@@ -59,6 +60,12 @@
     routerID = new URLSearchParams(location.search).get('routerId') ?? '';
     section = destination;
     void focusWorkspace();
+  }
+
+  function closeRouterDetail() {
+    if (!routerID) return;
+    history.pushState({}, '', '/ui/');
+    routerID = '';
   }
 
   async function endAccess(state: 'signed_out' | 'setup_required') {
@@ -165,7 +172,7 @@
     const locationChanged = () => {
       section = sectionForPath();
       editorID = new URLSearchParams(location.search).get('templateId') ?? '';
-    routerID = new URLSearchParams(location.search).get('routerId') ?? '';
+      routerID = new URLSearchParams(location.search).get('routerId') ?? '';
       if (view === 'active') void focusWorkspace();
     };
     window.addEventListener('popstate', locationChanged);
@@ -225,6 +232,13 @@
         <h1>Обзор</h1>
         <a class="overview-action" href="/ui/routers/connect"
           onclick={(event)=>navigate(event,'/ui/routers/connect','router-connect')}>Подключить роутер</a>
+        {#if view === 'active' && !busy}
+          {#key mutation}
+            <RouterOverview selectedId={routerID}
+              openRouter={(event,path) => navigate(event,path,'overview')} closeRouter={closeRouterDetail}
+              signedOut={() => { void endAccess('signed_out'); }} />
+          {/key}
+        {/if}
       {/if}
       {#if message && view === 'active'}
         <p class="notice error" role="status">{message}</p>

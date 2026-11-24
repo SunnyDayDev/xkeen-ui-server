@@ -111,6 +111,7 @@ export async function checkRouterEnrollment(page, {origin, dir, cert, post}) {
     await page.getByText('Агент зарегистрирован.',{exact:true}).waitFor({timeout:20000});
     await secret.waitFor({state:'detached'});
     await page.getByText('Применение: нет подтверждения',{exact:true}).waitFor();
+    await page.getByText('Связь: на связи',{exact:true}).waitFor({timeout:20000});
     assert.equal(safe,true);
   } finally {
     const end = new Promise(resolve => agent.once('exit',resolve));
@@ -119,4 +120,5 @@ export async function checkRouterEnrollment(page, {origin, dir, cert, post}) {
       await end;
     }
   }
+  return new URL(page.url()).searchParams.get('routerId');
 }
