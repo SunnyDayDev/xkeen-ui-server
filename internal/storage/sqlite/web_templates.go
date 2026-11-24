@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 	"unicode/utf8"
 
@@ -59,6 +60,46 @@ func (w WebTemplates) Create(ctx context.Context, digest [32]byte, clock func() 
 	}
 	if err := insertTemplate(ctx, tx, draft); err != nil {
 		return err
+	}
+	return tx.Commit()
+}
+
+func (w WebTemplates) Copy(ctx context.Context, digest [32]byte, clock func() time.Time, source, target string, expected int64) error {
+	tx, err := w.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	now := clock()
+	if err := touchActiveWebSession(ctx, tx, now, activeWebSessionArgs(digest, now)); err != nil {
+		return err
+	}
+	var raw []byte
+	var version int64
+	err = tx.QueryRowContext(ctx, "SELECT draft, version FROM templates WHERE id = ?", source).Scan(&raw, &version)
+	if errors.Is(err, sql.ErrNoRows) {
+		return templates.ErrNotFound
+	}
+	if err != nil {
+		return operationError("read template to copy", ctx.Err())
+	}
+	if version != expected {
+		return templates.ErrVersionConflict
+	}
+	draft, err := decodeTemplate(source, raw)
+	if err != nil || len(configuration.ValidateTemplateDraft(*draft)) != 0 {
+		return templates.ErrCorrupt
+	}
+	result, err := tx.ExecContext(ctx, "INSERT INTO templates (id,draft) VALUES (?,?) ON CONFLICT(id) DO NOTHING", target, raw)
+	if err != nil {
+		return operationError("insert template copy", ctx.Err())
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return operationError("confirm template copy", ctx.Err())
+	}
+	if n != 1 {
+		return templates.ErrConflict
 	}
 	return tx.Commit()
 }

@@ -173,6 +173,21 @@ func TestProcessWebTemplateEditor(t *testing.T) {
 	add["section"] = "rules"
 	request("POST", target, add, 400)
 	delete(add, "section")
+	const copiedID = " copy / # "
+	copyPath := "/ui/v1/templates/copy?templateId=" + url.QueryEscape(id)
+	copyInput := map[string]string{"version": "8", "targetId": copiedID}
+	request("POST", copyPath, copyInput, 409)
+	copyInput["version"] = "9"
+	receipt, _ := request("POST", copyPath, copyInput, 201)
+	if receipt["id"] != copiedID || receipt["version"] != "1" {
+		t.Fatal("inexact copy receipt")
+	}
+	copied, _ := request("GET", "/ui/v1/templates/item?templateId="+url.QueryEscape(copiedID)+"&elementId="+secondRuleID, nil, 200)
+	if copied["selected"].(map[string]any)["source"] != raw {
+		t.Fatal("the copied source or stable UUID changed")
+	}
+	request("POST", copyPath, copyInput, 409)
 	request("POST", "/ui/v1/logout", nil, 200)
 	request("POST", target, add, 401)
+	request("POST", copyPath, copyInput, 401)
 }
