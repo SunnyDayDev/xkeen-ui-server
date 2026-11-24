@@ -259,3 +259,29 @@ func TestRouterVisibilityEpochMigratesAnExistingHiddenRecord(t *testing.T) {
 		t.Fatal("write accepted a stale permit")
 	}
 }
+
+func TestRouterVisibilityDoesNotClaimUnwrittenMarkerOrEpoch(t *testing.T) {
+	ctx := t.Context()
+	db, _ := openPublicationDB(t)
+	plan := storeCurrentPublication(t, db)
+	if _, err := NewPublications(db).Commit(ctx, plan); err != nil {
+		t.Fatal(err)
+	}
+	view := NewRouterVisibility(db)
+	for _, table := range []string{"hidden_router_visibility", "router_visibility_epochs"} {
+		t.Run(table, func(t *testing.T) {
+			if _, err := db.ExecContext(ctx, "CREATE TRIGGER fixture_skip_hide BEFORE INSERT ON "+table+
+				" BEGIN SELECT RAISE(IGNORE); END"); err != nil {
+				t.Fatal(err)
+			}
+			defer db.ExecContext(ctx, "DROP TRIGGER fixture_skip_hide")
+			if err := view.Hide(ctx, "router"); !errors.Is(err, routersettings.ErrVisibilityUnavailable) {
+				t.Fatalf("suppressed %s reported successful hide: %v", table, err)
+			}
+			var hidden bool
+			if err := db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM hidden_router_visibility WHERE router_id='router')").Scan(&hidden); err != nil || hidden {
+				t.Fatal("half-written hide survived")
+			}
+		})
+	}
+}

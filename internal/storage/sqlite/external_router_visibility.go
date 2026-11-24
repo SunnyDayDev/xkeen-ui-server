@@ -44,6 +44,9 @@ func (s *ExternalAccess) HideExternalRouter(ctx context.Context, permit external
 	if err != nil {
 		return routersettings.VisibilitySnapshot{}, err
 	}
+	if current.Visible {
+		return routersettings.VisibilitySnapshot{}, routersettings.ErrVisibilityUnavailable
+	}
 	if err := tx.Commit(); err != nil {
 		return routersettings.VisibilitySnapshot{}, err
 	}
@@ -61,7 +64,7 @@ func readRouterVisibility(ctx context.Context, tx *sql.Tx, id string) (routerset
 	if errors.Is(err, sql.ErrNoRows) {
 		return routersettings.VisibilitySnapshot{}, routersettings.ErrVisibilityNotFound
 	}
-	if err != nil || status.ActiveGeneration < 1 || status.Epoch < 0 {
+	if err != nil || status.ActiveGeneration < 1 || status.Epoch < 0 || (!status.Visible && status.Epoch == 0) {
 		return routersettings.VisibilitySnapshot{}, routersettings.ErrVisibilityUnavailable
 	}
 	return status, nil

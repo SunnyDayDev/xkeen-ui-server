@@ -58,12 +58,32 @@ func hideRouter(ctx context.Context, tx *sql.Tx, id string) error {
 		return err
 	}
 	changed, err := result.RowsAffected()
-	if err != nil || changed == 0 {
+	if err != nil {
 		return err
 	}
-	_, err = tx.ExecContext(ctx, `INSERT INTO router_visibility_epochs(router_id,epoch)
+	if changed == 0 {
+		var hidden bool
+		err := tx.QueryRowContext(ctx, `SELECT EXISTS(
+			SELECT 1 FROM hidden_router_visibility AS hidden
+			JOIN router_visibility_epochs AS epochs ON epochs.router_id=hidden.router_id
+			WHERE hidden.router_id=? AND epochs.epoch>0)`, id).Scan(&hidden)
+		if err != nil || !hidden {
+			return routersettings.ErrVisibilityUnavailable
+		}
+		return nil
+	}
+	if changed != 1 {
+		return routersettings.ErrVisibilityUnavailable
+	}
+	epoch, err := tx.ExecContext(ctx, `INSERT INTO router_visibility_epochs(router_id,epoch)
 		VALUES (?,1) ON CONFLICT(router_id) DO UPDATE SET epoch=epoch+1`, id)
-	return err
+	if err != nil {
+		return err
+	}
+	if changed, err := epoch.RowsAffected(); err != nil || changed != 1 {
+		return routersettings.ErrVisibilityUnavailable
+	}
+	return nil
 }
 
 func (v RouterVisibility) VisibleIDs(ctx context.Context) ([]string, error) {
