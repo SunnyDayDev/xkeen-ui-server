@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	jsonv2 "encoding/json/v2"
 	"errors"
 	"net/http"
 	"time"
@@ -22,10 +23,7 @@ type externalRouterRulesStore interface {
 	WriteExternalRouterOrder(context.Context, externalaccess.Permit, routerdraft.Basis, routersettings.Draft, *publication.OrderBasis) (int64, error)
 }
 
-type externalRuleInsert struct {
-	After  *string `json:"afterId"`
-	Source *string `json:"source"`
-}
+type externalRuleMutation func(*publication.DraftRules) (routersettings.Draft, *publication.OrderBasis, error)
 
 func NewExternalRouterRules(store externalRouterRulesStore, next ExternalOperation) ExternalOperation {
 	return func(w http.ResponseWriter, r *http.Request, permit externalaccess.Permit) {
@@ -34,8 +32,8 @@ func NewExternalRouterRules(store externalRouterRulesStore, next ExternalOperati
 			return
 		}
 		w.Header().Set("Cache-Control", "no-store, no-transform")
-		if r.Method != http.MethodGet && r.Method != http.MethodPost {
-			w.Header().Set("Allow", "GET, POST")
+		if r.Method != http.MethodGet && r.Method != http.MethodPost && r.Method != http.MethodPatch {
+			w.Header().Set("Allow", "GET, POST, PATCH")
 			externalError(w, http.StatusMethodNotAllowed, "method_not_allowed")
 			return
 		}
@@ -45,18 +43,22 @@ func NewExternalRouterRules(store externalRouterRulesStore, next ExternalOperati
 			return
 		}
 		var expected string
-		var insert externalRuleInsert
-		if r.Method == http.MethodPost {
+		var mutation externalRuleMutation
+		if r.Method != http.MethodGet {
 			if err := http.NewResponseController(w).SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil && !errors.Is(err, http.ErrNotSupported) {
 				externalFailure(w, err)
 				return
 			}
 			expected, ok = externalCondition(w, r)
-			if !ok || !readExternalTemplateJSON(w, r, maxWebEditorBody, &insert) {
+			if !ok {
 				return
 			}
-			if insert.After == nil || insert.Source == nil || (*insert.After != "" && !configuration.ValidElementID(*insert.After)) {
-				externalError(w, http.StatusBadRequest, "invalid_request")
+			if r.Method == http.MethodPost {
+				mutation, ok = readExternalRuleInsert(w, r)
+			} else {
+				mutation, ok = readExternalRuleMove(w, r)
+			}
+			if !ok {
 				return
 			}
 		}
@@ -76,17 +78,12 @@ func NewExternalRouterRules(store externalRouterRulesStore, next ExternalOperati
 			externalFailure(w, err)
 			return
 		}
-		if r.Method == http.MethodPost {
+		if mutation != nil {
 			if expected != tag {
 				externalError(w, http.StatusPreconditionFailed, "precondition_failed")
 				return
 			}
-			id, err := uuid.NewRandom()
-			if err != nil {
-				externalFailure(w, err)
-				return
-			}
-			draft, orderBasis, err := rules.Insert(id.String(), *insert.After, json.RawMessage(*insert.Source))
+			draft, orderBasis, err := mutation(rules)
 			if err != nil {
 				externalRuleFailure(w, err)
 				return
@@ -116,6 +113,60 @@ func NewExternalRouterRules(store externalRouterRulesStore, next ExternalOperati
 		}
 		_, _ = w.Write(body)
 	}
+}
+
+func readExternalRuleInsert(w http.ResponseWriter, r *http.Request) (externalRuleMutation, bool) {
+	var input struct {
+		After  *string `json:"afterId"`
+		Source *string `json:"source"`
+	}
+	if !readExternalTemplateJSON(w, r, maxWebEditorBody, &input) {
+		return nil, false
+	}
+	if input.After == nil || input.Source == nil || (*input.After != "" && !configuration.ValidElementID(*input.After)) {
+		externalError(w, http.StatusBadRequest, "invalid_request")
+		return nil, false
+	}
+	return func(rules *publication.DraftRules) (routersettings.Draft, *publication.OrderBasis, error) {
+		id, err := uuid.NewRandom()
+		if err != nil {
+			return routersettings.Draft{}, nil, err
+		}
+		return rules.Insert(id.String(), *input.After, json.RawMessage(*input.Source))
+	}, true
+}
+
+func readExternalRuleMove(w http.ResponseWriter, r *http.Request) (externalRuleMutation, bool) {
+	var input struct {
+		Action   string          `json:"action"`
+		RuleID   json.RawMessage `json:"ruleId"`
+		Position json.RawMessage `json:"position"`
+		Confirm  json.RawMessage `json:"confirm"`
+	}
+	if !readExternalTemplateJSON(w, r, 16<<10, &input) {
+		return nil, false
+	}
+	var id string
+	var position *int
+	var valid bool
+	switch input.Action {
+	case "move":
+		valid = input.Confirm == nil && jsonv2.Unmarshal(input.RuleID, &id) == nil && configuration.ValidElementID(id) &&
+			jsonv2.Unmarshal(input.Position, &position) == nil && position != nil && *position >= 0
+	case "reset":
+		var confirmed bool
+		valid = input.RuleID == nil && input.Position == nil && jsonv2.Unmarshal(input.Confirm, &confirmed) == nil && confirmed
+	}
+	if !valid {
+		externalError(w, http.StatusBadRequest, "invalid_request")
+		return nil, false
+	}
+	return func(rules *publication.DraftRules) (routersettings.Draft, *publication.OrderBasis, error) {
+		if position != nil && *position >= len(rules.Entries) {
+			return routersettings.Draft{}, nil, routersettings.ErrInvalidDraft
+		}
+		return rules.Reorder(id, position)
+	}, true
 }
 
 func externalRuleRepresentation(basis routerdraft.Basis, personalized bool, draft *publication.DraftRules) ([]byte, string, error) {

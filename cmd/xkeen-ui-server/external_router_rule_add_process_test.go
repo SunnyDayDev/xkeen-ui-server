@@ -10,18 +10,21 @@ import (
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 )
 
-func TestProcessExternalLocalRuleAdd(t *testing.T) {
+const externalExcludedRule = "550e8400-e29b-41d4-a716-446655440030"
+const externalDisabledRule = "550e8400-e29b-41d4-a716-446655440031"
+const externalRulesURL = "/api/v1/routers/rules?routerId=router-example"
+
+func newExternalRuleFixture(t *testing.T) externalRouterFixture {
+	t.Helper()
 	fixture := newExternalRouterFixture(t)
 	ctx := t.Context()
 	if _, _, err := fixture.access.Owner(ctx, fixture.owner,
 		&externalaccess.Change{Version: fixture.settings.Version, Enabled: true}); err != nil {
 		t.Fatal(err)
 	}
-	const excluded = "550e8400-e29b-41d4-a716-446655440030"
-	const disabled = "550e8400-e29b-41d4-a716-446655440031"
 	shared := `{"name":"rules","elements":[
-		{"disabled":false,"record":{"id":"` + excluded + `","content":"{\"ruleTag\":\"excluded-rule\"}","variables":[]}},
-		{"disabled":true,"record":{"id":"` + disabled + `","content":"{\"ruleTag\":\"disabled-rule\"}","variables":[]}}]}`
+		{"disabled":false,"record":{"id":"` + externalExcludedRule + `","content":"{\"ruleTag\":\"excluded-rule\"}","variables":[]}},
+		{"disabled":true,"record":{"id":"` + externalDisabledRule + `","content":"{\"ruleTag\":\"disabled-rule\"}","variables":[]}}]}`
 	if _, err := fixture.db.ExecContext(ctx, `UPDATE accepted_templates
 		SET draft=CAST(json_insert(CAST(draft AS TEXT), '$[#]', json(?)) AS BLOB)`, shared); err != nil {
 		t.Fatal(err)
@@ -36,12 +39,23 @@ func TestProcessExternalLocalRuleAdd(t *testing.T) {
 	}
 	base.Editable.Groups = append(base.Editable.Groups, routersettings.Group{
 		Name:       "rules",
-		Exclusions: []configuration.ElementSource{{TemplateID: base.Basis.TemplateID, ElementID: excluded}},
+		Exclusions: []configuration.ElementSource{{TemplateID: base.Basis.TemplateID, ElementID: externalExcludedRule}},
 	})
 	if _, err := fixture.access.WriteExternalRouterDraft(ctx, permit, base.Basis, base.Editable); err != nil {
 		t.Fatal(err)
 	}
-	const collection = "/api/v1/routers/rules?routerId=router-example"
+	return fixture
+}
+
+func TestProcessExternalLocalRuleAdd(t *testing.T) {
+	fixture := newExternalRuleFixture(t)
+	ctx := t.Context()
+	permit, err := fixture.access.Admit(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const collection = externalRulesURL
+	const excluded, disabled = externalExcludedRule, externalDisabledRule
 	call := fixture.call
 	view := call("GET", collection, "", "", "", 200)
 	if view.Tag == "" || !bytes.Contains(view.Body, []byte(`"excluded":true`)) ||
