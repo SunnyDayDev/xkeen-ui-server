@@ -12,6 +12,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/storage/sqlite"
 )
 
 func TestProcessWebRouterEnrollment(t *testing.T) {
@@ -19,6 +21,16 @@ func TestProcessWebRouterEnrollment(t *testing.T) {
 	dir := t.TempDir()
 	database := filepath.Join(dir, "server.sqlite")
 	_, credentials := fixtureEnrollment(t, database)
+	const elementID = "550e8400-e29b-41d4-a716-446655440000"
+	db, err := sqlite.Open(t.Context(), database)
+	if err != nil {
+		t.Fatal(err)
+	}
+	draft := []byte(`[{"name":"outbounds","elements":[{"disabled":false,"record":{"id":"` + elementID + `","content":"{\"tag\":\"example\",\"test\":\"$` + "{port}" + `\"}","variables":[{"name":"port","type":"number","default":443}]}}]}]`)
+	if _, err := db.ExecContext(t.Context(), "UPDATE accepted_templates SET draft=?", draft); err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
 	if err := credentials.Revoke(t.Context(), "router-example"); err != nil {
 		t.Fatal(err)
 	}
@@ -76,6 +88,8 @@ func TestProcessWebRouterEnrollment(t *testing.T) {
 	const overview = "/ui/v1/routers"
 	request(http.MethodGet, overview, nil, http.StatusUnauthorized)
 	request(http.MethodGet, enrollment, nil, http.StatusUnauthorized)
+	const variablePath = "/ui/v1/routers/variables?routerId=router-example&elementId=" + elementID
+	request(http.MethodGet, variablePath, nil, http.StatusUnauthorized)
 	login, _ := json.Marshal(map[string]string{"password": password})
 	body, res := request(http.MethodPost, "/ui/v1/login", login, http.StatusOK)
 	var signedIn struct{ CSRF string }
@@ -128,6 +142,30 @@ func TestProcessWebRouterEnrollment(t *testing.T) {
 	}
 	if bytes.Contains(body, []byte(receipt.Invitation)) || bytes.Contains(body, []byte(`"appliedRevision"`)) {
 		t.Fatal("overview exposed an invitation or fabricated applied evidence")
+	}
+	body, _ = request(http.MethodGet, variablePath, nil, http.StatusOK)
+	if !bytes.Contains(body, []byte(`"defaultSource":"443"`)) || !bytes.Contains(body, []byte(`"draftGeneration":"0"`)) {
+		t.Fatal("snapshot did not show the chosen variables and original generation")
+	}
+	source := " 9007199254740993\r\n"
+	values := map[string]any{"templateId": "template-example", "activeGeneration": "1", "acceptedVersion": "1", "draftGeneration": "0",
+		"values": []map[string]string{{"name": "port", "source": source}}}
+	literal, _ := json.Marshal(values)
+	body, _ = request(http.MethodPost, variablePath, literal, http.StatusOK)
+	if !bytes.Contains(body, []byte(`"draftGeneration":"1"`)) || !bytes.Contains(body, []byte(`"personalSource":" 9007199254740993\r\n"`)) {
+		t.Fatal("exact accepted personal source missing")
+	}
+	request(http.MethodPost, variablePath, literal, http.StatusConflict)
+	values["draftGeneration"] = "1"
+	values["values"] = []map[string]string{{"name": "port"}}
+	inherited, _ := json.Marshal(values)
+	body, _ = request(http.MethodPost, variablePath, inherited, http.StatusOK)
+	if !bytes.Contains(body, []byte(`"draftGeneration":"2"`)) || bytes.Contains(body, []byte(`"personalSource"`)) {
+		t.Fatal("explicit inheritance did not remove the stored personal source")
+	}
+	var desired int
+	if err := db.QueryRowContext(t.Context(), "SELECT max(revision) FROM desired_router_revisions").Scan(&desired); err != nil || desired != 1 {
+		t.Fatal("editing changed the desired revision")
 	}
 	stopRouterAgent(t, worker)
 	body, _ = request(http.MethodGet, enrollment, nil, http.StatusOK)

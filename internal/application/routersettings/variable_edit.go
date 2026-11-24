@@ -1,0 +1,112 @@
+package routersettings
+
+import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"slices"
+
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/jsonvalue"
+)
+
+var (
+	ErrVariableScope = errors.New("shared variable scope changed")
+	ErrVariableMode  = errors.New("shared element uses literal replacement")
+)
+
+type VariableChange struct {
+	Name  string
+	Value json.RawMessage // Nil explicitly inherits the definition's default.
+}
+
+type VariableSourceError struct {
+	Name  string
+	Issue jsonvalue.Issue
+}
+
+func (e *VariableSourceError) Error() string { return "invalid personal JSON" }
+
+func VariableOverride(base Draft, section string, source configuration.ElementSource) (*configuration.ContentOverride, error) {
+	if base.TemplateID != source.TemplateID || section == "" || !configuration.ValidElementID(source.ElementID) {
+		return nil, ErrVariableScope
+	}
+	for i := range base.Groups {
+		group := &base.Groups[i]
+		for j := range group.Overrides {
+			override := &group.Overrides[j]
+			if override.Source != source {
+				continue
+			}
+			if group.Name != section {
+				return nil, ErrVariableScope
+			}
+			return override, nil
+		}
+	}
+	return nil, nil
+}
+
+// EditVariableValues copies the affected group and changes only the named values
+// of one shared element. Other draft settings and legacy values are retained.
+func EditVariableValues(base Draft, section string, source configuration.ElementSource, definitions []configuration.VariableDefinition, changes []VariableChange) (Draft, error) {
+	previous, err := VariableOverride(base, section, source)
+	if err != nil {
+		return Draft{}, err
+	}
+	if previous != nil && previous.Mode != configuration.ContentModeVariables {
+		return Draft{}, ErrVariableMode
+	}
+	if len(changes) == 0 {
+		return Draft{}, ErrInvalidDraft
+	}
+	allowed := make(map[string]bool, len(definitions))
+	for _, definition := range definitions {
+		allowed[definition.Name] = true
+	}
+
+	next := configuration.ContentOverride{Source: source, Mode: configuration.ContentModeVariables}
+	if previous != nil {
+		next.Values = make(map[string]json.RawMessage, len(previous.Values))
+		for name, value := range previous.Values {
+			next.Values[name] = bytes.Clone(value)
+		}
+	}
+	for _, change := range changes {
+		if !allowed[change.Name] {
+			return Draft{}, ErrInvalidDraft
+		}
+		delete(allowed, change.Name)
+		if change.Value == nil {
+			delete(next.Values, change.Name)
+			continue
+		}
+		if _, issue := jsonvalue.Parse(change.Value); issue != nil {
+			return Draft{}, &VariableSourceError{Name: change.Name, Issue: *issue}
+		}
+		if next.Values == nil {
+			next.Values = make(map[string]json.RawMessage)
+		}
+		next.Values[change.Name] = bytes.Clone(change.Value)
+	}
+	if previous == nil && len(next.Values) == 0 {
+		return base, nil
+	}
+	base.Groups = slices.Clone(base.Groups)
+	for i, group := range base.Groups {
+		if group.Name != section {
+			continue
+		}
+		base.Groups[i].Overrides = slices.Clone(group.Overrides)
+		for j, override := range group.Overrides {
+			if override.Source == source {
+				base.Groups[i].Overrides[j] = next
+				return base, nil
+			}
+		}
+		base.Groups[i].Overrides = append(base.Groups[i].Overrides, next)
+		return base, nil
+	}
+	base.Groups = append(base.Groups, Group{Name: section, Overrides: []configuration.ContentOverride{next}})
+	return base, nil
+}

@@ -1,3 +1,4 @@
+import { checkRouterVariables } from "./router-variable-browser.mjs";
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 
@@ -18,6 +19,7 @@ export async function checkRouterOverview(page,{origin,database,enrolledRouter,r
   await drawer.getByText(enrolledRouter,{exact:true}).waitFor();
   await drawer.getByText('Связь: на связи',{exact:true}).waitFor();
   await drawer.getByText('Применение: нет подтверждения',{exact:true}).waitFor();
+  await checkRouterVariables(page, enrolledRouter, resetSession, password);
   await drawer.getByRole('button',{name:'Закрыть панель'}).click();
   assert.equal(await selected.evaluate(link=>document.activeElement===link),true);
   await page.goBack();
@@ -62,5 +64,11 @@ export async function checkRouterOverview(page,{origin,database,enrolledRouter,r
     assert.equal(await selected.count(),0);
     await page.goto(origin+'/ui/?routerId='+encodeURIComponent(enrolledRouter));
     await drawer.getByText('Роутер недоступен в текущем списке.',{exact:true}).waitFor();
+    await page.goto(origin+'/ui/routers/variables?routerId='+encodeURIComponent(enrolledRouter));
+    await page.getByText('Роутер недоступен в текущем обзоре.',{exact:true}).waitFor();
+    assert.equal(await page.getByLabel('Секция Xray').count(),0);
+    await page.getByRole('link',{name:'К роутеру'}).click();
+    await drawer.getByText('Роутер недоступен в текущем списке.',{exact:true}).waitFor();
+
   } finally { db.close(); }
 }
