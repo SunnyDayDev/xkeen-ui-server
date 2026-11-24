@@ -8,6 +8,8 @@
 sh scripts/build-entware-release.sh v0.0.0 .build/entware-bundles
 ```
 
+Выберите каталог под контролем владельца. Параллельные вызовы этого сборщика блокируются по версии; посторонним программам не следует создавать целевой каталог во время сборки.
+
 Готовый каталог `.build/entware-bundles/v0.0.0/` содержит:
 
 - Четыре статических Linux ARM64 исполняемых файла: xkeen-agent-linux-arm64, xkeen-local-validator-linux-arm64, xkeen-entware-installer-linux-arm64 и xkeen-ui-server-linux-arm64.
