@@ -45,6 +45,31 @@ const createPublicationStorage = `
 		PRIMARY KEY (router_id, revision)
 	)`
 
+const createAgentCredentialStorage = `
+	CREATE TABLE agent_registrations (
+		router_id TEXT NOT NULL PRIMARY KEY COLLATE BINARY,
+		generation INTEGER NOT NULL CHECK (typeof(generation) = 'integer' AND generation >= 0),
+		active INTEGER NOT NULL CHECK (active IN (0,1))
+	);
+	CREATE TABLE agent_working_keys (
+		selector BLOB NOT NULL PRIMARY KEY CHECK (typeof(selector) = 'blob' AND length(selector) = 16),
+		router_id TEXT NOT NULL COLLATE BINARY,
+		generation INTEGER NOT NULL CHECK (typeof(generation) = 'integer' AND generation > 0),
+		secret_digest BLOB NOT NULL UNIQUE CHECK (typeof(secret_digest) = 'blob' AND length(secret_digest) = 32),
+		UNIQUE (router_id, generation)
+	);
+	CREATE TABLE agent_invitations (
+		selector BLOB NOT NULL PRIMARY KEY CHECK (typeof(selector) = 'blob' AND length(selector) = 16),
+		router_id TEXT NOT NULL COLLATE BINARY,
+		purpose INTEGER NOT NULL CHECK (purpose IN (1,2)),
+		expires_ns INTEGER NOT NULL CHECK (typeof(expires_ns) = 'integer'),
+		secret_digest BLOB NOT NULL CHECK (typeof(secret_digest) = 'blob' AND length(secret_digest) = 32),
+		expected_generation INTEGER NOT NULL CHECK (typeof(expected_generation) = 'integer' AND expected_generation >= 0),
+		redeemed_generation INTEGER CHECK (redeemed_generation IS NULL OR
+			(typeof(redeemed_generation) = 'integer' AND redeemed_generation > 0))
+	);
+	CREATE UNIQUE INDEX agent_one_pending_invitation ON agent_invitations(router_id) WHERE redeemed_generation IS NULL`
+
 // Migrations are indexed by version minus one and remain immutable once released.
 var migrations = []string{
 	createMigrationHistory,
@@ -53,6 +78,7 @@ var migrations = []string{
 	`ALTER TABLE templates ADD COLUMN version INTEGER NOT NULL DEFAULT 1
 		CHECK (typeof(version) = 'integer' AND version >= 1)`,
 	createPublicationStorage,
+	createAgentCredentialStorage,
 }
 
 func Open(ctx context.Context, path string) (*sql.DB, error) {

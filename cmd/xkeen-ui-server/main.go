@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -14,6 +15,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/agentcredentials"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/server"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/storage/sqlite"
 )
@@ -30,6 +32,15 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 2
+	}
+	var tlsConfig *tls.Config
+	if cfg.tlsCert != "" {
+		certificate, err := tls.LoadX509KeyPair(cfg.tlsCert, cfg.tlsKey)
+		if err != nil {
+			fmt.Fprintln(stderr, "invalid TLS configuration: cannot load certificate and key")
+			return 2
+		}
+		tlsConfig = &tls.Config{Certificates: []tls.Certificate{certificate}, MinVersion: tls.VersionTLS12}
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -55,6 +66,11 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 		fmt.Fprintf(stderr, "listen: %v\n", err)
 		return 1
 	}
+	handler := server.NewHandler()
+	if tlsConfig != nil {
+		listener = tls.NewListener(listener, tlsConfig)
+		handler = server.NewAgentHandler(agentcredentials.NewService(sqlite.NewAgentCredentials(db), time.Now))
+	}
 	if err := json.NewEncoder(stderr).Encode(struct {
 		Event   string `json:"event"`
 		Address string `json:"address"`
@@ -63,7 +79,7 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 		fmt.Fprintf(stderr, "report listener: %v\n", err)
 		return 1
 	}
-	if err := server.Serve(ctx, listener, server.NewHandler(), 5*time.Second); err != nil {
+	if err := server.Serve(ctx, listener, handler, 5*time.Second); err != nil {
 		fmt.Fprintf(stderr, "server: %v\n", err)
 		return 1
 	}

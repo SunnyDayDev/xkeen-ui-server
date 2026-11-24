@@ -238,6 +238,11 @@ func (p *process) ready(t *testing.T) string {
 	t.Helper()
 	client := &http.Client{Timeout: 200 * time.Millisecond, Transport: &http.Transport{DisableKeepAlives: true}}
 	defer client.CloseIdleConnections()
+	return p.readyWithClient(t, client, "http")
+}
+
+func (p *process) readyWithClient(t *testing.T, client *http.Client, scheme string) string {
+	t.Helper()
 	deadline := time.Now().Add(15 * time.Second)
 	for time.Now().Before(deadline) {
 		select {
@@ -253,7 +258,7 @@ func (p *process) ready(t *testing.T) string {
 			if json.Unmarshal([]byte(line), &event) != nil || event.Event != "listening" {
 				continue
 			}
-			response, err := client.Get("http://" + event.Address + "/healthz")
+			response, err := client.Get(scheme + "://" + event.Address + "/healthz")
 			if err != nil {
 				continue
 			}
