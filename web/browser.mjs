@@ -1,3 +1,4 @@
+import { checkRouterVisibility } from './router-visibility-browser.mjs';
 import { checkTemplatePublication } from './template-publication-browser.mjs';
 import { checkTemplateCopy } from './template-copy-browser.mjs';
 import { checkAgentKeys } from './agent-keys-browser.mjs';
@@ -390,6 +391,7 @@ try {
     const enrolledRouter = await checkRouterEnrollment(page, {origin, dir, cert, post});
     if (enrolledRouter) {
       await checkAgentKeys(page,{origin,dir,cert,database,enrolledRouter});
+      await checkRouterVisibility(page,{origin,dir,cert,enrolledRouter,resetSession: () => admin('reset',first),password:first});
       await checkRouterOverview(page,{origin, database, enrolledRouter, resetSession: () => admin('reset',first), password:first});
       await checkTemplatePublication(page,{origin,database,resetSession: () => admin('reset',first),password:first});
     }

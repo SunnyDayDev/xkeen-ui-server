@@ -7,6 +7,7 @@ import (
 )
 
 var (
+	ErrVisibilityConflict    = errors.New("router visibility changed")
 	ErrVisibilityInvalid     = errors.New("invalid router identity")
 	ErrVisibilityNotFound    = errors.New("confirmed router not found")
 	ErrVisibilityUnavailable = errors.New("router visibility unavailable")
