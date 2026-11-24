@@ -17,6 +17,9 @@ func TestMain(m *testing.M) {
 		case "server-service", "install-server-stage", "update-server-stage", "uninstall-server":
 			afterServerPreflight = waitForMaintenanceClient
 			afterServerAdmission = func() error {
+				if path := os.Getenv("XKEEN_TEST_SERVER_ADMISSION_CHECKPOINT"); path != "" {
+					return maintenanceCheckpoint(path, "candidate-admitted")
+				}
 				if os.Getenv("XKEEN_TEST_INCOMPATIBLE_SERVER_ADMISSION") == "1" {
 					db, err := sql.Open("sqlite", serverDB)
 					if err != nil {
@@ -48,7 +51,11 @@ func waitForMaintenanceClient() error {
 	if path == "" {
 		return nil
 	}
-	if err := os.WriteFile(filepath.Join(path, "preflight-completed"), nil, 0600); err != nil {
+	return maintenanceCheckpoint(path, "preflight-completed")
+}
+
+func maintenanceCheckpoint(path, milestone string) error {
+	if err := os.WriteFile(filepath.Join(path, milestone), nil, 0600); err != nil {
 		return err
 	}
 	deadline := time.Now().Add(10 * time.Second)

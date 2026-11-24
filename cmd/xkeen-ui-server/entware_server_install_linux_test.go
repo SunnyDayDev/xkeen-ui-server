@@ -337,6 +337,45 @@ func TestEntwareInstallServerKeepsTLSAndAdministrator(t *testing.T) {
 			t.Fatalf("failed same-format candidate did not recover: %v, %s", err, out)
 		}
 		verifyLateState(origin, revoked)
+
+		// Hold a different TLS listener through the genuine candidate start.
+		// Recovery must retain the previous scope until ownership can be proven.
+		admission := t.TempDir()
+		fault = serverCommand("update")
+		fault.Env = append(os.Environ(), "XKEEN_TEST_SERVER_ADMISSION_CHECKPOINT="+admission)
+		var faultOutput strings.Builder
+		fault.Stdout, fault.Stderr = &faultOutput, &faultOutput
+		if err := fault.Start(); err != nil {
+			t.Fatal(err)
+		}
+		defer func() { _ = fault.Process.Kill(); _ = fault.Wait() }()
+		waitRecovery(t, 10*time.Second, "candidate did not reach admission", func() bool {
+			_, err := os.Stat(filepath.Join(admission, "candidate-admitted"))
+			return err == nil
+		})
+		occupied, err := net.Listen("tcp", endpoint)
+		if err != nil {
+			t.Fatal(err)
+		}
+		foreign := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		}))
+		foreign.Listener.Close()
+		foreign.Listener = occupied
+		if err := startEntwareFixtureTLS(foreign, cert, key); err != nil {
+			t.Fatal(err)
+		}
+		defer foreign.Close()
+		if err := os.WriteFile(filepath.Join(admission, "client-completed"), nil, 0600); err != nil {
+			t.Fatal(err)
+		}
+		if err := fault.Wait(); err == nil || !strings.Contains(faultOutput.String(), "did not confirm HTTPS readiness") {
+			t.Fatalf("genuine candidate start did not reject unrelated TLS: %v, %s", err, faultOutput.String())
+		}
+		query("/healthz")
+		foreign.Close()
+		invoke("start")
+		verifyLateState(origin, revoked)
 		selected = nextTag
 	} else if out, err := serverOperation("update"); err != nil {
 		t.Fatalf("installed server update: %v, %s", err, out)

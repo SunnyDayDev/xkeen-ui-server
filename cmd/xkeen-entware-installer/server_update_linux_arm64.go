@@ -13,6 +13,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"golang.org/x/sys/unix"
 )
 
 const serverUpdatePath = control + "/server.update.json"
@@ -164,8 +166,27 @@ func serverMaintenanceDirectory(p serverProfile, prefix string) (string, error) 
 	if err := prepareServerState(p); err != nil {
 		return "", err
 	}
-	path, err := os.MkdirTemp(serverState, prefix)
-	if err != nil || os.Chown(path, int(p.UID), int(p.GID)) != nil || syncDir(serverState) != nil {
+	// Change ownership while the directory entry is still under a parent
+	// controlled by root. The service UID owns serverState.
+	if err := rootDirs(false, stateBase); err != nil {
+		return "", err
+	}
+	stage, err := os.MkdirTemp(stateBase, prefix)
+	if err != nil {
+		return "", errServerMaintenance
+	}
+	defer os.Remove(stage)
+	dir, err := os.Open(stage)
+	if err != nil {
+		return "", errServerMaintenance
+	}
+	defer dir.Close()
+	if dir.Chown(int(p.UID), int(p.GID)) != nil || dir.Sync() != nil {
+		return "", errServerMaintenance
+	}
+	path := filepath.Join(serverState, filepath.Base(stage))
+	if unix.Renameat2(unix.AT_FDCWD, stage, unix.AT_FDCWD, path, unix.RENAME_NOREPLACE) != nil ||
+		syncDir(stateBase) != nil || syncDir(serverState) != nil {
 		return "", errServerMaintenance
 	}
 	return path, nil
