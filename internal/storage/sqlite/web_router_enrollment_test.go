@@ -3,6 +3,7 @@ package sqlite
 import (
 	"database/sql"
 	"errors"
+	"strconv"
 	"testing"
 	"time"
 
@@ -39,7 +40,7 @@ func TestWebRouterEnrollmentMigrationKeepsPendingInvitation(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	if got := readText(t, db, "SELECT max(version) FROM schema_migrations"); got != "11" {
+	if got := readText(t, db, "SELECT max(version) FROM schema_migrations"); got != strconv.Itoa(len(migrations)) {
 		t.Fatalf("migration version = %s", got)
 	}
 	credentials := agentcredentials.NewService(NewAgentCredentials(db), fixedWebTime(now))

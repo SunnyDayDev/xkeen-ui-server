@@ -87,6 +87,7 @@ var migrations = []string{
 		router_id TEXT PRIMARY KEY NOT NULL COLLATE BINARY,
 		epoch INTEGER NOT NULL CHECK (typeof(epoch) = 'integer' AND epoch > 0)
 	)`,
+	createSharedExclusions,
 }
 
 func Open(ctx context.Context, path string) (*sql.DB, error) {

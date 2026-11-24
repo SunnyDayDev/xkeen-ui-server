@@ -1,5 +1,6 @@
 import { checkTemplateCopy } from './template-copy-browser.mjs';
 import { checkAgentKeys } from './agent-keys-browser.mjs';
+import { checkExclusionsBrowser } from './exclusions-browser.mjs';
 import { checkRouterOverview } from './router-overview-browser.mjs';
 import { checkTemplateVariables } from './template-variables-browser.mjs';
 import { checkRouterEnrollment } from './router-enrollment-browser.mjs';
@@ -259,6 +260,7 @@ try {
   });
   assert.equal(await templateID.inputValue(), 'before-session-rotation');
   assert.equal(await page.getByText('Шаблон создан:',{exact:false}).count(),0);
+  await checkExclusionsBrowser(page.context(),origin,'branch-east');
   await checkTemplateEditor(page, exactID, first, () => admin("reset", first), (id, sibling) => {
     const db = new DatabaseSync(database);
     try {

@@ -10,11 +10,12 @@ import (
 )
 
 var (
-	ErrEffectRefused    = errors.New("publication authority is no longer active")
-	ErrConflict         = errors.New("publication state changed")
-	ErrInvalidState     = errors.New("invalid publication state")
-	ErrStoredState      = errors.New("invalid stored publication state")
-	ErrVersionExhausted = errors.New("publication version exhausted")
+	ErrBypassUnavailable = errors.New("XKeen destination bypass is unavailable")
+	ErrEffectRefused     = errors.New("publication authority is no longer active")
+	ErrConflict          = errors.New("publication state changed")
+	ErrInvalidState      = errors.New("invalid publication state")
+	ErrStoredState       = errors.New("invalid stored publication state")
+	ErrVersionExhausted  = errors.New("publication version exhausted")
 )
 
 // Store reads from one consistent state and commits one prepared router
@@ -33,6 +34,7 @@ type ReadRequest struct {
 }
 
 type Inputs struct {
+	Exclusions             *configuration.ExclusionSource
 	RouterID, TemplateID   string
 	Accepted               *templates.Snapshot
 	Active                 *ActiveSettings

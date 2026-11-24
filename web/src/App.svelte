@@ -5,6 +5,7 @@
 
   import TemplateList from './TemplateList.svelte';
   import TemplateCreate from './TemplateCreate.svelte';
+  import ExclusionEditor from './ExclusionEditor.svelte';
   import TemplateEditor from './TemplateEditor.svelte';
   import TemplateCopy from './TemplateCopy.svelte';
   import RouterPreparation from './RouterPreparation.svelte';
@@ -13,10 +14,11 @@
   import RouterVariables from './RouterVariables.svelte';
   import RouterReplacement from './RouterReplacement.svelte';
 
-  type Section = 'overview' | 'templates' | 'settings' | 'template-editor' | 'template-copy' | 'router-connect' | 'router-enroll' | 'router-variables' | 'router-replacement';
+  type Section = 'template-exclusions' | 'overview' | 'templates' | 'settings' | 'template-editor' | 'template-copy' | 'router-connect' | 'router-enroll' | 'router-variables' | 'router-replacement';
 
   function sectionForPath(): Section {
     if (location.pathname === '/ui/templates/copy') return 'template-copy';
+    if (location.pathname === '/ui/templates/exclusions') return 'template-exclusions';
     if (location.pathname === '/ui/templates/item') return 'template-editor';
     if (location.pathname === '/ui/routers/replacement') return 'router-replacement';
     if (location.pathname === '/ui/routers/variables') return 'router-variables';
@@ -209,7 +211,7 @@
       <nav aria-label="Основная навигация">
         <a href="/ui/" aria-current={section === 'overview' || section === 'router-variables' || section === 'router-replacement' ? 'page' : undefined}
           onclick={(event) => navigate(event, '/ui/', 'overview')}>Обзор</a>
-        <a href="/ui/templates" aria-current={section === 'templates' || section === 'template-editor' || section === 'template-copy' ? 'page' : undefined}
+        <a href="/ui/templates" aria-current={section === 'templates' || section === 'template-editor' || section === 'template-copy' || section === 'template-exclusions' ? 'page' : undefined}
           onclick={(event) => navigate(event, '/ui/templates', 'templates')}>Шаблоны</a>
         <a href="/ui/settings" aria-current={section === 'settings' ? 'page' : undefined}
           onclick={(event) => navigate(event, '/ui/settings', 'settings')}>Настройки</a>
@@ -224,6 +226,8 @@
         <TemplateList active={view === 'active'} refreshKey={templateRevision}
           signedOut={() => { void endAccess('signed_out'); }}
           openTemplate={(event, path) => navigate(event, path, 'template-editor')} />
+      {:else if section === 'template-exclusions'}
+        {#key editorID}<ExclusionEditor id={editorID} active={view === 'active'} sessionEpoch={mutation} {csrf} signedOut={() => {void endAccess('signed_out');}} refreshSession={() => {void refresh();}} />{/key}
       {:else if section === 'template-editor'}
         {#key editorID}<TemplateEditor id={editorID} active={view === 'active'} sessionEpoch={mutation} {csrf}
           changed={() => { templateRevision++; }} signedOut={() => { void endAccess('signed_out'); }}

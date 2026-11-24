@@ -184,6 +184,8 @@ func webPreparationFailure(w http.ResponseWriter, err error) {
 		webResult(w, http.StatusConflict, "conflict", "")
 	case errors.As(err, &catalog), errors.Is(err, publication.ErrInvalidCandidate):
 		webResult(w, http.StatusUnprocessableEntity, "configuration_invalid", "")
+	case errors.Is(err, publication.ErrBypassUnavailable):
+		webResult(w, 422, "bypass_unavailable", "")
 	case errors.Is(err, publication.ErrCatalogRejected):
 		webResult(w, http.StatusUnprocessableEntity, "catalog_rejected", "")
 	case errors.Is(err, publication.ErrValidatorUnavailable):

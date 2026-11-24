@@ -78,6 +78,9 @@ func (s *TemplateGroupService) Publish(ctx context.Context, request SharedPublis
 	plan := TemplateGroupPlan{TemplateID: request.TemplateID, TemplateDraftVersion: request.TemplateDraftVersion,
 		AcceptedVersion: request.AcceptedVersion, Edit: edit, Members: make([]GroupRouterPlan, 0, len(members))}
 	for i, member := range members {
+		if err := checkXrayOnlyExclusions(inputs.Exclusions); err != nil {
+			return nil, &GroupMemberError{RouterID: expectations[i].RouterID, Cause: err}
+		}
 		candidate, err := prepareGroupMember(ctx, s.validator, selected, member)
 		if err != nil {
 			return nil, &GroupMemberError{RouterID: expectations[i].RouterID, Cause: err}

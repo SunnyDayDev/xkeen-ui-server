@@ -101,5 +101,11 @@ func (w WebTemplates) Copy(ctx context.Context, digest [32]byte, clock func() ti
 	if n != 1 {
 		return templates.ErrConflict
 	}
+	// Template element IDs are scoped by the template, including the separate XKeen source.
+	_, err = tx.ExecContext(ctx, `INSERT INTO shared_xkeen_exclusions(template_id,element_id,version,source,variables)
+	 SELECT ?,element_id,1,source,variables FROM shared_xkeen_exclusions WHERE template_id=?`, target, source)
+	if err != nil {
+		return operationError("copy template exclusion source", ctx.Err())
+	}
 	return tx.Commit()
 }
