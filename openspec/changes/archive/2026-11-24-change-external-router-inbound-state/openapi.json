@@ -1,0 +1,420 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Guarded router inbound state",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/routers/inbounds": {
+      "get": {
+        "security": [
+          {
+            "bearer": []
+          },
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "routerId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "elementId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current inbound state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "routerId",
+                    "templateId",
+                    "acceptedVersion",
+                    "activeGeneration",
+                    "draftGeneration",
+                    "elementId",
+                    "origin",
+                    "personalDisabled",
+                    "templateDisabled",
+                    "excluded",
+                    "active",
+                    "references"
+                  ],
+                  "properties": {
+                    "routerId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "templateId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "acceptedVersion": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9][0-9]*)$"
+                    },
+                    "activeGeneration": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9][0-9]*)$"
+                    },
+                    "draftGeneration": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9][0-9]*)$"
+                    },
+                    "elementId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "origin": {
+                      "enum": [
+                        "shared",
+                        "local"
+                      ]
+                    },
+                    "personalDisabled": {
+                      "type": "boolean"
+                    },
+                    "templateDisabled": {
+                      "type": "boolean"
+                    },
+                    "excluded": {
+                      "type": "boolean"
+                    },
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "references": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "ruleId",
+                          "kind",
+                          "path"
+                        ],
+                        "properties": {
+                          "ruleId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "kind": {
+                            "enum": [
+                              "inbound",
+                              "direct",
+                              "fallback",
+                              "selector"
+                            ]
+                          },
+                          "path": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "required": true,
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Authorization required"
+          },
+          "404": {
+            "description": "Unavailable scope"
+          },
+          "409": {
+            "description": "Conflict or invalid dependency structure"
+          },
+          "503": {
+            "description": "Store unavailable"
+          }
+        }
+      },
+      "patch": {
+        "security": [
+          {
+            "bearer": []
+          },
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "routerId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "elementId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[0-9a-f]{64}\"$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Exact committed inbound state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "routerId",
+                    "templateId",
+                    "acceptedVersion",
+                    "activeGeneration",
+                    "draftGeneration",
+                    "elementId",
+                    "origin",
+                    "personalDisabled",
+                    "templateDisabled",
+                    "excluded",
+                    "active",
+                    "references"
+                  ],
+                  "properties": {
+                    "routerId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "templateId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "acceptedVersion": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9][0-9]*)$"
+                    },
+                    "activeGeneration": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9][0-9]*)$"
+                    },
+                    "draftGeneration": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9][0-9]*)$"
+                    },
+                    "elementId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "origin": {
+                      "enum": [
+                        "shared",
+                        "local"
+                      ]
+                    },
+                    "personalDisabled": {
+                      "type": "boolean"
+                    },
+                    "templateDisabled": {
+                      "type": "boolean"
+                    },
+                    "excluded": {
+                      "type": "boolean"
+                    },
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "references": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "ruleId",
+                          "kind",
+                          "path"
+                        ],
+                        "properties": {
+                          "ruleId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "kind": {
+                            "enum": [
+                              "inbound",
+                              "direct",
+                              "fallback",
+                              "selector"
+                            ]
+                          },
+                          "path": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "required": true,
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Authorization required"
+          },
+          "404": {
+            "description": "Unavailable scope"
+          },
+          "409": {
+            "description": "State conflict, active references or invalid dependency structure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code",
+                        "references"
+                      ],
+                      "properties": {
+                        "code": {
+                          "const": "inbound_in_use"
+                        },
+                        "references": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "ruleId",
+                              "kind",
+                              "path"
+                            ],
+                            "properties": {
+                              "ruleId": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "kind": {
+                                "enum": [
+                                  "inbound",
+                                  "direct",
+                                  "fallback",
+                                  "selector"
+                                ]
+                              },
+                              "path": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Store unavailable"
+          },
+          "412": {
+            "description": "Stale ETag"
+          },
+          "428": {
+            "description": "Missing If-Match"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "action"
+                ],
+                "properties": {
+                  "action": {
+                    "enum": [
+                      "disable",
+                      "enable"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}
