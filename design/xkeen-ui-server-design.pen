@@ -10607,19 +10607,29 @@
                           }
                         },
                         {
-                          "id": "zjfVa",
-                          "type": "ref",
-                          "ref": "ARxJx",
-                          "name": "Заменить токен",
-                          "fill": "$surface",
-                          "stroke": "$line",
-                          "strokeWidth": 1,
-                          "descendants": {
-                            "GyrRR": {
-                              "content": "Заменить токен",
-                              "fill": "$ink"
+                          "type": "frame",
+                          "id": "R488K",
+                          "name": "Видимый клавиатурный фокус",
+                          "fill": "#497DE5",
+                          "cornerRadius": 11,
+                          "padding": 2,
+                          "children": [
+                            {
+                              "id": "zjfVa",
+                              "type": "ref",
+                              "ref": "ARxJx",
+                              "name": "Заменить токен",
+                              "fill": "$surface",
+                              "stroke": "$line",
+                              "strokeWidth": 1,
+                              "descendants": {
+                                "GyrRR": {
+                                  "content": "Заменить токен",
+                                  "fill": "$ink"
+                                }
+                              }
                             }
-                          }
+                          ]
                         },
                         {
                           "type": "text",
@@ -16725,14 +16735,14 @@
                           "id": "BC7NT",
                           "type": "ref",
                           "ref": "ARxJx",
-                          "name": "Заменить токен",
+                          "name": "Подтвердить замену",
                           "fill": "$surface",
                           "stroke": "$line",
                           "strokeWidth": 1,
                           "descendants": {
                             "GyrRR": {
                               "fill": "$ink",
-                              "content": "Заменить токен"
+                              "content": "Подтвердить замену"
                             }
                           }
                         },
@@ -16749,19 +16759,29 @@
                           "fontWeight": "normal"
                         },
                         {
-                          "id": "v3coAv",
-                          "type": "ref",
-                          "ref": "ARxJx",
-                          "name": "Отмена",
-                          "fill": "$surface",
-                          "stroke": "$line",
-                          "strokeWidth": 1,
-                          "descendants": {
-                            "GyrRR": {
-                              "fill": "$ink",
-                              "content": "Отмена"
+                          "type": "frame",
+                          "id": "H3SLc",
+                          "name": "Видимый клавиатурный фокус",
+                          "fill": "#497DE5",
+                          "cornerRadius": 11,
+                          "padding": 2,
+                          "children": [
+                            {
+                              "id": "v3coAv",
+                              "type": "ref",
+                              "ref": "ARxJx",
+                              "name": "Отмена",
+                              "fill": "$surface",
+                              "stroke": "$line",
+                              "strokeWidth": 1,
+                              "descendants": {
+                                "GyrRR": {
+                                  "fill": "$ink",
+                                  "content": "Отмена"
+                                }
+                              }
                             }
-                          }
+                          ]
                         }
                       ]
                     }
@@ -46068,26 +46088,25 @@
               "gap": 10,
               "children": [
                 {
-                  "id": "JOh1w",
-                  "type": "ref",
-                  "ref": "ARxJx",
-                  "name": "Перечитать",
-                  "descendants": {
-                    "GyrRR": {
-                      "content": "Перечитать"
+                  "type": "frame",
+                  "id": "XLO5x",
+                  "name": "Видимый клавиатурный фокус",
+                  "fill": "#497DE5",
+                  "cornerRadius": 11,
+                  "padding": 2,
+                  "children": [
+                    {
+                      "id": "JOh1w",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Перечитать",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Перечитать"
+                        }
+                      }
                     }
-                  }
-                },
-                {
-                  "id": "dF0Ay",
-                  "type": "ref",
-                  "ref": "ARxJx",
-                  "name": "Проверить список",
-                  "descendants": {
-                    "GyrRR": {
-                      "content": "Проверить список"
-                    }
-                  }
+                  ]
                 },
                 {
                   "id": "Y31YCl",

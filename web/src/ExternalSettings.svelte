@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
 
   let { csrf, refreshSession }: {csrf: string; refreshSession: () => Promise<void>} = $props();
   type Settings = {enabled: boolean; protected: boolean; hasToken: boolean; version: string};
@@ -12,6 +12,8 @@
   let secret = $state('');
   let message = $state('');
   let needsReload = $state(false);
+  let replaceButton = $state<HTMLButtonElement>();
+  let cancelButton = $state<HTMLButtonElement>();
   let alive = true;
   const lifetime = new AbortController();
 
@@ -61,6 +63,23 @@
       if (alive) { needsReload = true; message = action === 'read' ? 'Не удалось прочитать настройки.' : 'Ответ не получен. Обновите состояние перед следующим действием.'; }
     } finally { if (alive) busy = false; }
   }
+  async function restoreActionFocus(started: HTMLButtonElement, target: () => HTMLButtonElement | undefined) {
+    if (document.activeElement !== started) return;
+    await tick();
+    if (alive && (document.activeElement === started || document.activeElement === document.body)) target()?.focus();
+  }
+
+  function changeConfirmation(started: HTMLButtonElement, open: boolean) {
+    confirmReplace = open;
+    void restoreActionFocus(started, () => open ? cancelButton : replaceButton);
+  }
+
+  function hideToken(started: HTMLButtonElement) {
+    secret = '';
+    message = '';
+    void restoreActionFocus(started, () => replaceButton);
+  }
+
   async function copy() {
     try { await navigator.clipboard.writeText(secret); if (alive) message = 'Токен скопирован.'; }
     catch { if (alive) message = 'Выделите токен и скопируйте вручную.'; }
@@ -87,17 +106,17 @@
       {#if secret}
         <h2>Токен выпущен</h2><p>Скопируйте токен сейчас. После закрытия он больше не показывается.</p>
         <label for="issued-token">Новый токен</label><input id="issued-token" readonly value={secret} autocomplete="off" spellcheck="false" />
-        <div class="actions"><button onclick={copy}>Скопировать</button><button onclick={() => {secret = ''; message = '';}}>Скрыть токен</button></div>
+        <div class="actions"><button onclick={copy}>Скопировать</button><button onclick={event => hideToken(event.currentTarget)}>Скрыть токен</button></div>
       {:else if state.enabled && !state.protected}
         <h2>Токен не требуется</h2><p>API доступен без авторизации всем клиентам, которые могут подключиться к серверу по сети.</p>
       {:else}
         <h2>Токен API</h2>
         {#if confirmReplace}
           <p>Заменить общий токен? Все клиенты со старым токеном сразу потеряют доступ.</p>
-          <div class="actions"><button onclick={() => request('issue')}>Подтвердить замену</button><button onclick={() => confirmReplace = false}>Отмена</button></div>
+          <div class="actions"><button onclick={() => request('issue')}>Подтвердить замену</button><button bind:this={cancelButton} onclick={event => changeConfirmation(event.currentTarget, false)}>Отмена</button></div>
         {:else}
           <p>{state.hasToken ? 'Токен выпущен. При замене прежнее значение сразу перестанет работать у всех клиентов.' : 'Токен ещё не выпущен. При включённой авторизации внешним клиентам нужен токен.'}</p>
-          <button disabled={busy || needsReload || changed} onclick={() => state?.hasToken ? confirmReplace = true : request('issue')}>{state.hasToken ? 'Заменить токен' : 'Выпустить токен'}</button>
+          <button bind:this={replaceButton} disabled={busy || needsReload || changed} onclick={event => state?.hasToken ? changeConfirmation(event.currentTarget, true) : request('issue')}>{state.hasToken ? 'Заменить токен' : 'Выпустить токен'}</button>
         {/if}
       {/if}
     </section>

@@ -4,11 +4,13 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 export async function checkRouterEnrollment(page, {origin, dir, cert, post}) {
-  await page.getByRole('link', {name:'Подключить агента'}).click();
+  const viewport=page.viewportSize();
+  await page.setViewportSize({width:320,height:740});
+  await page.getByRole('link', {name:'Подключить агента'}).press('Enter');
   await page.getByRole('heading', {name:'Подключение агента'}).waitFor();
   await page.getByText(origin, {exact:true}).waitFor();
   const issue = page.getByRole('button', {name:'Выдать приглашение',exact:true});
-  await issue.click();
+  await issue.press('Enter');
   const secret = page.getByRole('textbox',{name:'Одноразовое приглашение'});
   await secret.waitFor();
   const old = await secret.inputValue();
@@ -16,9 +18,7 @@ export async function checkRouterEnrollment(page, {origin, dir, cert, post}) {
   assert.ok(!page.url().includes(old));
   assert.equal(await page.evaluate(token => [localStorage,sessionStorage].some(storage =>
     Object.values(storage).some(value => value.includes(token))),old),false);
-  await page.setViewportSize({width:360,height:740});
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth),360);
-  await page.setViewportSize({width:1080,height:660});
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth),320);
   await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})));
   await secret.waitFor({state:'detached'});
   await page.reload();
@@ -27,7 +27,7 @@ export async function checkRouterEnrollment(page, {origin, dir, cert, post}) {
 
   const endpoint = '/ui/v1/routers/enroll';
   const before = post.length;
-  await page.getByRole('button',{name:'Заменить приглашение'}).click();
+  await page.getByRole('button',{name:'Заменить приглашение'}).press('Enter');
   await page.evaluate(endpoint => {
     const original = window.fetch;
     window.fetch = async (target, options) => {
@@ -39,9 +39,9 @@ export async function checkRouterEnrollment(page, {origin, dir, cert, post}) {
       return result;
     };
   },endpoint);
-  await page.getByRole('button',{name:'Заменить',exact:true}).click();
+  await page.getByRole('button',{name:'Заменить',exact:true}).press('Enter');
   await page.getByText('Не удалось подтвердить выдачу.',{exact:true}).waitFor();
-  await page.getByRole('button',{name:'Проверить состояние'}).click();
+  await page.getByRole('button',{name:'Проверить состояние'}).press('Enter');
   await page.getByText('Приглашение действует.',{exact:true}).waitFor();
   assert.deepEqual(post.slice(before),[endpoint]);
   assert.equal(await secret.count(),0);
@@ -68,8 +68,8 @@ export async function checkRouterEnrollment(page, {origin, dir, cert, post}) {
       }
     }).observe(document.body,{childList:true,subtree:true});
   },endpoint);
-  await page.getByRole('button',{name:'Заменить приглашение'}).click();
-  await page.getByRole('button',{name:'Заменить',exact:true}).click();
+  await page.getByRole('button',{name:'Заменить приглашение'}).press('Enter');
+  await page.getByRole('button',{name:'Заменить',exact:true}).press('Enter');
   await page.getByText('Приглашение действует.',{exact:true}).waitFor();
   assert.equal(await page.evaluate(() => !!window.syntheticExpiredInvitationWasShown),false);
   const enrollmentLocation = page.url();
@@ -84,21 +84,22 @@ export async function checkRouterEnrollment(page, {origin, dir, cert, post}) {
       return result;
     };
   },endpoint);
-  await page.getByRole('button',{name:'Заменить приглашение'}).click();
-  await page.getByRole('button',{name:'Заменить',exact:true}).click();
+  await page.getByRole('button',{name:'Заменить приглашение'}).press('Enter');
+  await page.getByRole('button',{name:'Заменить',exact:true}).press('Enter');
   await page.waitForFunction(() => typeof window.releaseSyntheticReceipt === 'function');
-  await page.getByRole('link',{name:'Обзор'}).click();
+  await page.getByRole('link',{name:'Обзор'}).press('Enter');
   await page.evaluate(() => { window.releaseSyntheticReceipt(); delete window.releaseSyntheticReceipt; });
   assert.equal(await secret.count(),0);
   await page.goto(enrollmentLocation);
   await page.getByText('Приглашение действует.',{exact:true}).waitFor();
   assert.equal(await secret.count(),0);
-  await page.getByRole('button',{name:'Заменить приглашение'}).click();
-  await page.getByRole('button',{name:'Заменить',exact:true}).click();
+  await page.getByRole('button',{name:'Заменить приглашение'}).press('Enter');
+  await page.getByRole('button',{name:'Заменить',exact:true}).press('Enter');
   await secret.waitFor();
   const fresh = await secret.inputValue();
   assert.match(fresh,/^i1\./);
   assert.notEqual(fresh,old);
+  await page.setViewportSize(viewport);
   if (!process.env.XKEEN_TEST_AGENT_BINARY) return;
   const agentDir = join(dir,'router-agent');
   mkdirSync(agentDir,{mode:0o700});
