@@ -15,6 +15,10 @@ import (
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/webadmin"
 )
 
+type preparationAdmission struct{ err error }
+
+func (a preparationAdmission) CheckMutation(context.Context, string, string) error { return a.err }
+
 type stubRouterPreparation struct {
 	id, proof string
 	input     webadmin.PreparationConfirmation
@@ -42,7 +46,7 @@ func TestWebRouterPreparationWire(t *testing.T) {
 		t.Fatal(err)
 	}
 	service := &stubRouterPreparation{}
-	handler := NewWebRouterPreparationHandler(context.Background(), origin, service, NewWebShellHandler(origin, http.NotFoundHandler()))
+	handler := NewWebRouterPreparationHandler(context.Background(), origin, service, preparationAdmission{}, NewWebShellHandler(origin, http.NotFoundHandler()))
 	const path = "/ui/v1/routers/prepare"
 	const confirm = `{"routerId":"router-a","templateId":" x / # ","name":"Филиал","source":"accepted","version":"9223372036854775807","values":[{"elementId":"element-a","name":"value","source":"9007199254740993"}]}`
 	check := func(method, path, origin, body string, want int) string {
@@ -115,7 +119,7 @@ func TestWebRouterPreparationStopsValidationOnShutdown(t *testing.T) {
 		t.Fatal(err)
 	}
 	worker := shutdownRouterPreparation{entered: make(chan struct{})}
-	handler := NewWebRouterPreparationHandler(lifetime, origin, &worker, http.NotFoundHandler())
+	handler := NewWebRouterPreparationHandler(lifetime, origin, &worker, preparationAdmission{}, http.NotFoundHandler())
 	req := httptest.NewRequest(http.MethodPost, "https://admin.example/ui/v1/routers/prepare",
 		strings.NewReader(`{"routerId":"router-a","templateId":"template-a","name":"Example","source":"draft","version":"1"}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -132,5 +136,21 @@ func TestWebRouterPreparationStopsValidationOnShutdown(t *testing.T) {
 	case <-done:
 	case <-time.After(time.Second):
 		t.Fatal("shutdown left validation active")
+	}
+}
+
+func TestWebRouterPreparationAuthenticatesBeforeReadingBody(t *testing.T) {
+	origin, err := ParseWebOrigin("https://admin.example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler := NewWebRouterPreparationHandler(t.Context(), origin, &stubRouterPreparation{}, preparationAdmission{webadmin.ErrSignedOut}, http.NotFoundHandler())
+	req := httptest.NewRequest(http.MethodPost, "https://admin.example/ui/v1/routers/prepare", strings.NewReader("invalid JSON"))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Origin", "https://admin.example")
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+	if w.Code != http.StatusUnauthorized || !strings.Contains(w.Body.String(), "signed_out") {
+		t.Fatalf("unprivileged request reached body parsing: %d %q", w.Code, w.Body.String())
 	}
 }

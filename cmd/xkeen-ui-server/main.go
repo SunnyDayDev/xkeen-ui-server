@@ -90,7 +90,7 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 		sessions := webadmin.New(sqlite.NewWebAdmin(db), time.Now)
 		handler = server.NewWebShellHandler(cfg.webOrigin, handler)
 		preparation := webadmin.NewRouterPreparation(sqlite.NewWebRouterPreparation(publications), validator, time.Now)
-		handler = server.NewWebRouterPreparationHandler(ctx, cfg.webOrigin, preparation, handler)
+		handler = server.NewWebRouterPreparationHandler(ctx, cfg.webOrigin, preparation, sessions, handler)
 		handler = server.NewWebTemplatesHandler(cfg.webOrigin, webadmin.NewTemplates(webStore, time.Now), handler)
 		handler = server.NewWebTemplateEditorHandler(cfg.webOrigin, webadmin.NewTemplateEditor(webStore, time.Now), sessions, handler)
 		handler = server.NewWebAdminHandler(cfg.webOrigin, sessions, handler)

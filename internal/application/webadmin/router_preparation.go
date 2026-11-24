@@ -2,10 +2,8 @@ package webadmin
 
 import (
 	"context"
-	"crypto/rand"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -14,6 +12,7 @@ import (
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/templates"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
+	"github.com/google/uuid"
 )
 
 var ErrInvalidPreparation = errors.New("invalid router preparation")
@@ -139,13 +138,11 @@ func (s RouterPreparation) Describe(ctx context.Context, token, templateID strin
 }
 
 func newPreparationID() (string, error) {
-	var id [16]byte
-	if _, err := rand.Read(id[:]); err != nil {
+	id, err := uuid.NewRandom()
+	if err != nil {
 		return "", err
 	}
-	id[6] = (id[6] & 0x0f) | 0x40
-	id[8] = (id[8] & 0x3f) | 0x80
-	return fmt.Sprintf("%x-%x-%x-%x-%x", id[:4], id[4:6], id[6:8], id[8:10], id[10:]), nil
+	return id.String(), nil
 }
 
 // PreparationInputError identifies a field without including authored values.

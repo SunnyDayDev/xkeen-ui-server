@@ -19,6 +19,10 @@ type webRouterPreparationService interface {
 	Prepared(context.Context, string, string) (webadmin.PreparedRouter, error)
 }
 
+type webPreparationAdmission interface {
+	CheckMutation(context.Context, string, string) error
+}
+
 type preparationVariable struct {
 	Name          string `json:"name"`
 	Type          string `json:"type"`
@@ -52,7 +56,7 @@ type preparationConfirmation struct {
 	} `json:"values"`
 }
 
-func NewWebRouterPreparationHandler(lifetime context.Context, origin WebOrigin, service webRouterPreparationService, next http.Handler) http.Handler {
+func NewWebRouterPreparationHandler(lifetime context.Context, origin WebOrigin, service webRouterPreparationService, admission webPreparationAdmission, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/ui/v1/routers/prepare" {
 			next.ServeHTTP(w, r)
@@ -71,6 +75,10 @@ func NewWebRouterPreparationHandler(lifetime context.Context, origin WebOrigin, 
 			defer stop()
 			if lifetime.Err() != nil {
 				cancel()
+			}
+			if err := admission.CheckMutation(ctx, webSessionToken(r), webCSRFProof(r)); err != nil {
+				webFailure(w, err)
+				return
 			}
 			confirmWebPreparation(w, r.WithContext(ctx), service)
 		}
