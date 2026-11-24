@@ -106,6 +106,7 @@ func checkControlledApplication(t *testing.T, mode string) {
 	allow := faultableApplicationProbe(t, "allowed-fixture", unavailable.Load)
 	deny := localProbeEndpoint(t, "denied-fixture")
 	var failAfterReplacement, failHotProbe atomic.Bool
+	var crashOnReplacement atomic.Int32
 	target := faultableApplicationProbe(t, "target-fixture", func() bool {
 		if failHotProbe.Load() {
 			return true
@@ -122,7 +123,13 @@ func checkControlledApplication(t *testing.T, mode string) {
 		}
 		for _, r := range list.Rules {
 			if r.RuleTag == "switch" && r.Tag == "block" {
-				return failAfterReplacement.CompareAndSwap(true, false)
+				if !failAfterReplacement.CompareAndSwap(true, false) {
+					return false
+				}
+				if pid := crashOnReplacement.Swap(0); pid > 0 {
+					_ = syscall.Kill(int(pid), syscall.SIGKILL)
+				}
+				return true
 			}
 		}
 		return false
@@ -400,6 +407,30 @@ func checkControlledApplication(t *testing.T, mode string) {
 				t.Fatal("hot rollback lost previous bytes")
 			}
 		}
+		// Interrupt the actual supervisor after Xray exposes the new route and
+		// before it witnesses the command result. No synthetic journal is injected.
+		crashOnReplacement.Store(int32(supervisor.cmd.Process.Pid))
+		failAfterReplacement.Store(true)
+		publish(catalog(true, false), 5)
+		interrupted, _ := launchAgent()
+		interrupted()
+		if supervisor.wait(t) == nil || failAfterReplacement.Load() {
+			t.Fatal("supervisor was not interrupted during hot dispatch")
+		}
+		raw, err = os.ReadFile(path("journal/application.json"))
+		record = restart.Record{}
+		if err != nil || json.Unmarshal(raw, &record) != nil || record.Pending == nil || record.Pending.Phase != restart.HotDispatch || record.Pending.TargetFiles == nil {
+			t.Fatal("interrupted hot intent lost")
+		}
+		attempt := record.Pending.AttemptID
+		checkTraffic(target, "target-fixture", false)
+		supervisor = startSupervisor()
+		raw, err = os.ReadFile(path("journal/application.json"))
+		record = restart.Record{}
+		if err != nil || json.Unmarshal(raw, &record) != nil || record.Pending != nil || record.LastRollback == nil || record.LastRollback.AttemptID != attempt || record.Current == nil || record.Current.AttemptID != revived.AttemptID {
+			t.Fatal("relaunch failed to resolve hot intent")
+		}
+		checkTraffic(target, "target-fixture", true)
 		stopRouterAgent(t, supervisor)
 		return
 	}
