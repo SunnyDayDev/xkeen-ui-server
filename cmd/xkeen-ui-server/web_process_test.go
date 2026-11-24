@@ -10,6 +10,10 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/templates"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/storage/sqlite"
 )
 
 func TestProcessWebRejectsOriginWithoutTLS(t *testing.T) {
@@ -73,9 +77,14 @@ func TestProcessWebAdministratorLifecycle(t *testing.T) {
 		return p, "https://" + p.readyWithClient(t, client, "https")
 	}
 	p, endpoint := launch()
+	type templateSummary struct {
+		ID      string
+		Version string
+	}
 	type result struct {
-		State string
-		CSRF  string
+		State     string
+		CSRF      string
+		Templates []templateSummary
 	}
 	request := func(method, path, requestOrigin, csrf, body string, cookie *http.Cookie, status int, state string) (result, *http.Cookie) {
 		t.Helper()
@@ -133,6 +142,23 @@ func TestProcessWebAdministratorLifecycle(t *testing.T) {
 	request("GET", "/session", "", "", "", nil, 200, "signed_out")
 	request("POST", "/login", "https://foreign.example", "", `{"password":"synthetic first password"}`, nil, 403, "invalid_origin")
 	first, firstCookie := login(pass, nil)
+	listing, _ := request("GET", "/templates", "", "", "", firstCookie, 200, "")
+	if listing.Templates == nil || len(listing.Templates) != 0 {
+		t.Fatalf("expected empty array, got %#v", listing.Templates)
+	}
+	db, err := sqlite.Open(t.Context(), path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const templateID = " branch / # "
+	_, buildErr := templates.New(sqlite.NewTemplateRepository(db)).Create(t.Context(), configuration.TemplateDraft{ID: templateID})
+	if err := db.Close(); buildErr != nil || err != nil {
+		t.Fatalf("seeding C02 draft: %v, %v", buildErr, err)
+	}
+	listing, _ = request("GET", "/templates", "", "", "", firstCookie, 200, "")
+	if len(listing.Templates) != 1 || listing.Templates[0] != (templateSummary{ID: templateID, Version: "1"}) {
+		t.Fatalf("expected saved C02 metadata, got %#v", listing.Templates)
+	}
 	agentRequest, err := http.NewRequestWithContext(t.Context(), http.MethodGet, endpoint+"/agent/v1/identity", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -171,6 +197,7 @@ func TestProcessWebAdministratorLifecycle(t *testing.T) {
 	write(replacement)
 	change("reset", 0)
 	request("GET", "/session", "", "", "", secondCookie, 200, "signed_out")
+	request("GET", "/templates", "", "", "", secondCookie, 401, "signed_out")
 	request("POST", "/login", origin, "", `{"password":"synthetic first password"}`, nil, 401, "invalid_credentials")
 	login(replacement, nil)
 	// Exercise expensive incorrect passwords while the non-browser handler remains available.

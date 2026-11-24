@@ -2,6 +2,16 @@
   import { onMount, tick } from 'svelte';
   import { sessionRequest, type Session } from './session';
 
+  import TemplateList from './TemplateList.svelte';
+
+  type Section = 'overview' | 'templates';
+
+  function sectionForPath(): Section {
+    return location.pathname === '/ui/templates' ? 'templates' : 'overview';
+  }
+
+  let section = $state<Section>(sectionForPath());
+
   let view = $state<'initial' | 'setup_required' | 'signed_out' | 'active' | 'unavailable'>('initial');
   let message = $state('');
   let opened = $state(false);
@@ -29,6 +39,28 @@
     workspace?.focus();
   }
 
+  function navigate(event: MouseEvent, path: string, destination: Section) {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    if (location.pathname !== path) history.pushState({}, '', path);
+    section = destination;
+    void focusWorkspace();
+  }
+
+  async function endAccess(state: 'signed_out' | 'setup_required') {
+    if (view === 'active') {
+      mutation++;
+      const focused = document.activeElement;
+      retainedFocus = focused instanceof HTMLElement && workspace?.contains(focused) ? focused : undefined;
+      expired = true;
+      message = '';
+    }
+    csrf = '';
+    const changed = view !== state;
+    view = state;
+    if (changed && state === 'signed_out') await focusPassword();
+  }
+
   async function refresh() {
     if (busy || reading || document.hidden) return;
     reading = true;
@@ -44,16 +76,7 @@
         await focusWorkspace();
       }
     } else if (reply.state === 'signed_out' || reply.state === 'setup_required') {
-      if (view === 'active') {
-        const focused = document.activeElement;
-        retainedFocus = focused instanceof HTMLElement && workspace?.contains(focused) ? focused : undefined;
-        expired = true;
-        message = '';
-      }
-      csrf = '';
-      const changed = view !== reply.state;
-      view = reply.state;
-      if (changed && view === 'signed_out') await focusPassword();
+      await endAccess(reply.state);
     } else if (reply.state === 'unavailable' && (view === 'initial' || view === 'unavailable')) {
       view = 'unavailable';
     }
@@ -123,12 +146,18 @@
 
   onMount(() => {
     const check = () => { void refresh(); };
+    const locationChanged = () => {
+      section = sectionForPath();
+      if (view === 'active') void focusWorkspace();
+    };
+    window.addEventListener('popstate', locationChanged);
     check();
     const timer = setInterval(check, 15_000);
     window.addEventListener('focus', check);
     document.addEventListener('visibilitychange', check);
     return () => {
       clearInterval(timer);
+      window.removeEventListener('popstate', locationChanged);
       window.removeEventListener('focus', check);
       document.removeEventListener('visibilitychange', check);
     };
@@ -140,17 +169,18 @@
     <header class="console-header">
       <strong>XKeen Console</strong>
       <nav aria-label="Основная навигация">
-        <a href="/ui/" aria-current="page" onclick={(event) => {
-          if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
-            event.preventDefault();
-            void focusWorkspace();
-          }
-        }}>Обзор</a>
+        <a href="/ui/" aria-current={section === 'overview' ? 'page' : undefined}
+          onclick={(event) => navigate(event, '/ui/', 'overview')}>Обзор</a>
+        <a href="/ui/templates" aria-current={section === 'templates' ? 'page' : undefined}
+          onclick={(event) => navigate(event, '/ui/templates', 'templates')}>Шаблоны</a>
       </nav>
       <button onclick={logout} disabled={busy}>Выйти</button>
     </header>
     <main bind:this={workspace} tabindex="-1">
-      <h1>Обзор</h1>
+      <h1>{section === 'templates' ? 'Шаблоны' : 'Обзор'}</h1>
+      {#if section === 'templates'}
+        <TemplateList active={view === 'active'} signedOut={() => { void endAccess('signed_out'); }} />
+      {/if}
       {#if message && view === 'active'}
         <p class="notice error" role="status">{message}</p>
       {/if}

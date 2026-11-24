@@ -3,6 +3,7 @@ import { execFileSync, spawn } from 'node:child_process';
 import { createHash, X509Certificate } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
+import { DatabaseSync } from 'node:sqlite';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { chromium } from 'playwright-core';
@@ -66,6 +67,55 @@ try {
   await page.getByRole('heading', {name:'Обзор'}).waitFor();
   assert.equal(await page.getByRole('link',{name:'Обзор'}).getAttribute('aria-current'),'page');
 
+  const templates = page.getByRole('link', {name:'Шаблоны'});
+  await page.route('**/ui/v1/templates', async route => {
+    await new Promise(resolve => setTimeout(resolve, 220));
+    await route.continue();
+  }, {times: 1});
+  await templates.click();
+  await page.getByText('Загрузка шаблонов…').waitFor();
+  await page.getByText('Шаблонов пока нет.').waitFor();
+  assert.equal(new URL(page.url()).pathname, '/ui/templates');
+  assert.equal(await templates.getAttribute('aria-current'),'page');
+
+  const legacyID = '<literal>/' + 'Д'.repeat(96) + ' branch';
+  const sql = new DatabaseSync(database);
+  try {
+    sql.prepare('INSERT INTO templates(id, draft, version) VALUES (?,?,?)').run(legacyID, '[]', 9223372036854775807n);
+    sql.prepare('INSERT INTO templates(id, draft, version) VALUES (?,?,?)').run('branch-east', '[]', 2);
+  } finally { sql.close(); }
+  await page.goBack();
+  await page.getByRole('heading', {name:'Обзор'}).waitFor();
+  await page.route('**/ui/v1/templates', route => route.fulfill({status:503, contentType:'application/json',
+    body:JSON.stringify({state:'unavailable'})}), {times: 1});
+  await page.goForward();
+  await page.getByText('Не удалось загрузить шаблоны.').waitFor();
+  await page.getByRole('button', {name:'Повторить'}).click();
+  await page.getByText(legacyID, {exact:true}).waitFor();
+  await page.getByText('Версия 9223372036854775807', {exact:true}).waitFor();
+  await page.reload();
+  await page.getByText('branch-east', {exact:true}).waitFor();
+  assert.equal(await page.locator('.console-header').count(), 1);
+  if (process.env.XKEEN_BROWSER_SCREENSHOT) await page.screenshot({path:process.env.XKEEN_BROWSER_SCREENSHOT + '-templates-wide.png'});
+  await page.setViewportSize({width:360,height:640});
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 360);
+  if (process.env.XKEEN_BROWSER_SCREENSHOT) {
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    await page.screenshot({path:process.env.XKEEN_BROWSER_SCREENSHOT + '-templates.png'});
+  }
+  await page.setViewportSize({width:1080,height:660});
+  await page.getByRole('link',{name:'Обзор'}).click();
+  admin('reset', first);
+  const inactive = page.waitForResponse(response => response.url().endsWith('/ui/v1/templates') && response.status() === 401);
+  await templates.click();
+  await inactive;
+  await page.getByRole('heading', {name:'Сессия истекла'}).waitFor();
+  assert.equal(await page.getByText('branch-east', {exact:true}).isVisible(), false);
+  await password.fill(first);
+  await password.press('Enter');
+  await page.getByText('branch-east', {exact:true}).waitFor();
+  await page.getByRole('link',{name:'Обзор'}).click();
+
   await page.evaluate(() => {
     const main = document.querySelector('main');
     main.dataset.tabBuffer = 'synthetic';
@@ -105,7 +155,7 @@ try {
     await page.locator('form[aria-busy="false"]').waitFor();
   }
   await page.getByText('Слишком много попыток входа. Повторите позже.').waitFor();
-  console.log('F04 real HTTPS browser scenario passed');
+  console.log('F04–F05 real HTTPS browser scenarios passed');
 } finally {
   if (browser) await browser.close();
   if (server && server.exitCode === null) {

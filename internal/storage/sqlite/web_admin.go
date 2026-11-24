@@ -97,22 +97,15 @@ func (w *WebAdmin) Session(ctx context.Context, digest [32]byte, clock func() ti
 	}
 	defer tx.Rollback()
 	now := clock()
-	const active = ` WHERE digest = ? AND generation = (SELECT generation FROM web_administrator WHERE id = 1)
-		AND issued_ns > ? AND activity_ns > ? AND activity_ns <= ?`
-	args := []any{digest[:], now.Add(-webadmin.AbsoluteLifetime).UnixNano(), now.Add(-webadmin.IdleLifetime).UnixNano(), now.UnixNano()}
+	args := activeWebSessionArgs(digest, now)
 	var result sql.Result
 	switch action {
 	case webadmin.SessionRead:
-		var present int
-		err := tx.QueryRowContext(ctx, `SELECT 1 FROM web_sessions`+active, args...).Scan(&present)
-		if errors.Is(err, sql.ErrNoRows) {
-			return webadmin.ErrSignedOut
-		}
-		return err
+		return requireActiveWebSession(ctx, tx, args)
 	case webadmin.SessionTouch:
-		result, err = tx.ExecContext(ctx, `UPDATE web_sessions SET activity_ns = ?`+active, append([]any{now.UnixNano()}, args...)...)
+		result, err = tx.ExecContext(ctx, `UPDATE web_sessions SET activity_ns = ?`+activeWebSession, append([]any{now.UnixNano()}, args...)...)
 	case webadmin.SessionRevoke:
-		result, err = tx.ExecContext(ctx, `DELETE FROM web_sessions`+active, args...)
+		result, err = tx.ExecContext(ctx, `DELETE FROM web_sessions`+activeWebSession, args...)
 	default:
 		return errors.New("invalid session action")
 	}
@@ -120,6 +113,22 @@ func (w *WebAdmin) Session(ctx context.Context, digest [32]byte, clock func() ti
 		return err
 	}
 	return tx.Commit()
+}
+
+const activeWebSession = ` WHERE digest = ? AND generation = (SELECT generation FROM web_administrator WHERE id = 1)
+    AND issued_ns > ? AND activity_ns > ? AND activity_ns <= ?`
+
+func activeWebSessionArgs(digest [32]byte, now time.Time) []any {
+	return []any{digest[:], now.Add(-webadmin.AbsoluteLifetime).UnixNano(), now.Add(-webadmin.IdleLifetime).UnixNano(), now.UnixNano()}
+}
+
+func requireActiveWebSession(ctx context.Context, tx *sql.Tx, args []any) error {
+	var present int
+	err := tx.QueryRowContext(ctx, `SELECT 1 FROM web_sessions`+activeWebSession, args...).Scan(&present)
+	if errors.Is(err, sql.ErrNoRows) {
+		return webadmin.ErrSignedOut
+	}
+	return err
 }
 
 func requireWebRow(result sql.Result, err, errorIfMissing error) error {

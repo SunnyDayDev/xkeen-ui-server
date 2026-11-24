@@ -25,28 +25,10 @@ func NewWebAdminHandler(origin WebOrigin, sessions *webadmin.Service, next http.
 			next.ServeHTTP(w, r)
 			return
 		}
-		w.Header().Set("Cache-Control", "no-store")
-		if err := http.NewResponseController(w).SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil && !errors.Is(err, http.ErrNotSupported) {
-			webResult(w, http.StatusServiceUnavailable, "unavailable", "")
+		if !allowWebRequest(w, r, origin, method) {
 			return
 		}
-		if r.URL.RawQuery != "" || r.URL.ForceQuery {
-			webResult(w, http.StatusBadRequest, "invalid_request", "")
-			return
-		}
-		if r.Method != method {
-			w.Header().Set("Allow", method)
-			webResult(w, http.StatusMethodNotAllowed, "method_not_allowed", "")
-			return
-		}
-		if !origin.allows(r, method == http.MethodPost) {
-			webResult(w, http.StatusForbidden, "invalid_origin", "")
-			return
-		}
-		token := ""
-		if cookies := r.CookiesNamed(webSessionCookie); len(cookies) == 1 {
-			token = cookies[0].Value
-		}
+		token := webSessionToken(r)
 		switch r.URL.Path {
 		case "/ui/v1/session":
 			configured, err := sessions.Configured(r.Context())
@@ -102,6 +84,35 @@ func NewWebAdminHandler(origin WebOrigin, sessions *webadmin.Service, next http.
 			webResult(w, http.StatusOK, "active", csrf)
 		}
 	})
+}
+
+func allowWebRequest(w http.ResponseWriter, r *http.Request, origin WebOrigin, method string) bool {
+	w.Header().Set("Cache-Control", "no-store")
+	if err := http.NewResponseController(w).SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil && !errors.Is(err, http.ErrNotSupported) {
+		webResult(w, http.StatusServiceUnavailable, "unavailable", "")
+		return false
+	}
+	if r.URL.RawQuery != "" || r.URL.ForceQuery {
+		webResult(w, http.StatusBadRequest, "invalid_request", "")
+		return false
+	}
+	if r.Method != method {
+		w.Header().Set("Allow", method)
+		webResult(w, http.StatusMethodNotAllowed, "method_not_allowed", "")
+		return false
+	}
+	if !origin.allows(r, method == http.MethodPost) {
+		webResult(w, http.StatusForbidden, "invalid_origin", "")
+		return false
+	}
+	return true
+}
+
+func webSessionToken(r *http.Request) string {
+	if cookies := r.CookiesNamed(webSessionCookie); len(cookies) == 1 {
+		return cookies[0].Value
+	}
+	return ""
 }
 
 func webLoginPassword(w http.ResponseWriter, r *http.Request) ([]byte, error) {
