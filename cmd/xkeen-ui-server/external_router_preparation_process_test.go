@@ -89,7 +89,7 @@ func TestProcessExternalPreparationKeepsAgentAuthoritySeparate(t *testing.T) {
 		}
 		defer res.Body.Close()
 		raw, err := io.ReadAll(res.Body)
-		if err != nil || res.StatusCode != status || res.Header.Get("Cache-Control") != "no-store" {
+		if err != nil || res.StatusCode != status || !strings.Contains(res.Header.Get("Cache-Control"), "no-store") {
 			t.Fatalf("%s preparation got %d want %d", method, res.StatusCode, status)
 		}
 		if strings.Contains(string(raw), rawCanary) || strings.Contains(string(raw), defaultCanary) ||

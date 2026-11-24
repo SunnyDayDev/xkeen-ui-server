@@ -22,6 +22,7 @@ func NewExternalRouterPreparation(lifetime context.Context, service externalacce
 			next(w, r, permit)
 			return
 		}
+		w.Header().Set("Cache-Control", "no-store, no-transform")
 		if r.Method != http.MethodGet && r.Method != http.MethodPost {
 			w.Header().Set("Allow", "GET, POST")
 			externalError(w, http.StatusMethodNotAllowed, "method_not_allowed")
