@@ -16,14 +16,16 @@
   import RouterReplacement from './RouterReplacement.svelte';
   import RouterRules from './RouterRules.svelte';
   import RouterInbounds from './RouterInbounds.svelte';
+  import RouterCatalog from './RouterCatalog.svelte';
 
-  type Section = 'router-exclusions' | 'template-exclusions' | 'overview' | 'templates' | 'settings' | 'template-editor' | 'template-copy' | 'router-connect' | 'router-enroll' | 'router-variables' | 'router-replacement' | 'router-rules' | 'router-inbounds';
+  type Section = 'router-exclusions' | 'template-exclusions' | 'overview' | 'templates' | 'settings' | 'template-editor' | 'template-copy' | 'router-connect' | 'router-enroll' | 'router-variables' | 'router-replacement' | 'router-rules' | 'router-inbounds' | 'router-catalog';
 
   function sectionForPath(): Section {
     if (location.pathname === '/ui/templates/copy') return 'template-copy';
     if (location.pathname === '/ui/templates/exclusions') return 'template-exclusions';
     if (location.pathname === '/ui/templates/item') return 'template-editor';
     if (location.pathname === '/ui/routers/inbounds') return 'router-inbounds';
+    if (location.pathname === '/ui/routers/catalog') return 'router-catalog';
     if (location.pathname === '/ui/routers/rules') return 'router-rules';
     if (location.pathname === '/ui/routers/exclusions') return 'router-exclusions';
     if (location.pathname === '/ui/routers/replacement') return 'router-replacement';
@@ -249,6 +251,12 @@
         <RouterPreparation canSubmit={view === 'active' && !busy} sessionEpoch={mutation} {csrf}
           signedOut={() => { void endAccess('signed_out'); }} refreshSession={() => { void refresh(); }}
           openEnrollment={(event,path) => navigate(event,path,'router-enroll')} />
+      {:else if section === 'router-catalog'}
+        {#key routerID}
+          <RouterCatalog id={routerID} active={view === 'active' && !busy} sessionEpoch={mutation}
+            signedOut={() => { void endAccess('signed_out'); }}
+            back={(event,path) => navigate(event,path,'overview')} />
+        {/key}
       {:else if section === 'router-inbounds'}
         {#key routerID}
           <RouterInbounds id={routerID} active={view === 'active' && !busy} sessionEpoch={mutation} {csrf}
@@ -295,6 +303,7 @@
               openEnrollment={(event,path) => navigate(event,path,'router-enroll')}
               openRules={(event,path) => navigate(event,path,'router-rules')}
               openInbounds={(event,path) => navigate(event,path,'router-inbounds')}
+              openCatalog={(event,path) => navigate(event,path,'router-catalog')}
               signedOut={() => { void endAccess('signed_out'); }} />
           {/key}
         {/if}

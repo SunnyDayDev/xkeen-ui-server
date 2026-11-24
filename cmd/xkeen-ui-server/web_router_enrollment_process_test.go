@@ -97,6 +97,8 @@ func TestProcessWebRouterEnrollment(t *testing.T) {
 	const overview = "/ui/v1/routers"
 	request(http.MethodGet, overview, nil, http.StatusUnauthorized)
 	request(http.MethodGet, enrollment, nil, http.StatusUnauthorized)
+	const catalog = "/ui/v1/routers/catalog?routerId=router-example&source="
+	request(http.MethodGet, catalog+"personal", nil, http.StatusUnauthorized)
 	const variablePath = "/ui/v1/routers/variables?routerId=router-example&elementId=" + elementID
 	request(http.MethodGet, variablePath, nil, http.StatusUnauthorized)
 	login, _ := json.Marshal(map[string]string{"password": password})
@@ -152,6 +154,11 @@ func TestProcessWebRouterEnrollment(t *testing.T) {
 	if bytes.Contains(body, []byte(receipt.Invitation)) || bytes.Contains(body, []byte(`"appliedRevision"`)) {
 		t.Fatal("overview exposed an invitation or fabricated applied evidence")
 	}
+	desiredBefore, _ := request(http.MethodGet, catalog+"desired", nil, http.StatusOK)
+	if !bytes.Contains(desiredBefore, []byte(`"desiredRevision":"1"`)) {
+		t.Fatal("desired revision identity missing")
+	}
+	request(http.MethodGet, catalog+"desired&source=personal", nil, http.StatusBadRequest)
 	body, _ = request(http.MethodGet, variablePath, nil, http.StatusOK)
 	if !bytes.Contains(body, []byte(`"defaultSource":"443"`)) || !bytes.Contains(body, []byte(`"draftGeneration":"0"`)) {
 		t.Fatal("snapshot did not show the chosen variables and original generation")
@@ -163,6 +170,47 @@ func TestProcessWebRouterEnrollment(t *testing.T) {
 	body, _ = request(http.MethodPost, variablePath, literal, http.StatusOK)
 	if !bytes.Contains(body, []byte(`"draftGeneration":"1"`)) || !bytes.Contains(body, []byte(`"personalSource":" 9007199254740993\r\n"`)) {
 		t.Fatal("exact accepted personal source missing")
+	}
+	personalPreview, _ := request(http.MethodGet, catalog+"personal", nil, http.StatusOK)
+	var previewFiles struct {
+		Source string
+		Files  []struct {
+			Name    string
+			Content []byte
+		}
+	}
+	if err := json.Unmarshal(personalPreview, &previewFiles); err != nil || previewFiles.Source != "personal" {
+		t.Fatalf("preview structure %v", err)
+	}
+	var outbound []byte
+	for _, file := range previewFiles.Files {
+		if file.Name == "04_outbounds.json" {
+			outbound = file.Content
+		}
+	}
+	var actual struct{ Outbounds []map[string]json.RawMessage }
+	if json.Unmarshal(outbound, &actual) != nil || len(actual.Outbounds) != 1 ||
+		string(actual.Outbounds[0]["test"]) != "9007199254740993" {
+		t.Fatalf("missing exact assembled value: %s", outbound)
+	}
+	desiredAfter, _ := request(http.MethodGet, catalog+"desired", nil, http.StatusOK)
+	if !bytes.Equal(desiredBefore, desiredAfter) {
+		t.Fatal("catalog preview changed the desired snapshot")
+	}
+	brokenDraft := bytes.Replace(draft, []byte(`\"tag\":\"example\"`), []byte(`\"tag\":false`), 1)
+	if bytes.Equal(brokenDraft, draft) {
+		t.Fatal("broken B12 fixture unchanged")
+	}
+	if _, err := db.ExecContext(t.Context(), "UPDATE accepted_templates SET draft=?", brokenDraft); err != nil {
+		t.Fatal(err)
+	}
+	failedPreview, _ := request(http.MethodGet, catalog+"personal", nil, http.StatusUnprocessableEntity)
+	if !bytes.Contains(failedPreview, []byte(`"state":"catalog_unready"`)) ||
+		!bytes.Contains(failedPreview, []byte(`"issues":[`)) || bytes.Contains(failedPreview, []byte(`"files"`)) {
+		t.Fatalf("unexpected assembly failure: %s", failedPreview)
+	}
+	if _, err := db.ExecContext(t.Context(), "UPDATE accepted_templates SET draft=?", draft); err != nil {
+		t.Fatal(err)
 	}
 	request(http.MethodPost, variablePath, literal, http.StatusConflict)
 	values["draftGeneration"] = "1"

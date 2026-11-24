@@ -1,0 +1,79 @@
+package publication
+
+import (
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
+)
+
+type RouterPreviewMode string
+
+const (
+	PreviewDesired  RouterPreviewMode = "desired"
+	PreviewPersonal RouterPreviewMode = "personal"
+)
+
+type RouterCatalogPreview struct {
+	Mode     RouterPreviewMode
+	Expected Expectations
+	Files    []configuration.CatalogFile
+}
+
+// RouterPreviewExpectations describes the inputs used by preview without assembling any files.
+func RouterPreviewExpectations(inputs *Inputs, mode RouterPreviewMode) (Expectations, error) {
+	if inputs == nil || inputs.Active == nil || inputs.Accepted == nil || inputs.Desired == nil {
+		return Expectations{}, ErrSourceMissing
+	}
+	expected := Expectations{
+		RouterID: inputs.RouterID, TemplateID: inputs.TemplateID, AcceptedVersion: inputs.Accepted.Version,
+		ActiveGeneration: inputs.Active.Generation, DesiredNumber: inputs.Desired.Number,
+	}
+	switch mode {
+	case PreviewDesired:
+	case PreviewPersonal:
+		if !inputs.RouterDraftRequested {
+			return Expectations{}, ErrInvalidCommand
+		}
+		var generation int64
+		if saved := inputs.RouterDraft; saved != nil {
+			if saved.Generation < 1 {
+				return Expectations{}, ErrStoredState
+			}
+			generation = saved.Generation
+		}
+		expected.RouterDraftGeneration = &generation
+	default:
+		return Expectations{}, ErrInvalidCommand
+	}
+	if !validIdentity(expected.RouterID) || !validIdentity(expected.TemplateID) || expected.ActiveGeneration < 1 ||
+		expected.AcceptedVersion < 1 || expected.DesiredNumber < 1 || !matchesExpectedInputs(inputs, expected) {
+		return Expectations{}, ErrStoredState
+	}
+	return expected, nil
+}
+
+// PreviewRouterFiles uses the same accepted input and assembler as publication.
+// No validator or writer is involved. Desired mode copies the persisted bytes.
+func PreviewRouterFiles(inputs *Inputs, mode RouterPreviewMode) (*RouterCatalogPreview, error) {
+	expected, err := RouterPreviewExpectations(inputs, mode)
+	if err != nil {
+		return nil, err
+	}
+	if mode == PreviewDesired {
+		return &RouterCatalogPreview{Mode: mode, Expected: expected, Files: copyCatalogFiles(inputs.Desired.Catalog.Files)}, nil
+	}
+	draft, basis := inputs.Active.Draft, inputs.Active.OrderBasis
+	if saved := inputs.RouterDraft; saved != nil {
+		draft, basis = saved.Draft, EditableRuleOrderBasis(saved, inputs.Active)
+	}
+	if draft.ID != expected.RouterID || draft.TemplateID != expected.TemplateID {
+		return nil, ErrSourceMismatch
+	}
+	if err := routersettings.ValidateDraft(draft); err != nil {
+		return nil, ErrInvalidCandidate
+	}
+	prepared, issues := PrepareRouterCandidate(inputs.Accepted, &draft, basis)
+	if len(issues) != 0 {
+		return nil, &PreparationError{Issues: issues}
+	}
+	return &RouterCatalogPreview{Mode: mode, Expected: expected, Files: prepared.Catalog.Files}, nil
+}
