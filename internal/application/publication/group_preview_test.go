@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/templates"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 )
@@ -101,5 +102,25 @@ func TestSharedPreviewBlocksUnsupportedG08Bypass(t *testing.T) {
 	input.Members = nil
 	if p, err := service.Preview(t.Context(), request.TemplateID, request.TemplateDraftVersion); p == nil || err != nil || len(p.Members) != 0 {
 		t.Fatalf("empty membership preview %v %v", p, err)
+	}
+}
+
+func TestSharedPreviewUsesEffectivePersonalExclusions(t *testing.T) {
+	input, request := sharedFixture(t, false)
+	input.Exclusions = &configuration.ExclusionSource{Text: "192.0.2.0/24\n", ElementID: firstID}
+	empty := "# A deliberate empty personal list\n"
+	for i := range input.Members {
+		input.Members[i].Active.Draft.Exclusion = &routersettings.ExclusionOverride{
+			Source: configuration.ElementSource{TemplateID: request.TemplateID, ElementID: firstID}, Replacement: &empty,
+		}
+	}
+	store := &groupStoreStub{inputs: input}
+	service := NewTemplateGroupService(store, catalogValidatorFunc(func(context.Context, string, []configuration.CatalogFile) error { return nil }))
+	if p, err := service.Preview(t.Context(), request.TemplateID, request.TemplateDraftVersion); err != nil || p == nil || len(p.Members) != 2 || len(store.commits) != 0 {
+		t.Fatalf("effective empty exclusions %+v %v", p, err)
+	}
+	input.Members[len(input.Members)-1].Active.Draft.Exclusion = nil
+	if p, err := service.Preview(t.Context(), request.TemplateID, request.TemplateDraftVersion); p != nil || !errors.Is(err, ErrBypassUnavailable) || len(store.commits) != 0 {
+		t.Fatalf("affected inheritor must block the full preview %+v %v", p, err)
 	}
 }
