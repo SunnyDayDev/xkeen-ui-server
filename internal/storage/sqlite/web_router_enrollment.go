@@ -50,8 +50,12 @@ func readWebEnrollment(ctx context.Context, tx *sql.Tx, now time.Time, id string
 	if status.Desired <= 0 {
 		return webadmin.EnrollmentState{}, webadmin.ErrEnrollmentMissing
 	}
+	name, err := displayedRouterName(ctx, tx, id, active.Draft.Name)
+	if err != nil {
+		return webadmin.EnrollmentState{}, err
+	}
 	state := webadmin.EnrollmentState{
-		RouterID: id, Name: active.Draft.Name, Desired: status.Desired,
+		RouterID: id, Name: name, Desired: status.Desired,
 		Contact: string(status.Presence), Applied: status.Applied, Runtime: status.Runtime, Phase: "missing",
 	}
 	var registration, expires sql.NullInt64

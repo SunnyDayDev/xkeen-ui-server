@@ -60,6 +60,10 @@ func readRouterDraft(ctx context.Context, tx *sql.Tx, id string) (routerdraft.Sn
 	if name == "" {
 		name = id
 	}
+	name, err = displayedRouterName(ctx, tx, id, name)
+	if err != nil {
+		return result, err
+	}
 	editable := active.Draft
 	if draft != nil {
 		editable = draft.Draft
