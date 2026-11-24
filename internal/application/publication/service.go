@@ -110,7 +110,7 @@ func (s *Service) Publish(ctx context.Context, request PublishRequest) (*Publish
 		return nil, &PreparationError{Issues: issues}
 	}
 	files := prepared.Catalog.Files
-	if err := s.validateFiles(ctx, files); err != nil {
+	if err := validateCatalogFiles(ctx, s.validator, files); err != nil {
 		return nil, err
 	}
 
@@ -226,12 +226,12 @@ func selectPersonalSource(request PublishRequest, inputs *Inputs) (routersetting
 	return draft, basis, nil
 }
 
-func (s *Service) validateFiles(ctx context.Context, files []configuration.CatalogFile) error {
-	if s.validator == nil {
+func validateCatalogFiles(ctx context.Context, validator CatalogValidator, files []configuration.CatalogFile) error {
+	if validator == nil {
 		return ErrValidatorUnavailable
 	}
 	verification := copyCatalogFiles(files)
-	err := s.validator.Validate(ctx, configuration.XrayIdentityVersion, verification)
+	err := validator.Validate(ctx, configuration.XrayIdentityVersion, verification)
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
