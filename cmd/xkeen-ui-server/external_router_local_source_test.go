@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/externalaccess"
 	"reflect"
 	"testing"
+
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/externalaccess"
 )
 
 func TestProcessExternalLocalRuleSource(t *testing.T) {
