@@ -102,8 +102,19 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 			return err
 		}
 		defer working.Close()
+		if app.ReportVersion == 1 {
+			if err := restart.EnableReports(journal); err != nil {
+				return err
+			}
+		} else if record, err := journal.Load(); err != nil || record.Delivery != nil {
+			return restart.ErrJournal
+		}
+		reportOnly := false
 		if err := restart.RecoverStartup(ctx, journal, working); err != nil {
-			return err
+			if app.ReportVersion != 1 || !errors.Is(err, restart.ErrRollbackFailed) || !restart.TerminalRollbackReport(journal) {
+				return err
+			}
+			reportOnly = true
 		}
 		central, err := app.OpenCentral(cfg.Scope)
 		if err != nil {
@@ -111,7 +122,19 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 		}
 		defer central.CloseIdleConnections()
 		service := restart.New(cfg.Scope, restart.NewCentralSource(cfg.Scope, central), journal, working, runner)
-		socket, handler, ready, writeTimeout = app.Socket, localvalidation.ApplicationHandler(cfg.Scope, service), "local application ready", 70*time.Second
+		var apply localvalidation.Applier = service
+		var report func(context.Context, string) (bool, error)
+		ready = "local application ready"
+		if app.ReportVersion == 1 {
+			report = func(ctx context.Context, key string) (bool, error) {
+				return service.ReconcileReport(ctx, central, key, reportOnly)
+			}
+		}
+		if reportOnly {
+			apply = nil
+			ready = "local reporting ready; startup blocked by terminal rollback"
+		}
+		socket, handler, writeTimeout = app.Socket, localvalidation.ApplicationProfileHandler(cfg.Scope, apply, report), 70*time.Second
 	}
 	listener, err := lease.Listen(socket, cfg.AgentUID, cfg.AgentGID)
 	if err != nil {

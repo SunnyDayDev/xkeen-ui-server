@@ -28,6 +28,7 @@ type storedRecord struct {
 	LocalBaseline *preparation.Baseline `json:"LocalBaseline,omitempty"`
 	LastRollback  *RollbackResult       `json:"LastRollback,omitempty"`
 	Pending       *storedIntent
+	Delivery      *ReportDelivery `json:",omitempty"`
 }
 
 type storedIntent struct {
@@ -43,7 +44,7 @@ type storedIntent struct {
 }
 
 func storeRecord(record Record) storedRecord {
-	stored := storedRecord{Version: record.Version, Scope: record.Scope, Current: record.Current, LocalBaseline: record.LocalBaseline, LastRollback: record.LastRollback}
+	stored := storedRecord{Version: record.Version, Scope: record.Scope, Current: record.Current, LocalBaseline: record.LocalBaseline, LastRollback: record.LastRollback, Delivery: record.Delivery}
 	if p := record.Pending; p != nil {
 		stored.Pending = &storedIntent{AttemptID: p.AttemptID, Previous: p.Previous, Number: p.Target.Snapshot.Number,
 			Tag: p.Target.Tag, TargetFiles: p.TargetFiles, Phase: p.Phase, Started: p.Started, Rollback: p.Rollback, Hot: p.Hot}
@@ -52,7 +53,7 @@ func storeRecord(record Record) storedRecord {
 }
 
 func (stored storedRecord) restore() Record {
-	record := Record{Version: stored.Version, Scope: stored.Scope, Current: stored.Current, LocalBaseline: stored.LocalBaseline, LastRollback: stored.LastRollback}
+	record := Record{Version: stored.Version, Scope: stored.Scope, Current: stored.Current, LocalBaseline: stored.LocalBaseline, LastRollback: stored.LastRollback, Delivery: stored.Delivery}
 	if p := stored.Pending; p != nil {
 		target := Desired{Tag: p.Tag, Snapshot: agentrevision.Snapshot{Number: p.Number, Profile: stored.Scope.Profile}}
 		for _, file := range p.TargetFiles {
@@ -184,7 +185,7 @@ func validScope(scope preparation.Scope) bool {
 }
 
 func validRecord(scope preparation.Scope, record Record) bool {
-	if record.Version != Version || record.Scope != scope {
+	if record.Version != Version || record.Scope != scope || !validDelivery(record) {
 		return false
 	}
 	if current := record.Current; current != nil {

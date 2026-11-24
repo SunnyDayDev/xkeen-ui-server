@@ -68,6 +68,7 @@ type Record struct {
 	LocalBaseline *preparation.Baseline
 	LastRollback  *RollbackResult
 	Pending       *Intent
+	Delivery      *ReportDelivery `json:",omitempty"`
 }
 
 // Working returns the recorded baseline authority, including a restored local
@@ -106,6 +107,7 @@ type Service struct {
 	working   Working
 	validator preparation.Validator
 	mu        sync.Mutex
+	applying  sync.Mutex
 }
 
 func New(scope preparation.Scope, source Source, journal Journal, working Working, validator preparation.Validator) *Service {
@@ -113,10 +115,17 @@ func New(scope preparation.Scope, source Source, journal Journal, working Workin
 }
 
 func (s *Service) Apply(ctx context.Context, key, tag string) (Confirmed, error) {
-	if !s.mu.TryLock() {
+	if !s.applying.TryLock() {
 		return Confirmed{}, ErrPending
 	}
+	defer s.applying.Unlock()
+	// One application may wait for an in-flight report. Other application
+	// requests cannot queue their own mutations behind the scope lock.
+	s.mu.Lock()
 	defer s.mu.Unlock()
+	if err := ctx.Err(); err != nil {
+		return Confirmed{}, err
+	}
 	record, err := s.journal.Load()
 	if err != nil || record.Version != Version || record.Scope != s.scope {
 		return Confirmed{}, ErrJournal
@@ -126,6 +135,9 @@ func (s *Service) Apply(ctx context.Context, key, tag string) (Confirmed, error)
 			return Confirmed{}, ErrRollbackFailed
 		}
 		return Confirmed{}, ErrPending
+	}
+	if record.Delivery != nil && record.Delivery.Outcome != nil && !record.Delivery.Done {
+		return Confirmed{}, ErrReportPending
 	}
 	candidate, err := s.read(ctx, key, tag)
 	if err != nil {
@@ -193,6 +205,9 @@ func (s *Service) Apply(ctx context.Context, key, tag string) (Confirmed, error)
 		}
 		confirmed := Confirmed{AttemptID: intent.AttemptID, Number: fresh.Snapshot.Number, Tag: fresh.Tag, Baseline: again, Guard: record.Current.Guard, Hot: record.Current.Hot}
 		record.Current = &confirmed
+		if err := queueOutcome(&record, appliedOutcome(confirmed)); err != nil {
+			return Confirmed{}, err
+		}
 		if err := s.journal.Save(record); err != nil {
 			return Confirmed{}, ErrJournal
 		}
@@ -239,6 +254,9 @@ func (s *Service) Apply(ctx context.Context, key, tag string) (Confirmed, error)
 		confirmed.Guard = intent.Hot.Guard
 	}
 	record.Current, record.Pending, record.LocalBaseline = &confirmed, nil, nil
+	if err := queueOutcome(&record, appliedOutcome(confirmed)); err != nil {
+		return Confirmed{}, err
+	}
 	if err := s.journal.Save(record); err != nil {
 		return Confirmed{}, ErrJournal
 	}

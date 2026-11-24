@@ -131,6 +131,12 @@ func (q *Queue) Run(ctx context.Context, onReportError func(error)) {
 	})
 	workers.Wait()
 }
+
+// RunHeartbeat keeps presence independent when another owner delivers reports.
+func (q *Queue) RunHeartbeat(ctx context.Context) {
+	q.runHeartbeat(ctx, time.Now, wait)
+}
+
 func (q *Queue) runHeartbeat(ctx context.Context, now func() time.Time, pause func(context.Context, time.Duration) bool) {
 	delay := time.Second
 	for ctx.Err() == nil {

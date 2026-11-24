@@ -108,6 +108,9 @@ func RestorePending(ctx context.Context, journal Journal, working Restorer, expe
 		next := pending
 		next.Rollback = &RollbackProgress{State: RollbackFailed, Started: pending.Rollback.Started}
 		record.Pending = &next
+		if err := queueOutcome(&record, rollbackFailedOutcome(next)); err != nil {
+			return RollbackResult{}, err
+		}
 		if err := journal.Save(record); err != nil {
 			return RollbackResult{}, ErrJournal
 		}
@@ -125,6 +128,9 @@ func RestorePending(ctx context.Context, journal Journal, working Restorer, expe
 		record.Current = &current
 	}
 	record.Pending, record.LastRollback = nil, &result
+	if err := queueOutcome(&record, rollbackOutcome(result)); err != nil {
+		return RollbackResult{}, err
+	}
 	if err := journal.Save(record); err != nil {
 		return RollbackResult{}, ErrJournal
 	}

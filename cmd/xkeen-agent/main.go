@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -18,9 +19,11 @@ import (
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/contact"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/desired"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/enrollment"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/preparation"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/revisionloop"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/statefile"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agentrevision"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 )
 
 func main() {
@@ -38,9 +41,10 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	caFile := flags.String("ca-file", "", "optional PEM file with trusted certificates")
 	validatorSocket := flags.String("local-validator-socket", "", "protected local preparation supervisor socket")
 	applicationSocket := flags.String("local-application-socket", "", "protected local controlled application socket")
+	applicationReports := flags.Bool("local-application-reports", false, "use the v1 report-enabled local application profile")
 	verifier := flags.String("local-verifier", "", "trusted local preparation profile ID")
 	if err := flags.Parse(args); errors.Is(err, flag.ErrHelp) {
-		fmt.Fprintln(stdout, "Usage: xkeen-agent --server HTTPS_ORIGIN --state-dir PATH [--ca-file PATH] [--local-validator-socket PATH | --local-application-socket PATH] [--local-verifier ID]")
+		fmt.Fprintln(stdout, "Usage: xkeen-agent --server HTTPS_ORIGIN --state-dir PATH [--ca-file PATH] [--local-validator-socket PATH | --local-application-socket PATH] [--local-verifier ID] [--local-application-reports]")
 		flags.SetOutput(stdout)
 		flags.PrintDefaults()
 		return 0
@@ -48,7 +52,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "invalid agent arguments: HTTPS server and state directory are required")
 		return 2
 	}
-	if (*validatorSocket != "" && *applicationSocket != "") || (*validatorSocket == "" && *applicationSocket == "") != (*verifier == "") {
+	if (*applicationReports && *applicationSocket == "") || (*validatorSocket != "" && *applicationSocket != "") || (*validatorSocket == "" && *applicationSocket == "") != (*verifier == "") {
 		fmt.Fprintln(stderr, "invalid local preparation profile")
 		return 2
 	}
@@ -82,17 +86,37 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, enrollment.ErrState)
 		return 1
 	}
+	reportSocket := *applicationSocket
+	if *applicationReports && !applicationReportHandoff(store, *binding) {
+		reportSocket = ""
+		fmt.Fprintln(stderr, "agent legacy report needs resolution before enabling application reports")
+	}
 	contactContext, stopContact := context.WithCancel(ctx)
-	contactDone := make(chan struct{})
-	go func() {
-		defer close(contactDone)
-		contact.New(*binding, store, client).Run(contactContext, func(error) {
-			fmt.Fprintln(stderr, "agent report remains pending")
+	var workers sync.WaitGroup
+	queue := contact.New(*binding, store, client)
+	var wake chan struct{}
+	var reconciled chan time.Time
+	if *applicationReports {
+		workers.Go(func() { queue.RunHeartbeat(contactContext) })
+		if reportSocket != "" {
+			wake = make(chan struct{}, 1)
+			reconciled = make(chan time.Time, 1)
+			reportScope := preparation.Scope{Origin: binding.Origin, RouterID: binding.RouterID,
+				Profile: configuration.XrayIdentityVersion, VerifierID: *verifier}
+			workers.Go(func() {
+				runApplicationReports(contactContext, reportSocket, reportScope, binding.Key, wake, reconciled, stderr)
+			})
+		}
+	} else {
+		workers.Go(func() {
+			queue.Run(contactContext, func(error) {
+				fmt.Fprintln(stderr, "agent report remains pending")
+			})
 		})
-	}()
+	}
 	defer func() {
 		stopContact()
-		<-contactDone
+		workers.Wait()
 	}()
 	snapshot, err := desired.UntilCurrent(ctx, *binding, store, client)
 	if err != nil {
@@ -102,7 +126,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
-	prepare := candidatePreparation{socket: *validatorSocket, application: *applicationSocket, profile: *verifier, binding: *binding, store: store, out: stdout, diagnostics: stderr}
+	prepare := candidatePreparation{socket: *validatorSocket, application: reportSocket, applicationReports: *applicationReports, reportWake: wake, profile: *verifier, binding: *binding, store: store, out: stdout, diagnostics: stderr}
 	prepare.check(ctx, snapshot)
 	fmt.Fprintln(stdout, "agent authenticated")
 	var latest int64
@@ -111,7 +135,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	}
 	ticker := time.NewTicker(time.Minute)
 	defer ticker.Stop()
-	err = revisionloop.Run(ctx, binding.Key, latest, ticker.C, client, func(ctx context.Context) (*agentrevision.Snapshot, error) {
+	err = revisionloop.Run(ctx, binding.Key, latest, revisionTicks(ctx, ticker.C, reconciled), client, func(ctx context.Context) (*agentrevision.Snapshot, error) {
 		snapshot, err := desired.Sync(ctx, *binding, store, client)
 		if err == nil {
 			prepare.check(ctx, snapshot)

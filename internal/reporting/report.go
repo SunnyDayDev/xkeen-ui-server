@@ -39,7 +39,7 @@ func (r Report) Valid() bool {
 		return (r.AppliedRevision == 0 || r.AppliedRevision == r.Revision) && r.Stage == "" && r.Code == ""
 	case "failed":
 		switch r.Stage + "/" + r.Code {
-		case "validate/configuration_invalid", "write/write_failed", "reload/reload_failed", "verify/runtime_check_failed", "rollback/rollback_failed", "apply/apply_failed":
+		case "validate/configuration_invalid", "write/write_failed", "reload/reload_failed", "verify/runtime_check_failed", "verify/runtime_unknown", "rollback/rollback_failed", "apply/apply_failed":
 			return true
 		}
 	}
@@ -131,7 +131,7 @@ func (e Evidence) After(r Report) Evidence {
 			e.Uncertain = 0
 		}
 	}
-	if r.Code == "rollback_failed" {
+	if r.Code == "rollback_failed" || r.Code == "runtime_unknown" {
 		e.Uncertain = max(e.Uncertain, r.Revision)
 	}
 	return e
