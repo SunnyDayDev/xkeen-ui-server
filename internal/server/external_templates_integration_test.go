@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
@@ -434,4 +435,185 @@ func TestExternalTemplateCreateConsumer(t *testing.T) {
 			t.Fatalf("unexpected publication state %d %v", count, err)
 		}
 	}
+}
+
+func TestExternalTemplateAddElementConsumer(t *testing.T) {
+	ctx := t.Context()
+	db, err := sqlite.Open(ctx, filepath.Join(t.TempDir(), "append.sqlite"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	admin := sqlite.NewWebAdmin(db)
+	session := [32]byte{8}
+	if err = admin.SaveVerifier(ctx, webadmin.Verifier{Version: 1, Salt: [16]byte{1}, Digest: [32]byte{2}}, false); err != nil {
+		t.Fatal(err)
+	}
+	if err = admin.Issue(ctx, 1, session, [32]byte{}, time.Now()); err != nil {
+		t.Fatal(err)
+	}
+	store := sqlite.NewExternalAccess(db, time.Now)
+	opened, _, err := store.Owner(ctx, session, &externalaccess.Change{Version: 1, Enabled: true, Protected: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	issued, token, err := store.Owner(ctx, session, &externalaccess.Change{Version: opened.Version, Rotate: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	hook := externalTemplateWriteHook{ExternalAccess: store, beforeReplace: make(chan func(), 1)}
+	endpoint := server.NewExternalTemplates(hook)
+	srv := httptest.NewTLSServer(server.NewExternalAccessHandler("", store, endpoint, http.NotFoundHandler()))
+	defer srv.Close()
+
+	type reply struct {
+		status              int
+		text, tag, location string
+		err                 error
+	}
+	call := func(method, path, body, tag, bearer string) reply {
+		req, err := http.NewRequestWithContext(ctx, method, srv.URL+path, strings.NewReader(body))
+		if err != nil {
+			return reply{err: err}
+		}
+		if body != "" {
+			req.Header.Set("Content-Type", "application/json")
+		}
+		if tag != "" {
+			req.Header.Set("If-Match", tag)
+		}
+		if bearer != "" {
+			req.Header.Set("Authorization", "Bearer "+bearer)
+		}
+		res, err := srv.Client().Do(req)
+		if err != nil {
+			return reply{err: err}
+		}
+		defer res.Body.Close()
+		data, err := io.ReadAll(res.Body)
+		location := res.Header.Get("Content-Location")
+		if method == http.MethodPost && path == "/api/v1/templates" {
+			location = res.Header.Get("Location")
+		}
+		return reply{res.StatusCode, strings.TrimSpace(string(data)), res.Header.Get("ETag"), location, err}
+	}
+	expect := func(got reply, status int, code string) {
+		t.Helper()
+		if got.err != nil || got.status != status || (code != "" && got.text != fmt.Sprintf(`{"code":%q}`, code)) {
+			t.Fatalf("got %d %q %v, want %d %q", got.status, got.text, got.err, status, code)
+		}
+	}
+	collection := call(http.MethodPost, "/api/v1/templates", `{"id":" +&/ alpha "}`, "", token)
+	expect(collection, 201, "")
+	query := "?" + (url.Values{"templateId": {" +&/ alpha "}}).Encode()
+	item := "/api/v1/templates/item" + query
+	elements := "/api/v1/templates/item/elements" + query
+	empty := call(http.MethodGet, item, "", "", token)
+	expect(empty, 200, "")
+	firstID := "550e8400-e29b-41d4-a716-446655440000"
+	secondID := "550e8400-e29b-41d4-a716-446655440001"
+	thirdID := "550e8400-e29b-41d4-a716-446655440002"
+	body := func(section, id, source string) string {
+		data, err := json.Marshal(map[string]string{"section": section, "elementId": id, "source": source})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(data)
+	}
+	const source = "{ \"large\":9007199254740993, \"tag\": \"${label}\" }\n"
+	add := func(body, tag string) reply { return call(http.MethodPost, elements, body, tag, token) }
+	expect(add(body("rules", firstID, source), ""), 428, "precondition_required")
+	first := add(body("rules", firstID, source), empty.tag)
+	expect(first, 201, "")
+	if first.location != item || first.tag == "" || first.tag == empty.tag {
+		t.Fatalf("first response headers %+v", first)
+	}
+	fromGET := call(http.MethodGet, item, "", "", token)
+	if fromGET.text != first.text || fromGET.tag != first.tag {
+		t.Fatalf("first GET receipt %+v %+v", first, fromGET)
+	}
+	var version2 struct {
+		Version  string
+		Sections []struct {
+			Name     string
+			Elements []struct {
+				ID, Source string
+				Variables  []struct{ Name, Type string }
+			}
+		}
+	}
+	if err := json.Unmarshal([]byte(first.text), &version2); err != nil || version2.Version != "2" || len(version2.Sections) != 1 || version2.Sections[0].Name != "rules" || len(version2.Sections[0].Elements) != 1 {
+		t.Fatalf("first snapshot %+v %v", version2, err)
+	}
+	firstElement := version2.Sections[0].Elements[0]
+	if firstElement.ID != firstID || firstElement.Source != source || len(firstElement.Variables) != 1 || firstElement.Variables[0].Name != "label" || firstElement.Variables[0].Type != "string" {
+		t.Fatalf("first element %+v", firstElement)
+	}
+	expect(add(body("outbounds", firstID, `{}`), first.tag), 409, "element_exists")
+	expect(add(body("rules", secondID, `{}`), empty.tag), 412, "precondition_failed")
+	expect(add(body("rules", secondID, `{"x":0,"x":1}`), first.tag), 422, "invalid_content")
+	expect(add(body("exclude_ips", secondID, `{}`), first.tag), 400, "invalid_request")
+	expect(add(`{"section":"rules","elementId":"`+secondID+`","source":null}`, first.tag), 400, "invalid_request")
+	next := add(body("rules", secondID, `{"type":"field","outboundTag":"example"}`), first.tag)
+	expect(next, 201, "")
+	expect(call(http.MethodPatch, item, `{"elementId":"`+firstID+`","source":"{}","section":null}`, next.tag, token), 400, "invalid_request")
+	version3 := version2
+	if err := json.Unmarshal([]byte(next.text), &version3); err != nil || version3.Version != "3" || len(version3.Sections) != 1 || len(version3.Sections[0].Elements) != 2 ||
+		version3.Sections[0].Elements[0].Source != source || version3.Sections[0].Elements[1].ID != secondID {
+		t.Fatalf("second snapshot %+v %v", version3, err)
+	}
+	log := add(body("log", thirdID, `{"loglevel":"warning"}`), next.tag)
+	expect(log, 201, "")
+	expect(add(body("log", "550e8400-e29b-41d4-a716-446655440003", `{}`), log.tag), 409, "section_occupied")
+	const extraID = "550e8400-e29b-41d4-a716-446655440003"
+	addition := body("rules", extraID,
+		`{"type":"field","outboundTag":"other.example"}`)
+	patch, err := json.Marshal(map[string]string{"elementId": firstID, "source": `{"tag":"changed.example"}`})
+	if err != nil {
+		t.Fatal(err)
+	}
+	added, replaced := make(chan reply, 1), make(chan reply, 1)
+	go func() { added <- add(addition, log.tag) }()
+	go func() { replaced <- call(http.MethodPatch, item, string(patch), log.tag, token) }()
+	addResult, patchResult := <-added, <-replaced
+	if addResult.err != nil || patchResult.err != nil ||
+		!(addResult.status == 201 && patchResult.status == 412 || addResult.status == 412 && patchResult.status == 200) {
+		t.Fatalf("competing responses %+v %+v", addResult, patchResult)
+	}
+	winner := addResult
+	if patchResult.status == 200 {
+		winner = patchResult
+	}
+	rotate := make(chan error, 1)
+	hook.beforeReplace <- func() {
+		_, _, err := store.Owner(ctx, session, &externalaccess.Change{Version: issued.Version, Rotate: true})
+		rotate <- err
+	}
+	expect(add(body("rules", "550e8400-e29b-41d4-a716-446655440004", `{}`), winner.tag), 401, "unauthorized")
+	if err := <-rotate; err != nil {
+		t.Fatal(err)
+	}
+	expect(add(body("rules", "550e8400-e29b-41d4-a716-446655440004", `{}`), winner.tag), 401, "unauthorized")
+	final, err := templates.New(sqlite.NewTemplateRepository(db)).Get(ctx, " +&/ alpha ")
+	rules := 2
+	if addResult.status == 201 {
+		rules = 3
+	}
+	if err != nil || final.Version != 5 || len(final.Sections) != 2 || len(final.Sections[0].Elements) != rules {
+		t.Fatalf("final version %+v %v", final, err)
+	}
+}
+
+type externalTemplateWriteHook struct {
+	*sqlite.ExternalAccess
+	beforeReplace chan func()
+}
+
+func (h externalTemplateWriteHook) ReplaceExternalTemplate(ctx context.Context, permit externalaccess.Permit, draft configuration.TemplateDraft, version int64) (int64, error) {
+	select {
+	case before := <-h.beforeReplace:
+		before()
+	default:
+	}
+	return h.ExternalAccess.ReplaceExternalTemplate(ctx, permit, draft, version)
 }

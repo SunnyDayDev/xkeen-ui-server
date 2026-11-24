@@ -2,6 +2,7 @@ package templates
 
 import (
 	"errors"
+	"fmt"
 	"slices"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
@@ -10,6 +11,7 @@ import (
 var (
 	ErrElementNotFound  = errors.New("template element not found")
 	ErrTemplateNotEmpty = errors.New("template already has elements")
+	ErrElementExists    = fmt.Errorf("%w: template element id already exists", ErrInvalid)
 	ErrSectionOccupied  = errors.New("template section already has an element")
 )
 
@@ -110,6 +112,18 @@ func collectionSection(name string) bool {
 	return false
 }
 
+// AddElement chooses the empty or populated template operation from the snapshot.
+func AddElement(base *Snapshot, sectionName, newID, source string) (configuration.TemplateDraft, error) {
+	if base != nil {
+		for _, section := range base.Sections {
+			if len(section.Elements) != 0 {
+				return AppendElement(base, sectionName, newID, source)
+			}
+		}
+	}
+	return CreateFirstElement(base, sectionName, newID, source)
+}
+
 // AppendElement adds one item while retaining all existing records in order.
 func AppendElement(base *Snapshot, sectionName, newID, source string) (configuration.TemplateDraft, error) {
 	if base == nil || !configuration.ValidElementID(newID) || !slices.Contains(firstElementSections, sectionName) {
@@ -125,7 +139,7 @@ func AppendElement(base *Snapshot, sectionName, newID, source string) (configura
 		for _, item := range section.Elements {
 			populated = true
 			if item.Element.ID == newID {
-				return configuration.TemplateDraft{}, ErrInvalid
+				return configuration.TemplateDraft{}, ErrElementExists
 			}
 		}
 		if section.Name == sectionName {
