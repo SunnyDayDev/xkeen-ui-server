@@ -276,6 +276,16 @@ func TestProcessAgentAppliesTwoControlledGenerations(t *testing.T) {
 		t.Fatal("auxiliary file changed")
 	}
 	checkTraffic(target, "target-fixture", true)
+	// A structurally valid but agent-owned receipt is outside the supervisor's trust boundary.
+	var forged restart.Record
+	if err := json.Unmarshal(raw, &forged); err != nil || forged.Current == nil {
+		t.Fatal("cannot make synthetic receipt")
+	}
+	forged.Current.Baseline.Runtime.PID = oldPID
+	writeConfig("agent/application.json", forged)
+	if err := os.Chown(path("agent/application.json"), agentUID, agentUID); err != nil {
+		t.Fatal(err)
+	}
 	replay, replayOutput := launchAgent()
 	replay()
 	if !strings.Contains(replayOutput.String(), "agent revision verified locally") {

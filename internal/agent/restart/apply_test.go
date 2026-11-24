@@ -63,6 +63,7 @@ type applyFixture struct {
 	fetches                           int
 	secondErr, observeErr, installErr error
 	failIntent, failCommit            bool
+	installHook                       func()
 }
 
 func newApplyFixture(t *testing.T) *applyFixture {
@@ -122,6 +123,9 @@ func (f *applyFixture) Preflight(context.Context, preparation.Baseline, Desired)
 
 func (f *applyFixture) Install(_ context.Context, intent Intent, advance func(Phase, *preparation.Runtime) error) (preparation.Baseline, error) {
 	f.effects = append(f.effects, "install")
+	if f.installHook != nil {
+		f.installHook()
+	}
 	current := intent.Previous
 	current.Runtime.PID, current.Runtime.StartTick = 22, 2
 	if f.installErr != nil {
@@ -138,4 +142,30 @@ func (f *applyFixture) Install(_ context.Context, intent Intent, advance func(Ph
 
 func (f *applyFixture) Check(context.Context, preparation.Scope, agentrevision.Snapshot) error {
 	return nil
+}
+
+func TestCancellationBeforeAndAfterIntent(t *testing.T) {
+	t.Run("before", func(t *testing.T) {
+		f := newApplyFixture(t)
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		svc := New(f.scope, f, f, f, centralValidationHook(cancel))
+		_, err := svc.Apply(ctx, "synthetic", f.proposed)
+		if !errors.Is(err, context.Canceled) || len(f.effects) != 0 || f.record.Pending != nil {
+			t.Fatal("cancellation before intent had effects", err)
+		}
+	})
+	t.Run("after", func(t *testing.T) {
+		f := newApplyFixture(t)
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		f.installHook = cancel
+		f.installErr = context.Canceled
+		svc := New(f.scope, f, f, f, f)
+		_, err := svc.Apply(ctx, "synthetic", f.proposed)
+		if err != ErrEffects || !slices.Equal(f.effects, []string{"intent", "install"}) ||
+			f.record.Pending == nil || f.record.Current != nil {
+			t.Fatal("cancellation after intent did not retain the evidence", err)
+		}
+	})
 }

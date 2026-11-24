@@ -64,6 +64,7 @@ type DiskJournal struct {
 	dir, lock *os.File
 	scope     preparation.Scope
 	syncDir   func() error
+	syncFile  func(*os.File) error
 }
 
 func OpenJournal(path string, scope preparation.Scope) (*DiskJournal, error) {
@@ -99,7 +100,7 @@ func OpenJournal(path string, scope preparation.Scope) (*DiskJournal, error) {
 		dir.Close()
 		return nil, ErrJournal
 	}
-	return &DiskJournal{dir: dir, lock: lock, scope: scope, syncDir: dir.Sync}, nil
+	return &DiskJournal{dir: dir, lock: lock, scope: scope, syncDir: dir.Sync, syncFile: (*os.File).Sync}, nil
 }
 
 func (j *DiskJournal) Close() error {
@@ -145,7 +146,7 @@ func (j *DiskJournal) Save(record Record) error {
 	}
 	defer unix.Unlinkat(fd, name, 0)
 	n, writeErr := f.Write(raw)
-	syncErr := f.Sync()
+	syncErr := j.syncFile(f)
 	closeErr := f.Close()
 	if n != len(raw) || writeErr != nil || syncErr != nil || closeErr != nil || unix.Renameat(fd, name, fd, journalName) != nil {
 		return ErrJournal

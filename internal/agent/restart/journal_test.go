@@ -108,3 +108,26 @@ func TestJournalResyncsVisibleUnconfirmedIntent(t *testing.T) {
 		t.Fatal("successful barrier did not restore intact intent", err)
 	}
 }
+
+func TestJournalPreRenameSyncFailureKeepsPreviousRecord(t *testing.T) {
+	f := newApplyFixture(t)
+	journal, err := OpenJournal(privateTestDirectory(t), f.scope)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer journal.Close()
+	if err := journal.Save(f.record); err != nil {
+		t.Fatal(err)
+	}
+	next := f.record
+	next.Pending = &Intent{AttemptID: "01010101010101010101010101010101", Previous: f.old,
+		Target: f.first, TargetFiles: f.old.Files, Phase: Planned}
+	journal.syncFile = func(*os.File) error { return ErrJournal }
+	if err := journal.Save(next); err != ErrJournal {
+		t.Fatal("unsynced temporary file completed intent", err)
+	}
+	got, err := journal.Load()
+	if err != nil || !reflect.DeepEqual(got, f.record) {
+		t.Fatal("unconfirmed temporary write changed the previous journal", err)
+	}
+}
