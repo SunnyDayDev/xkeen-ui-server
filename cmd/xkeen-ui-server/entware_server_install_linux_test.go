@@ -235,4 +235,51 @@ func TestEntwareInstallServerKeepsTLSAndAdministrator(t *testing.T) {
 	if err != nil || !os.SameFile(db, after) {
 		t.Fatal("server restart replaced SQLite")
 	}
+	activeCookie, _ := login()
+	serverOperation := func(action string, extra ...string) ([]byte, error) {
+		t.Helper()
+		args := []string{script, action, "--role", "server", "--version", tag, "--manifest-sha256",
+			fmt.Sprintf("%x", sha256.Sum256([]byte(manifest.String()))), "--release-mirror", mirror.URL, "--mirror-ca-file", cert}
+		args = append(args, extra...)
+		return exec.CommandContext(t.Context(), "/opt/bin/sh", args...).CombinedOutput()
+	}
+	remove := func() ([]byte, error) { return serverOperation("uninstall", "--confirm", "remove-service") }
+	const existingKey = "/opt/etc/xkeen-ui/server/tls-key.pem"
+	originalKey, err := os.ReadFile(existingKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out, err := remove(); err != nil {
+		t.Fatalf("installed server uninstall: %v, %s", err, out)
+	}
+	for _, path := range []string{initPath, "/opt/libexec/xkeen-ui/server", "/opt/var/lib/xkeen-ui/install/server.process.json"} {
+		if _, err := os.Lstat(path); !os.IsNotExist(err) {
+			t.Fatalf("server uninstall left owned file: %s", path)
+		}
+	}
+	after, err = os.Stat(dbPath)
+	remainingKey, keyErr := os.ReadFile(existingKey)
+	if err != nil || !os.SameFile(db, after) || keyErr != nil || string(remainingKey) != string(originalKey) {
+		t.Fatal("server uninstall replaced SQLite or TLS key")
+	}
+	if out, err := remove(); err != nil {
+		t.Fatalf("server uninstall repeat: %v, %s", err, out)
+	}
+	if output, err := runInstall(key, "65531:65531", validationOptions...); err != nil {
+		t.Fatalf("server reinstall: %v, %s", err, output)
+	}
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, origin+"/ui/v1/templates", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(activeCookie)
+	response, err := web.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("retained administrator session returned %d after reinstall", response.StatusCode)
+	}
+
 }

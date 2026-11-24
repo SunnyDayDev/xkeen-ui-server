@@ -67,9 +67,9 @@ if [ "$action" != uninstall ] && [ -n "$confirm" ]; then
 fi
 
 case "$action:$role" in
-  uninstall:agent-transport|uninstall:agent-application)
+  uninstall:agent-transport|uninstall:agent-application|uninstall:server)
     [ "$confirm" = remove-service ] &&
-      [ -z "$run_as$server$server_ca$invite$listen$web_origin$tls_cert$tls_key$local_cfg$app_cfg" ] ||
+      [ -z "$run_as$server$server_ca$invite$listen$web_origin$tls_cert$tls_key$local_cfg$app_cfg$agent_origin$validator_origin$validator_ca$validator_cert$validator_key" ] ||
       refuse 'uninstall requires explicit remove-service confirmation' ;;
   install:agent-transport)
     [ -n "$run_as" ] && [ -n "$server" ] && [ -z "$listen$web_origin$tls_cert$tls_key$local_cfg$app_cfg" ] ||
@@ -170,6 +170,7 @@ if [ "$action" = uninstall ]; then
   case "$role" in
     agent-transport) "$stage/$helper" uninstall-transport remove-service ;;
     agent-application) "$stage/$helper" uninstall-application remove-service ;;
+    server) "$stage/$helper" uninstall-server remove-service ;;
   esac
 elif [ "$action" = update ]; then
   format=agent-state-format.txt

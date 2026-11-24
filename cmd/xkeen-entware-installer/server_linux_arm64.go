@@ -111,6 +111,9 @@ func installServer(args []string) error {
 		return err
 	}
 	defer lock.Close()
+	if _, err := os.Lstat(serverRemovalPath); !errors.Is(err, os.ErrNotExist) {
+		return errServerMaintenance
+	}
 	if _, err := os.Lstat(serverInit); !errors.Is(err, os.ErrNotExist) {
 		return errServerInstalled
 	}
@@ -258,6 +261,9 @@ func serverService(args []string) error {
 		return err
 	}
 	defer lock.Close()
+	if _, err := os.Lstat(serverRemovalPath); !errors.Is(err, os.ErrNotExist) {
+		return errServerMaintenance
+	}
 	if err := rootDirs(false, serverConfig, serverBase, serverBase+"/generations"); err != nil {
 		return err
 	}
