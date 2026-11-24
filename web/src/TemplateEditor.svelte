@@ -6,7 +6,7 @@
   type Member = { id: string; label: string };
   type Section = { name: string; members: Member[] };
   type Selection = { id: string; section: string; source: string };
-  type Snapshot = {id: string; version: string; sections: Section[]; selected?: Selection; firstSections?: string[]};
+  type Snapshot = {id: string; version: string; sections: Section[]; selected?: Selection; firstSections?: string[]; appendSections?: string[]};
   type Reply = Snapshot & { state?: string; code?: string; offset?: number; path?: string };
   type ReadState = 'loading' | 'ready' | 'missing' | 'unavailable';
 
@@ -29,6 +29,9 @@
   let message = $state('');
   let warning = $state(false);
   let busy = $state(false);
+  let appending = $state(false);
+  let sectionField = $state<HTMLSelectElement>();
+  let addButton = $state<HTMLButtonElement>();
   let editorField = $state<HTMLTextAreaElement>();
   let saving: { epoch: number } | undefined;
   let comparing = $state(false);
@@ -127,12 +130,41 @@
 
   function selectSection(event: Event) {
     const selected = (event.currentTarget as HTMLSelectElement).value;
-    if (current?.selected) {
+    if (current?.selected && !appending) {
       const next = current.sections.find(entry => entry.name === selected)?.members[0];
       if (next) void load(next.id);
     } else {
       section = selected;
     }
+  }
+
+  async function beginAppend() {
+    if (!active || busy || conflict || !current?.selected || !current.appendSections?.length) return;
+    if (buffer.value !== current.selected.source && !window.confirm('Продолжить без несохранённых изменений текущего элемента?')) return;
+    appending = true;
+    section = '';
+    buffer = new ExactSource('');
+    source = buffer.display;
+    previous = undefined;
+    warning = false;
+    message = '';
+    await tick();
+    sectionField?.focus();
+  }
+
+  async function cancelAppend() {
+    if (!current || busy) return;
+    reading?.abort();
+    comparing = false;
+    appending = false;
+    comparison = undefined;
+    conflict = false;
+    warning = false;
+    message = '';
+    previous = undefined;
+    applySnapshot(current, true);
+    await tick();
+    addButton?.focus();
   }
 
   function beforeInput(event: InputEvent) {
@@ -183,6 +215,7 @@
   function useLatest() {
     if (!comparison || comparison.selected?.id !== current?.selected?.id) return;
     current = comparison;
+    if (appending && !current.appendSections?.includes(section)) section = '';
     comparison = undefined;
     conflict = false;
     warning = false;
@@ -199,7 +232,8 @@
     message = '';
     warning = false;
     const draft = buffer.value;
-    const input = current.selected ? {version:current.version,elementId:current.selected.id,source:draft}
+    const input = appending ? {version:current.version,appendSection:section,source:draft}
+      : current.selected ? {version:current.version,elementId:current.selected.id,source:draft}
       : {version:current.version,section,source:draft};
     try {
       const response = await fetch(endpoint(),{
@@ -217,6 +251,7 @@
         message = 'Состояние сессии изменилось. Проверьте вход и повторите сохранение.';
         refreshSession();
       } else if (response.ok && validSnapshot(result) && result.selected) {
+        appending = false;
         applySnapshot(result, false);
         conflict = false;
         comparison = undefined;
@@ -231,6 +266,9 @@
           message = result.code === 'duplicate_json_key' ? 'Повторяющийся ключ JSON.' : 'Исправьте синтаксис JSON.';
           if (result.path) message += ' Путь: ' + result.path;
         }
+      } else if (result.state === 'section_occupied') {
+        warning = true;
+        message = 'В этой секции уже есть элемент. Выберите другую секцию.';
       } else if (result.state === 'version_conflict') {
         comparison = undefined;
         conflict = true;
@@ -269,7 +307,7 @@
     }} />
 {:else}
 <p class="editor-context"><bdi>{id}</bdi></p>
-<h1>{loadState === 'ready' && !current?.selected ? 'Первый элемент' : 'Сырой JSON элемента'}</h1>
+<h1>{appending ? 'Новый элемент' : loadState === 'ready' && !current?.selected ? 'Первый элемент' : 'Сырой JSON элемента'}</h1>
 {#if loadState === 'loading'}
   <p class="editor-info" role="status">Загружаем шаблон…</p>
 {:else if loadState === 'missing'}
@@ -282,15 +320,15 @@
   <form onsubmit={save} aria-busy={busy}>
     <div class="editor-coordinates">
       <label>Секция Xray
-        <select value={section} onchange={selectSection} disabled={busy}>
-          {#if !current.selected}<option value="">Выберите секцию</option>{/if}
-          {#each current.selected ? current.sections.filter(group => group.members.length).map(group => group.name)
+        <select bind:this={sectionField} value={section} onchange={selectSection} disabled={busy}>
+          {#if appending || !current.selected}<option value="">Выберите секцию</option>{/if}
+          {#each appending ? current.appendSections ?? [] : current.selected ? current.sections.filter(group => group.members.length).map(group => group.name)
             : current.firstSections ?? [] as name (name)}
             <option value={name}>{sectionName(name)}</option>
           {/each}
         </select>
       </label>
-      {#if current.selected}
+      {#if current.selected && !appending}
         <label>Элемент
           <select value={current.selected.id} onchange={(e) => load(e.currentTarget.value)} disabled={busy}>
             {#each current.sections.find(group => group.name === section)?.members ?? [] as item (item.id)}
@@ -300,9 +338,9 @@
         </label>
       {/if}
     </div>
-    {#if current.selected}
+    {#if current.selected && !appending}
       <p class="editor-id">UUID <bdi>{current.selected.id}</bdi></p>
-    {:else}
+    {:else if !appending}
       <p class="editor-context">Элемент появится в шаблоне после сохранения.</p>
     {/if}
     <label>JSON
@@ -319,10 +357,16 @@
       {#if conflict}
         <button type="button" disabled={comparing} onclick={compare}>Показать актуальную версию</button>
       {:else}
-        <button type="submit" disabled={!active || busy || !section}>{current.selected ? 'Сохранить черновик' : 'Создать элемент'}</button>
-        {#if current.selected}
+        <button type="submit" disabled={!active || busy || !section}>{appending ? 'Добавить элемент' : current.selected ? 'Сохранить черновик' : 'Создать элемент'}</button>
+        {#if current.selected && !appending}
           <button bind:this={variableButton} type="button" class="secondary" disabled={busy} onclick={() => { editingVariables = true; }}>Переменные</button>
+          {#if current.appendSections?.length}
+            <button bind:this={addButton} type="button" class="secondary" disabled={!active || busy} onclick={beginAppend}>Добавить элемент</button>
+          {/if}
         {/if}
+      {/if}
+      {#if appending}
+        <button type="button" class="secondary" disabled={busy} onclick={cancelAppend}>Отмена</button>
       {/if}
     </div>
   </form>

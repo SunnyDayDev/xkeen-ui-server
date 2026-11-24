@@ -128,3 +128,77 @@ export async function checkTemplateEditor(page, id, password, reset, addSibling,
   assert.equal(await input.inputValue(),'{"tag":"held.example"}');
   await page.unroute(selectsSibling,holdSelection);
 }
+
+export async function checkAppendTemplateElement(page, id, password, reset, screenshotPrefix) {
+  const snapshot = () => page.evaluate(async id => (await fetch('/ui/v1/templates/item?'+new URLSearchParams({templateId:id}))).json(),id);
+  const input = page.getByLabel('JSON',{exact:true});
+  const section = page.getByLabel('Секция Xray');
+  const add = page.getByRole('button',{name:'Добавить элемент',exact:true});
+  await input.waitFor();
+  const prior = await snapshot();
+  const original = await input.inputValue();
+  await input.fill('{"tag":"held.example"}');
+  page.once('dialog',dialog=>dialog.dismiss());
+  await add.click();
+  assert.equal(await input.inputValue(),'{"tag":"held.example"}');
+  await page.reload();
+  await input.waitFor();
+  await add.click();
+  await page.getByRole('heading',{name:'Новый элемент'}).waitFor();
+  await section.selectOption('log');
+  await input.fill('{"loglevel":"warning"}');
+  await page.getByRole('button',{name:'Отмена',exact:true}).click();
+  assert.equal((await snapshot()).version,prior.version);
+  assert.equal(await input.inputValue(),original);
+  await add.click();
+  await section.selectOption('log');
+  await input.fill('{"loglevel":"warning"}');
+  await add.click();
+  await page.getByText('Черновик сохранён.',{exact:true}).waitFor();
+  await add.click();
+  assert.equal(await section.locator('option[value=log]').count(),0);
+  await section.selectOption('rules');
+  const raw = '{\r\n  "type":"field",\n  "outboundTag":"example-outbound"\r\n}\n';
+  await input.evaluate((area,value)=>{
+    const clipboardData=new DataTransfer();
+    clipboardData.setData('text/plain',value);
+    area.dispatchEvent(new ClipboardEvent('paste',{clipboardData,bubbles:true,cancelable:true}));
+  },raw);
+  await page.setViewportSize({width:390,height:730});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),390);
+  if(screenshotPrefix) await page.screenshot({path:screenshotPrefix+'-append.png'});
+  await page.setViewportSize({width:1080,height:660});
+  const base = await snapshot();
+  const winner = await page.evaluate(async ({id,base})=>{
+    const session=await (await fetch('/ui/v1/session')).json();
+    const response=await fetch('/ui/v1/templates/item?'+new URLSearchParams({templateId:id}),{
+      method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':session.csrf},
+      body:JSON.stringify({version:base.version,appendSection:'rules',source:'{"tag":"first-rule"}'}),
+    });
+    return {status:response.status,body:await response.json()};
+  },{id,base});
+  assert.equal(winner.status,200);
+  await add.click();
+  await page.getByText('Шаблон изменился в другой вкладке. Ваш JSON остался в редакторе.').waitFor();
+  assert.equal(await input.inputValue(),raw.replaceAll('\r\n','\n'));
+  await page.getByRole('button',{name:'Показать актуальную версию'}).click();
+  await page.getByRole('button',{name:'Продолжить от актуальной версии'}).click();
+  reset();
+  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+  await page.getByRole('heading',{name:'Сессия истекла'}).waitFor();
+  const auth=page.getByLabel('Пароль администратора');
+  await auth.fill(password);
+  await auth.press('Enter');
+  await input.waitFor();
+  assert.equal(await input.inputValue(),raw.replaceAll('\r\n','\n'));
+  assert.equal((await snapshot()).version,winner.body.version);
+  await add.click();
+  await page.getByText('Черновик сохранён.',{exact:true}).waitFor();
+  const result=await snapshot();
+  const rules=result.sections.find(entry=>entry.name==='rules').members;
+  assert.equal(rules.length,2);
+  assert.equal(rules[0].id,winner.body.selected.id);
+  const exact=await page.evaluate(async ({id,elementId})=>(await fetch('/ui/v1/templates/item?'+new URLSearchParams({templateId:id,elementId}))).json(),{id,elementId:rules[1].id});
+  assert.equal(exact.selected.source,raw);
+  assert.equal(await input.inputValue(),raw.replaceAll('\r\n','\n'));
+}

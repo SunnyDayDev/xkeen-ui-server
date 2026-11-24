@@ -1,6 +1,6 @@
 import { checkTemplateVariables } from './template-variables-browser.mjs';
 import { checkRouterEnrollment } from './router-enrollment-browser.mjs';
-import { checkTemplateEditor } from './template-editor-browser.mjs';
+import { checkAppendTemplateElement, checkTemplateEditor } from './template-editor-browser.mjs';
 import { checkExternalAccess } from './external-access-browser.mjs';
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
@@ -268,6 +268,8 @@ try {
     }
   }, process.env.XKEEN_BROWSER_SCREENSHOT);
   await checkTemplateVariables(page, first, () => admin("reset", first), process.env.XKEEN_BROWSER_SCREENSHOT);
+  await page.reload();
+  await checkAppendTemplateElement(page, exactID, first, () => admin("reset", first), process.env.XKEEN_BROWSER_SCREENSHOT);
   await page.getByRole('link',{name:'Обзор'}).click();
 
   await page.getByRole('link',{name:'Подключить роутер'}).click();

@@ -128,24 +128,35 @@ func readWebTemplateEdit(w http.ResponseWriter, r *http.Request) (webadmin.Templ
 		return invalid, status
 	}
 	var input struct {
-		Version   string          `json:"version"`
-		Section   json.RawMessage `json:"section"`
-		ElementID json.RawMessage `json:"elementId"`
-		Source    *string         `json:"source"`
+		Version       string          `json:"version"`
+		Section       json.RawMessage `json:"section"`
+		AppendSection json.RawMessage `json:"appendSection"`
+		ElementID     json.RawMessage `json:"elementId"`
+		Source        *string         `json:"source"`
 	}
 	if jsonv2.Unmarshal(raw, &input, jsonv2.RejectUnknownMembers(true)) != nil || input.Source == nil {
 		return invalid, http.StatusBadRequest
 	}
 	version, err := strconv.ParseInt(input.Version, 10, 64)
-	if err != nil || version < 1 || strconv.FormatInt(version, 10) != input.Version || (input.Section == nil) == (input.ElementID == nil) {
+	if err != nil || version < 1 || strconv.FormatInt(version, 10) != input.Version {
 		return invalid, http.StatusBadRequest
 	}
 	edit := webadmin.TemplateElementEdit{Version: version, Source: *input.Source}
-	if input.Section != nil {
-		if jsonv2.Unmarshal(input.Section, &edit.Section) != nil || edit.Section == "" {
-			return invalid, http.StatusBadRequest
+	var selectors int
+	for _, selector := range []struct {
+		raw   json.RawMessage
+		value *string
+	}{
+		{input.Section, &edit.Section}, {input.AppendSection, &edit.AppendSection}, {input.ElementID, &edit.ElementID},
+	} {
+		if selector.raw != nil {
+			selectors++
+			if jsonv2.Unmarshal(selector.raw, selector.value) != nil || *selector.value == "" {
+				return invalid, http.StatusBadRequest
+			}
 		}
-	} else if jsonv2.Unmarshal(input.ElementID, &edit.ElementID) != nil || !configuration.ValidElementID(edit.ElementID) {
+	}
+	if selectors != 1 || (edit.ElementID != "" && !configuration.ValidElementID(edit.ElementID)) {
 		return invalid, http.StatusBadRequest
 	}
 	return edit, 0
@@ -168,11 +179,12 @@ type webEditorSelection struct {
 }
 
 type webEditorSnapshot struct {
-	ID            string              `json:"id"`
-	Version       string              `json:"version"`
-	Sections      []webEditorSection  `json:"sections"`
-	FirstSections []string            `json:"firstSections,omitempty"`
-	Selected      *webEditorSelection `json:"selected,omitempty"`
+	ID             string              `json:"id"`
+	Version        string              `json:"version"`
+	Sections       []webEditorSection  `json:"sections"`
+	FirstSections  []string            `json:"firstSections,omitempty"`
+	AppendSections []string            `json:"appendSections,omitempty"`
+	Selected       *webEditorSelection `json:"selected,omitempty"`
 }
 
 func templateEditorResponse(snapshot *templates.Snapshot, selected string) (webEditorSnapshot, bool) {
@@ -201,6 +213,8 @@ func templateEditorResponse(snapshot *templates.Snapshot, selected string) (webE
 			return webEditorSnapshot{}, false
 		}
 		result.FirstSections = templates.FirstElementSections()
+	} else {
+		result.AppendSections = templates.AppendElementSections(snapshot)
 	}
 	return result, true
 }
@@ -214,6 +228,8 @@ func webTemplateEditorFailure(w http.ResponseWriter, err error) {
 		webResult(w, http.StatusNotFound, "template_not_found", "")
 	case errors.Is(err, templates.ErrElementNotFound):
 		webResult(w, http.StatusNotFound, "element_not_found", "")
+	case errors.Is(err, templates.ErrSectionOccupied):
+		webResult(w, http.StatusConflict, "section_occupied", "")
 	case errors.Is(err, templates.ErrVersionConflict), errors.Is(err, templates.ErrTemplateNotEmpty), errors.Is(err, templates.ErrVersionExhausted):
 		webResult(w, http.StatusConflict, "version_conflict", "")
 	case errors.As(err, &invalid) && len(invalid.Issues) > 0:

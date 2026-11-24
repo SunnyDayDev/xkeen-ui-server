@@ -25,10 +25,11 @@ func NewTemplateEditor(store TemplateEditorStore, now func() time.Time) Template
 }
 
 type TemplateElementEdit struct {
-	Version   int64
-	Source    string
-	Section   string
-	ElementID string
+	Version       int64
+	Source        string
+	Section       string
+	AppendSection string
+	ElementID     string
 }
 
 func (s TemplateEditor) Read(ctx context.Context, token, id string) (*templates.Snapshot, error) {
@@ -43,7 +44,9 @@ func (s TemplateEditor) Read(ctx context.Context, token, id string) (*templates.
 }
 
 func (s TemplateEditor) Save(ctx context.Context, token, csrf, id string, input TemplateElementEdit) (*templates.Snapshot, string, error) {
-	if (input.Section == "") == (input.ElementID == "") {
+	if (input.ElementID == "" && input.Section == "" && input.AppendSection == "") ||
+		(input.ElementID != "" && (input.Section != "" || input.AppendSection != "")) ||
+		(input.Section != "" && input.AppendSection != "") {
 		return nil, "", templates.ErrInvalid
 	}
 	base, digest, err := s.editBase(ctx, token, csrf, id, input.Version)
@@ -52,7 +55,7 @@ func (s TemplateEditor) Save(ctx context.Context, token, csrf, id string, input 
 	}
 	elementID := input.ElementID
 	var draft configuration.TemplateDraft
-	if input.Section == "" {
+	if elementID != "" {
 		draft, err = templates.EditElementContent(base, elementID, input.Source)
 	} else {
 		newID, randomErr := uuid.NewRandom()
@@ -60,7 +63,11 @@ func (s TemplateEditor) Save(ctx context.Context, token, csrf, id string, input 
 			return nil, "", randomErr
 		}
 		elementID = newID.String()
-		draft, err = templates.CreateFirstElement(base, input.Section, elementID, input.Source)
+		if input.AppendSection != "" {
+			draft, err = templates.AppendElement(base, input.AppendSection, elementID, input.Source)
+		} else {
+			draft, err = templates.CreateFirstElement(base, input.Section, elementID, input.Source)
+		}
 	}
 	if err != nil {
 		return nil, "", err
