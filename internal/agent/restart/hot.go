@@ -3,8 +3,10 @@ package restart
 import (
 	"context"
 	"encoding/hex"
-	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/preparation"
 	"slices"
+
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/preparation"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/jsonvalue"
 )
 
 const (
@@ -55,4 +57,29 @@ func (h *HotReceipt) valid() bool {
 		tags[r.Tag] = true
 	}
 	return true
+}
+
+func (h *HotReceipt) agrees(files []preparation.BaselineFile) bool {
+	if h == nil {
+		return true
+	}
+	if !h.valid() || len(files) != 5 || files[2].Name != "03_inbounds.json" || files[4].Name != "05_routing.json" {
+		return false
+	}
+	value, err := jsonvalue.Parse(files[2].Content)
+	if err != nil {
+		return false
+	}
+	doc, _ := value.(map[string]any)
+	list, _ := doc["inbounds"].([]any)
+	if len(list) != 1 {
+		return false
+	}
+	in, _ := list[0].(map[string]any)
+	tag, _ := in["tag"].(string)
+	if tag == "" {
+		return false
+	}
+	set := ruleProjection(files[4].Content, tag)
+	return slices.Equal(set.routes, h.Expected) && set.outcome(h.AllowPort) == "direct" && set.outcome(h.DenyPort) == "block" && set.outcome(h.ProbePort) == h.Outcome
 }

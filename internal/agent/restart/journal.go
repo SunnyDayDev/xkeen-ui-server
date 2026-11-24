@@ -188,7 +188,7 @@ func validRecord(scope preparation.Scope, record Record) bool {
 		return false
 	}
 	if current := record.Current; current != nil {
-		if !current.Hot.valid() || current.Hot != nil && current.Hot.Guard != current.Guard || !validAttemptID(current.AttemptID) || !validBaseline(scope, current.Baseline) {
+		if !current.Hot.agrees(current.Baseline.Files) || current.Hot != nil && current.Hot.Guard != current.Guard || !validAttemptID(current.AttemptID) || !validBaseline(scope, current.Baseline) {
 			return false
 		}
 		snapshot := agentrevision.Snapshot{Number: current.Number, Profile: scope.Profile}
@@ -213,6 +213,9 @@ func validRecord(scope preparation.Scope, record Record) bool {
 	}
 	pending := record.Pending
 	working := record.Working()
+	if pending != nil && pending.Hot != nil && (record.Current == nil || record.Current.Guard != pending.Hot.Guard || !reflect.DeepEqual(record.Current.Baseline, pending.Previous)) {
+		return false
+	}
 	return pending == nil || validAttemptID(pending.AttemptID) && validTarget(scope, pending.Target) &&
 		validBaseline(scope, pending.Previous) && validPending(scope, pending) &&
 		(working == nil || reflect.DeepEqual(pending.Previous.Files, working.Baseline.Files)) &&
@@ -235,7 +238,7 @@ func validPending(scope preparation.Scope, pending *Intent) bool {
 			(state.Started != nil && !validRollbackRuntime(scope, *pending, *state.Started))) {
 		return false
 	}
-	if !pending.Hot.valid() {
+	if !pending.Hot.agrees(pending.TargetFiles) {
 		return false
 	}
 	if pending.Hot != nil {

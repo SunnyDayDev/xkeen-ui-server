@@ -16,6 +16,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -294,6 +295,7 @@ func checkControlledApplication(t *testing.T, mode string) {
 		if first.Guard == "" {
 			t.Fatal("protected launcher did not prove guarded startup")
 		}
+		assertHotAPIGuard(t, xray, cfg.Hot.API, proxy, agentUID)
 		stop()
 		checkTraffic(target, "target-fixture", false)
 		candidate := catalog(false, false)
@@ -648,4 +650,42 @@ func faultableApplicationProbe(t *testing.T, marker string, unavailable *atomic.
 	go server.Serve(listener)
 	t.Cleanup(func() { server.Close() })
 	return listener.Addr().String()
+}
+
+// The filter's packet counter distinguishes an actual rejected connection
+// from an unrelated parser, SOCKS handshake or client binary failure.
+func assertHotAPIGuard(t *testing.T, xray, api, socks string, uid uint32) {
+	t.Helper()
+	count := func() uint64 {
+		b, err := exec.Command("/opt/sbin/iptables", "-nvxL", "OUTPUT").Output()
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, line := range strings.Split(string(b), "\n") {
+			if strings.Contains(line, "REJECT") && strings.Contains(line, "dpt:10085") {
+				fields := strings.Fields(line)
+				c, err := strconv.ParseUint(fields[0], 10, 64)
+				if err == nil {
+					return c
+				}
+			}
+		}
+		t.Fatal("missing exact synthetic API counter")
+		return 0
+	}
+	before := count()
+	cmd := exec.Command(xray, "api", "lsrules", "--server="+api, "--timeout=1")
+	cmd.SysProcAttr = &syscall.SysProcAttr{Credential: &syscall.Credential{Uid: uid, Gid: uid}}
+	if err := cmd.Run(); err == nil || count() <= before {
+		t.Fatal("foreign UID was not rejected at API endpoint")
+	}
+	before = count()
+	client := http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(&url.URL{Scheme: "socks5", Host: socks}), DisableKeepAlives: true}, Timeout: 2 * time.Second}
+	resp, err := client.Get("http://" + api)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	if err == nil || count() <= before {
+		t.Fatal("proxied Xray UID was not rejected at API endpoint")
+	}
 }
