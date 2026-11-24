@@ -2,8 +2,8 @@
   "openapi": "3.1.1",
   "info": {
     "title": "Проект внешнего API управления XKeen UI Server",
-    "version": "0.1.0-draft",
-    "description": "Предлагаемый контракт F19. Операции появятся в F21 и F22 после F20. Доступ без Bearer определяется настройкой владельца."
+    "version": "0.1.0",
+    "description": "Контракт F19. Операции появятся в F21 и F22 после F20. Доступ без Bearer определяется настройкой владельца."
   },
   "servers": [{ "url": "https://management.example/api/v1" }],
   "paths": {
