@@ -3,6 +3,7 @@ package sqlite
 import (
 	"bytes"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"math"
 	"path/filepath"
@@ -261,7 +262,11 @@ func TestTemplateVersionsPreserveRouterDrafts(t *testing.T) {
 			Name: "rules", Exclusions: []configuration.ElementSource{{TemplateID: "shared", ElementID: oldID}},
 		}},
 	}
-	if err := routersettings.NewService(NewRouterSettings(prior)).Save(ctx, router); err != nil {
+	rawRouter, err := json.Marshal(encodeRouterDraft(router))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := prior.Exec("INSERT INTO router_settings(id,snapshot) VALUES (?,?)", router.ID, rawRouter); err != nil {
 		t.Fatal(err)
 	}
 	if err := prior.Close(); err != nil {

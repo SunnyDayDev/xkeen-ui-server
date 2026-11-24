@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"math"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
@@ -25,10 +26,18 @@ func (r *RouterSettings) Save(ctx context.Context, draft routersettings.Draft) e
 	if err != nil {
 		return errors.New("encode router draft")
 	}
-	_, err = r.db.ExecContext(ctx, `INSERT INTO router_settings (id, snapshot) VALUES (?, ?)
-		ON CONFLICT (id) DO UPDATE SET snapshot = excluded.snapshot`, draft.ID, snapshot)
+	result, err := r.db.ExecContext(ctx, `INSERT INTO router_settings (id, snapshot) VALUES (?, ?)
+		ON CONFLICT (id) DO UPDATE SET snapshot = excluded.snapshot, generation = generation + 1
+		WHERE generation < ?`, draft.ID, snapshot, int64(math.MaxInt64))
 	if err != nil {
 		return operationError("write router draft", ctx.Err())
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return operationError("write router draft", ctx.Err())
+	}
+	if n == 0 {
+		return errors.New("router draft version exhausted")
 	}
 	return nil
 }
@@ -42,15 +51,20 @@ func (r *RouterSettings) Get(ctx context.Context, id string) (routersettings.Dra
 	if err != nil {
 		return routersettings.Draft{}, false, operationError("read router draft", ctx.Err())
 	}
+	draft, err := decodeRouterDraft(id, raw)
+	return draft, err == nil, err
+}
+
+func decodeRouterDraft(id string, raw []byte) (routersettings.Draft, error) {
 	tree, issue := jsonvalue.Parse(raw)
 	if issue != nil || !validRouterRecord(tree) {
-		return routersettings.Draft{}, false, routersettings.ErrStoredDraft
+		return routersettings.Draft{}, routersettings.ErrStoredDraft
 	}
 	var stored storedRouterDraft
 	if err := json.Unmarshal(raw, &stored); err != nil {
-		return routersettings.Draft{}, false, routersettings.ErrStoredDraft
+		return routersettings.Draft{}, routersettings.ErrStoredDraft
 	}
-	return stored.draft(id), true, nil
+	return stored.draft(id), nil
 }
 
 // Check the exact stored field names before decoding. encoding/json accepts

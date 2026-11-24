@@ -54,7 +54,7 @@ func NewService(repository Repository) *Service {
 }
 
 func (s *Service) Save(ctx context.Context, draft Draft) error {
-	if err := validateDraft(draft); err != nil {
+	if err := ValidateDraft(draft); err != nil {
 		return err
 	}
 	return s.repository.Save(ctx, draft)
@@ -68,7 +68,7 @@ func (s *Service) Get(ctx context.Context, id string) (Draft, bool, error) {
 	if err != nil || !found {
 		return Draft{}, false, err
 	}
-	if draft.ID != id || validateDraft(draft) != nil {
+	if draft.ID != id || ValidateDraft(draft) != nil {
 		return Draft{}, false, ErrStoredDraft
 	}
 	return draft, true, nil
@@ -82,7 +82,8 @@ func invalid(position, reason string) error {
 	return fmt.Errorf("%w at %s: %s", ErrInvalidDraft, position, reason)
 }
 
-func validateDraft(draft Draft) error {
+// ValidateDraft checks the editable snapshot independently of SQLite and assembly.
+func ValidateDraft(draft Draft) error {
 	if !validID(draft.ID) {
 		return invalid("/id", "invalid identity")
 	}
