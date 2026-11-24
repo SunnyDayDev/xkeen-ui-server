@@ -270,7 +270,7 @@ func sameCatalogFiles(first, second []configuration.CatalogFile) bool {
 }
 
 func safeStoreError(err, fallback error) error {
-	for _, known := range []error{ErrConflict, ErrStoredState, ErrInvalidState, ErrVersionExhausted, context.Canceled, context.DeadlineExceeded} {
+	for _, known := range []error{ErrConflict, ErrEffectRefused, ErrStoredState, ErrInvalidState, ErrVersionExhausted, context.Canceled, context.DeadlineExceeded} {
 		if errors.Is(err, known) {
 			return known
 		}

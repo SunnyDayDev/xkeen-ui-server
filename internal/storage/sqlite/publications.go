@@ -39,6 +39,12 @@ const (
 )
 
 func (p *Publications) Read(ctx context.Context, request publication.ReadRequest) (*publication.Inputs, error) {
+	return p.read(ctx, request, nil)
+}
+
+type publicationGuard func(context.Context, *sql.Tx) error
+
+func (p *Publications) read(ctx context.Context, request publication.ReadRequest, guard publicationGuard) (*publication.Inputs, error) {
 	if !validPublicationID(request.RouterID) ||
 		(request.InitialTemplateID != "" && !validPublicationID(request.InitialTemplateID)) {
 		return nil, publication.ErrInvalidState
@@ -48,6 +54,11 @@ func (p *Publications) Read(ctx context.Context, request publication.ReadRequest
 		return nil, operationError("read publication", ctx.Err())
 	}
 	defer tx.Rollback()
+	if guard != nil {
+		if err := guard(ctx, tx); err != nil {
+			return nil, err
+		}
+	}
 
 	inputs := &publication.Inputs{
 		RouterID:               request.RouterID,

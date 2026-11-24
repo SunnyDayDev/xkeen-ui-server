@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	ErrEffectRefused    = errors.New("publication authority is no longer active")
 	ErrConflict         = errors.New("publication state changed")
 	ErrInvalidState     = errors.New("invalid publication state")
 	ErrStoredState      = errors.New("invalid stored publication state")
