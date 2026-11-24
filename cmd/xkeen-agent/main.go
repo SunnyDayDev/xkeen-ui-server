@@ -11,6 +11,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/agenthttp"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/enrollment"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/statefile"
@@ -72,10 +74,11 @@ func loadTrustedRoots(path string) (*x509.CertPool, error) {
 	if path == "" {
 		return nil, nil
 	}
-	file, err := os.Open(path)
+	fd, err := unix.Open(path, unix.O_RDONLY|unix.O_NONBLOCK|unix.O_CLOEXEC, 0)
 	if err != nil {
 		return nil, err
 	}
+	file := os.NewFile(uintptr(fd), "agent CA")
 	defer file.Close()
 	info, err := file.Stat()
 	if err != nil {

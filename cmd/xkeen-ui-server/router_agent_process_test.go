@@ -15,6 +15,8 @@ import (
 	"testing"
 	"time"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/enrollment"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/statefile"
 )
@@ -124,6 +126,24 @@ func TestProcessRouterAgentRejectsArgumentsAndUnsafeState(t *testing.T) {
 	rejected := startProcess(t, agent, "--server", "https://server.example", "--state-dir", dir)
 	if err := rejected.wait(t); err == nil || !strings.Contains(rejected.output(), "agent state is unavailable or invalid") {
 		t.Fatal("unsafe local state did not prevent launch")
+	}
+}
+
+func TestProcessRouterAgentRejectsNamedPipeCA(t *testing.T) {
+	agent := buildAgentForProcessTest(t)
+	dir := t.TempDir()
+	fifo := filepath.Join(dir, "ca")
+	if err := unix.Mkfifo(fifo, 0600); err != nil {
+		t.Fatal(err)
+	}
+	process := startProcess(t, agent, "--server", "https://server.example", "--state-dir", dir, "--ca-file", fifo)
+	select {
+	case <-process.done:
+		if process.err == nil || !strings.Contains(process.output(), "invalid agent CA configuration") {
+			t.Fatal("named pipe CA did not produce a safe refusal")
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("agent blocked opening a named pipe as CA")
 	}
 }
 

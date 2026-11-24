@@ -130,6 +130,17 @@ func (s *Store) Save(state enrollment.State) error {
 	if err := s.dir.Sync(); err != nil {
 		return enrollment.ErrState
 	}
+	// fsync of the state directory covers the file rename. Its parent
+	// also has to retain the state directory entry across a power loss.
+	parentFD, err := unix.Openat(fd, "..", unix.O_RDONLY|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return enrollment.ErrState
+	}
+	parent := os.NewFile(uintptr(parentFD), "agent state parent")
+	defer parent.Close()
+	if err := parent.Sync(); err != nil {
+		return enrollment.ErrState
+	}
 	return nil
 }
 

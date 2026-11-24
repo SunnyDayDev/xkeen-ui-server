@@ -136,3 +136,25 @@ func privateDirectory(t *testing.T) string {
 	}
 	return dir
 }
+
+func TestStateSaveRequiresSyncOfTheParentDirectory(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("root can open a directory without read permission")
+	}
+	parent := t.TempDir()
+	store, err := statefile.Open(filepath.Join(parent, "agent"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	if err := os.Chmod(parent, 0111); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chmod(parent, 0700)
+	state := enrollment.State{
+		Origin: "https://server.example", Key: agentcredential.Generate(agentcredential.Working).Encode(),
+	}
+	if err := store.Save(state); !errors.Is(err, enrollment.ErrState) {
+		t.Fatalf("state save without access to parent directory for fsync: %v", err)
+	}
+}
