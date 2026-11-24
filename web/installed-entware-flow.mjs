@@ -214,7 +214,7 @@ async function runConsole(page, fixture) {
     await section.selectOption(group);
     if (id) {
       await page.getByLabel(/^Элемент/).selectOption(id);
-      await page.getByText(id,{exact:true}).waitFor();
+      await page.locator('.editor-id').getByText(id,{exact:true}).waitFor();
     }
     await json.fill(JSON.stringify(source));
     const reply = page.waitForResponse(r => r.url().includes('/ui/v1/templates/item?') && r.request().method()==='POST');
