@@ -1,3 +1,4 @@
+import { checkRouterOverview } from './router-overview-browser.mjs';
 import { checkTemplateVariables } from './template-variables-browser.mjs';
 import { checkRouterEnrollment } from './router-enrollment-browser.mjs';
 import { checkAppendTemplateElement, checkTemplateEditor } from './template-editor-browser.mjs';
@@ -75,6 +76,7 @@ try {
   await page.getByRole('heading', {name:'Обзор'}).waitFor();
   assert.equal(await page.getByRole('link',{name:'Обзор'}).getAttribute('aria-current'),'page');
 
+  await page.getByText('Роутеров с подтверждённым контактом пока нет.',{exact:true}).waitFor();
   await checkExternalAccess(page, () => admin('reset',first), first);
   const templates = page.getByRole('link', {name:'Шаблоны'});
   await page.route('**/ui/v1/templates', async route => {
@@ -356,7 +358,8 @@ try {
     await page.getByRole('heading',{name:'Роутер подготовлен'}).waitFor();
     await page.getByText('Желаемая ревизия 1',{exact:true}).waitFor();
     assert.equal(post.length,beforeLookup);
-    await checkRouterEnrollment(page, {origin, dir, cert, post});
+    const enrolledRouter = await checkRouterEnrollment(page, {origin, dir, cert, post});
+    if (enrolledRouter) await checkRouterOverview(page,{origin, database, enrolledRouter, resetSession: () => admin('reset',first), password:first});
   } else {
     await page.getByText('Проверка Xray сейчас недоступна.',{exact:true}).waitFor();
     assert.equal(await duration.inputValue(),'9007199254740993');
@@ -409,7 +412,7 @@ try {
     await page.locator('form[aria-busy="false"]').waitFor();
   }
   await page.getByText('Слишком много попыток входа. Повторите позже.').waitFor();
-  console.log('F04–F10 real HTTPS browser scenarios passed');
+  console.log('F04–F11 real HTTPS browser scenarios passed');
 } finally {
   if (browser) await browser.close();
   if (server && server.exitCode === null) {

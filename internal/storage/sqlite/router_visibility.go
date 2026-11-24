@@ -46,7 +46,13 @@ func (v RouterVisibility) Hide(ctx context.Context, id string) error {
 }
 
 func (v RouterVisibility) VisibleIDs(ctx context.Context) ([]string, error) {
-	rows, err := v.db.QueryContext(ctx, `SELECT active.router_id
+	return visibleRouterIDs(ctx, v.db)
+}
+
+func visibleRouterIDs(ctx context.Context, source interface {
+	QueryContext(context.Context, string, ...any) (*sql.Rows, error)
+}) ([]string, error) {
+	rows, err := source.QueryContext(ctx, `SELECT active.router_id
 		FROM active_router_publications AS active
 		JOIN agent_contacts AS contact ON contact.router_id=active.router_id
 		WHERE NOT EXISTS (SELECT 1 FROM hidden_router_visibility AS hidden WHERE hidden.router_id=active.router_id)
