@@ -4,6 +4,7 @@
   import { sessionRequest, type Session } from './session';
 
   import TemplateList from './TemplateList.svelte';
+  import TemplateCreate from './TemplateCreate.svelte';
 
   type Section = 'overview' | 'templates' | 'settings';
 
@@ -21,10 +22,11 @@
   let busy = $state(false);
   let password = $state('');
   let csrf = $state('');
+  let templateRevision = $state(0);
   let passwordField = $state<HTMLInputElement>();
   let workspace = $state<HTMLElement>();
   let reading = false;
-  let mutation = 0;
+  let mutation = $state(0);
   let retainedFocus: HTMLElement | undefined;
 
   async function focusPassword() {
@@ -71,7 +73,9 @@
     reading = false;
     if (generation !== mutation || busy) return;
     if (reply.state === 'active' && !expired) {
-      csrf = reply.csrf ?? '';
+      const currentProof = reply.csrf ?? '';
+      if (view === 'active' && csrf !== currentProof) mutation++;
+      csrf = currentProof;
       if (view !== 'active') {
         view = 'active';
         opened = true;
@@ -181,13 +185,16 @@
       <button onclick={logout} disabled={busy}>Выйти</button>
     </header>
     <main bind:this={workspace} tabindex="-1">
-      {#if section === 'settings'}
+      {#if section === 'templates'}
+        <TemplateCreate canSubmit={view === 'active' && !busy} sessionEpoch={mutation} {csrf}
+          changed={() => { templateRevision++; }} signedOut={() => { void endAccess('signed_out'); }}
+          refreshSession={() => { void refresh(); }} />
+        <TemplateList active={view === 'active'} refreshKey={templateRevision}
+          signedOut={() => { void endAccess('signed_out'); }} />
+      {:else if section === 'settings'}
         {#if view === 'active'}{#key csrf}<ExternalSettings {csrf} refreshSession={refresh} />{/key}{/if}
       {:else}
-        <h1>{section === 'templates' ? 'Шаблоны' : 'Обзор'}</h1>
-      {/if}
-      {#if section === 'templates'}
-        <TemplateList active={view === 'active'} signedOut={() => { void endAccess('signed_out'); }} />
+        <h1>Обзор</h1>
       {/if}
       {#if message && view === 'active'}
         <p class="notice error" role="status">{message}</p>

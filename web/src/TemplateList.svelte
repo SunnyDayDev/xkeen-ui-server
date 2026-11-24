@@ -3,7 +3,7 @@
 
   type Summary = { id: string; version: string };
 
-  let { active, signedOut }: { active: boolean; signedOut: () => void } = $props();
+  let { active, refreshKey, signedOut }: { active: boolean; refreshKey: number; signedOut: () => void } = $props();
   let view = $state<'loading' | 'ready' | 'unavailable'>('loading');
   let templates = $state<Summary[]>([]);
   let pending: AbortController | undefined;
@@ -44,6 +44,7 @@
   }
 
   $effect(() => {
+    void refreshKey;
     if (!active) {
       templates = [];
       view = 'loading';

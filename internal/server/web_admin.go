@@ -6,6 +6,8 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/webadmin"
@@ -86,7 +88,7 @@ func NewWebAdminHandler(origin WebOrigin, sessions *webadmin.Service, next http.
 	})
 }
 
-func allowWebRequest(w http.ResponseWriter, r *http.Request, origin WebOrigin, method string) bool {
+func allowWebRequest(w http.ResponseWriter, r *http.Request, origin WebOrigin, methods ...string) bool {
 	w.Header().Set("Cache-Control", "no-store")
 	if err := http.NewResponseController(w).SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil && !errors.Is(err, http.ErrNotSupported) {
 		webResult(w, http.StatusServiceUnavailable, "unavailable", "")
@@ -96,12 +98,12 @@ func allowWebRequest(w http.ResponseWriter, r *http.Request, origin WebOrigin, m
 		webResult(w, http.StatusBadRequest, "invalid_request", "")
 		return false
 	}
-	if r.Method != method {
-		w.Header().Set("Allow", method)
+	if !slices.Contains(methods, r.Method) {
+		w.Header().Set("Allow", strings.Join(methods, ", "))
 		webResult(w, http.StatusMethodNotAllowed, "method_not_allowed", "")
 		return false
 	}
-	if !origin.allows(r, method == http.MethodPost) {
+	if !origin.allows(r, r.Method != http.MethodGet && r.Method != http.MethodHead) {
 		webResult(w, http.StatusForbidden, "invalid_origin", "")
 		return false
 	}

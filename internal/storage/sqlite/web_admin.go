@@ -103,7 +103,10 @@ func (w *WebAdmin) Session(ctx context.Context, digest [32]byte, clock func() ti
 	case webadmin.SessionRead:
 		return requireActiveWebSession(ctx, tx, args)
 	case webadmin.SessionTouch:
-		result, err = tx.ExecContext(ctx, `UPDATE web_sessions SET activity_ns = ?`+activeWebSession, append([]any{now.UnixNano()}, args...)...)
+		if err := touchActiveWebSession(ctx, tx, now, args); err != nil {
+			return err
+		}
+		return tx.Commit()
 	case webadmin.SessionRevoke:
 		result, err = tx.ExecContext(ctx, `DELETE FROM web_sessions`+activeWebSession, args...)
 	default:
@@ -129,6 +132,11 @@ func requireActiveWebSession(ctx context.Context, tx *sql.Tx, args []any) error 
 		return webadmin.ErrSignedOut
 	}
 	return err
+}
+
+func touchActiveWebSession(ctx context.Context, tx *sql.Tx, now time.Time, args []any) error {
+	result, err := tx.ExecContext(ctx, `UPDATE web_sessions SET activity_ns = ?`+activeWebSession, append([]any{now.UnixNano()}, args...)...)
+	return requireWebRow(result, err, webadmin.ErrSignedOut)
 }
 
 func requireWebRow(result sql.Result, err, errorIfMissing error) error {
