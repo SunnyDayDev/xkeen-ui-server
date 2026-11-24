@@ -6,7 +6,6 @@ import (
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routerdraft"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
-	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/jsonvalue"
 )
 
@@ -77,10 +76,6 @@ func (e RouterVariableEditor) Save(ctx context.Context, token, csrf string, basi
 	}
 	result.Basis.DraftGeneration = generation
 	return result, nil
-}
-
-func sharedRouterElement(snapshot RouterDraftSnapshot, elementID string) (configuration.Element, string, error) {
-	return routerdraft.SharedElement(snapshot, elementID)
 }
 
 func readRouterVariables(snapshot RouterDraftSnapshot, elementID string) (RouterVariables, error) {
