@@ -254,7 +254,7 @@
 - [Обновление и удаление сервера](https://github.com/SunnyDayDev/xkeen-ui-server/issues/120)
 - [Удаление агента](https://github.com/SunnyDayDev/xkeen-ui-server/issues/121)
 - [Резервное копирование и восстановление](https://github.com/SunnyDayDev/xkeen-ui-server/issues/122)
-- [Дополнительная архитектура](https://github.com/SunnyDayDev/xkeen-ui-server/issues/123)
+- [Дополнительная архитектура](https://github.com/SunnyDayDev/xkeen-ui-server/issues/123) ([изолированная проверка x86-64](entware-x64-research.md))
 - [Клавиатура и узкие экраны](https://github.com/SunnyDayDev/xkeen-ui-server/issues/124)
 
 ## Границы плана
