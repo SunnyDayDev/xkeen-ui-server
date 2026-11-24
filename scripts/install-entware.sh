@@ -15,6 +15,7 @@ action=${1:-}
 case "$action" in install|update) ;; *) refuse 'expected install or update command' ;; esac
 shift
 role='' version='' manifest='' run_as='' server='' server_ca='' invite='' mirror='' mirror_ca='' listen='' web_origin='' tls_cert='' tls_key='' local_cfg='' app_cfg=''
+agent_origin='' validator_origin='' validator_ca='' validator_cert='' validator_key=''
 while [ "$#" -gt 0 ]; do
   [ "$#" -ge 2 ] && [ -n "$2" ] || refuse 'missing installation option value'
   case "$1" in
@@ -31,6 +32,11 @@ while [ "$#" -gt 0 ]; do
     --tls-key) [ -z "$tls_key" ] || refuse 'duplicate option'; tls_key=$2 ;;
     --local-config) [ -z "$local_cfg" ] || refuse 'duplicate option'; local_cfg=$2 ;;
     --application-config) [ -z "$app_cfg" ] || refuse 'duplicate option'; app_cfg=$2 ;;
+    --agent-origin) [ -z "$agent_origin" ] || refuse 'duplicate option'; agent_origin=$2 ;;
+    --validator-origin) [ -z "$validator_origin" ] || refuse 'duplicate option'; validator_origin=$2 ;;
+    --validator-ca) [ -z "$validator_ca" ] || refuse 'duplicate option'; validator_ca=$2 ;;
+    --validator-client-cert) [ -z "$validator_cert" ] || refuse 'duplicate option'; validator_cert=$2 ;;
+    --validator-client-key) [ -z "$validator_key" ] || refuse 'duplicate option'; validator_key=$2 ;;
     --release-mirror) [ -z "$mirror" ] || refuse 'duplicate option'; mirror=$2 ;;
     --mirror-ca-file) [ -z "$mirror_ca" ] || refuse 'duplicate option'; mirror_ca=$2 ;;
     *) refuse 'unknown installation option' ;;
@@ -46,6 +52,15 @@ printf '%s\n' "$version" | /opt/bin/grep -Eq '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)
 case "$version" in *[!v.0-9]*) refuse 'invalid release tag' ;; esac
 case "$manifest" in ''|*[!0-9a-f]*) refuse 'invalid manifest SHA-256' ;; esac
 [ "${#manifest}" -eq 64 ] || refuse 'invalid manifest SHA-256'
+if [ "$role" != server ] && [ -n "$agent_origin$validator_origin$validator_ca$validator_cert$validator_key" ]; then
+  refuse 'external validation and agent origin apply to the server role'
+fi
+if [ -n "$validator_origin$validator_ca$validator_cert$validator_key" ]; then
+  [ -n "$validator_origin" ] && [ -n "$validator_ca" ] &&
+    [ -n "$validator_cert" ] && [ -n "$validator_key" ] ||
+    refuse 'complete external validator configuration is required'
+fi
+
 case "$action:$role" in
   install:agent-transport)
     [ -n "$run_as" ] && [ -n "$server" ] && [ -z "$listen$web_origin$tls_cert$tls_key$local_cfg$app_cfg" ] ||
@@ -147,7 +162,8 @@ if [ "$action" = update ]; then
   fi
   "$stage/$helper" update-stage "$stage" "$version" "$manifest"
 elif [ "$role" = server ]; then
-  "$stage/$helper" install-server-stage "$stage" "$version" "$manifest" "$run_as" "$listen" "$web_origin" "$tls_cert" "$tls_key"
+  "$stage/$helper" install-server-stage "$stage" "$version" "$manifest" "$run_as" "$listen" "$web_origin" "$tls_cert" "$tls_key" \
+    "$agent_origin" "$validator_origin" "$validator_ca" "$validator_cert" "$validator_key"
 elif [ "$role" = agent-application ]; then
   "$stage/$helper" install-application-stage "$stage" "$version" "$manifest" "$run_as" "$server" "$invite" "$local_cfg" "$app_cfg"
 else

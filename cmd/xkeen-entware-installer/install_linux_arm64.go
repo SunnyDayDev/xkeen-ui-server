@@ -59,7 +59,10 @@ func run(args []string) error {
 		return install(args[1:])
 	case args[0] == "update-stage" && len(args) == 4:
 		return update(args[1], args[2], args[3])
-	case args[0] == "install-server-stage" && len(args) == 9:
+	case args[0] == "install-server-stage" && (len(args) == 9 || len(args) == 14):
+		if len(args) == 9 {
+			args = append(args, "", "", "", "", "")
+		}
 		return installServer(args[1:])
 	case args[0] == "server-service":
 		return serverService(args[1:])
