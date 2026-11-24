@@ -152,6 +152,24 @@ func preparePersonalOrder(input configuration.CatalogInput, version int64, basis
 	if input.PersonalOrder == nil {
 		return nil, nil, nil
 	}
+	order := configuration.RuleOrderInput{
+		Template: input.Template, Router: input.Router, TemplateOrder: input.TemplateOrder, PersonalOrder: input.PersonalOrder,
+		Shared: make([]configuration.ElementRef, len(input.Rules.Shared)),
+		Local:  make([]configuration.ElementRef, len(input.Rules.Local)),
+	}
+	for i, rule := range input.Rules.Shared {
+		order.Shared[i] = configuration.ElementRef{ID: rule.Element.ID, Position: rule.Position}
+	}
+	for i, local := range input.Rules.Local {
+		order.Local[i] = configuration.ElementRef{ID: local.ID, Position: local.Position}
+	}
+	return alignRuleOrder(order, version, basis)
+}
+
+func alignRuleOrder(input configuration.RuleOrderInput, version int64, basis *OrderBasis) ([]string, *OrderBasis, []configuration.CatalogIssue) {
+	if input.PersonalOrder == nil {
+		return nil, nil, nil
+	}
 	if basis == nil || basis.SharedRuleIDs == nil {
 		return nil, nil, candidateFailure("order_basis_required", input.Router, "/orderBasis")
 	}
@@ -178,14 +196,8 @@ func preparePersonalOrder(input configuration.CatalogInput, version int64, basis
 			ID: id, Position: "/orderBasis/sharedRuleIDs/" + strconv.Itoa(i),
 		})
 	}
-	for _, local := range input.Rules.Local {
-		previous.Local = append(previous.Local, configuration.ElementRef{ID: local.ID, Position: local.Position})
-	}
-	shared := make([]configuration.ElementRef, len(input.Rules.Shared))
-	for i, rule := range input.Rules.Shared {
-		shared[i] = configuration.ElementRef{ID: rule.Element.ID, Position: rule.Position}
-	}
-	order, issues := configuration.ReconcileRuleOrder(previous, shared, input.TemplateOrder)
+	previous.Local = input.Local
+	order, issues := configuration.ReconcileRuleOrder(previous, input.Shared, input.TemplateOrder)
 	if len(issues) != 0 {
 		result := make([]configuration.CatalogIssue, len(issues))
 		for i, issue := range issues {

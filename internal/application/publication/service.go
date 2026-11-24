@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
@@ -220,6 +221,14 @@ func selectPersonalSource(request PublishRequest, inputs *Inputs) (routersetting
 			return routersettings.Draft{}, nil, ErrSourceMissing
 		}
 		draft = inputs.RouterDraft.Draft
+		if saved := inputs.RouterDraft.OrderBasis; saved != nil {
+			if basis != nil && (basis.TemplateID != saved.TemplateID || basis.TemplateVersion != saved.TemplateVersion || !slices.Equal(basis.SharedRuleIDs, saved.SharedRuleIDs)) {
+				return routersettings.Draft{}, nil, ErrSourceMismatch
+			}
+			basis = saved
+		} else if basis == nil {
+			basis = EditableRuleOrderBasis(inputs.RouterDraft, inputs.Active)
+		}
 	case SourceCandidate:
 		draft = *request.Candidate
 	}

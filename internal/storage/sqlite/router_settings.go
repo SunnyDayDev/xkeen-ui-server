@@ -27,7 +27,7 @@ func (r *RouterSettings) Save(ctx context.Context, draft routersettings.Draft) e
 		return errors.New("encode router draft")
 	}
 	result, err := r.db.ExecContext(ctx, `INSERT INTO router_settings (id, snapshot) VALUES (?, ?)
-		ON CONFLICT (id) DO UPDATE SET snapshot = excluded.snapshot, generation = generation + 1
+		ON CONFLICT (id) DO UPDATE SET snapshot = excluded.snapshot, generation = generation + 1, order_basis = NULL
 		WHERE generation < ?`, draft.ID, snapshot, int64(math.MaxInt64))
 	if err != nil {
 		return operationError("write router draft", ctx.Err())

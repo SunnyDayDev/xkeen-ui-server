@@ -105,7 +105,12 @@ try {
     }}]}, {name:'inbounds',elements:[{disabled:true,record:{
       id:'550e8400-e29b-41d4-a716-446655440004', content:'{"tag":"${inactiveLabel}"}',
       variables:[{name:'inactiveLabel',type:'string'}]
-    }}]}];
+    }}]}, {name:'rules',elements:[
+      {disabled:false,record:{id:'550e8400-e29b-41d4-a716-446655440030',
+        content:'{"type":"field","ruleTag":"common-rule","ip":["192.0.2.0/24"],"outboundTag":"example-direct"}',variables:[]}},
+      {disabled:true,record:{id:'550e8400-e29b-41d4-a716-446655440031',
+        content:'{"type":"field","ruleTag":"disabled-rule","ip":["198.51.100.0/24"],"outboundTag":"example-direct"}',variables:[]}},
+    ]}];
     sql.prepare('INSERT INTO templates(id, draft) VALUES (?,?)').run(routerTemplate,JSON.stringify(preparationFixture));
   } finally { sql.close(); }
   await page.goBack();

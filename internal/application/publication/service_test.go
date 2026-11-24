@@ -422,3 +422,38 @@ func TestPublishCarriesAnExplicitEmptyOrderAndItsBasis(t *testing.T) {
 		t.Fatalf("plan lost explicit empty order or basis: %#v", plan)
 	}
 }
+
+func TestFirstSavedDraftWithoutOrderBasisFailsSafely(t *testing.T) {
+	for _, mode := range []PublishMode{ConfirmAccepted, ConfirmInitial} {
+		t.Run(string(mode), func(t *testing.T) {
+			template, draft := snapshots()
+			draft.PersonalOrder = []string{}
+			const storedGeneration = int64(4)
+			generation := storedGeneration
+			inputs := &Inputs{
+				RouterID: draft.ID, TemplateID: template.ID, Accepted: template, RouterDraftRequested: true,
+				RouterDraft: &VersionedRouterDraft{Draft: *draft, Generation: storedGeneration},
+			}
+			command := PublishRequest{Mode: mode, Source: SourceSavedDraft, Expected: Expectations{
+				RouterID: draft.ID, TemplateID: template.ID, AcceptedVersion: template.Version, RouterDraftGeneration: &generation,
+			}}
+			if mode == ConfirmInitial {
+				inputs.Accepted = nil
+				inputs.TemplateDraftRequested = true
+				inputs.TemplateDraft = template
+				command.Expected.AcceptedVersion = 0
+				command.Expected.TemplateDraftVersion = &template.Version
+			}
+			store := &publicationStoreStub{inputs: inputs}
+			service := NewService(store, catalogValidatorFunc(func(context.Context, string, []configuration.CatalogFile) error {
+				t.Fatal("unproved order reached validation")
+				return nil
+			}))
+			_, err := service.Publish(t.Context(), command)
+			var preparation *PreparationError
+			if !errors.As(err, &preparation) || len(preparation.Issues) == 0 || preparation.Issues[0].Code != "order_basis_required" || len(store.commits) != 0 {
+				t.Fatalf("first confirmation without order evidence: %v", err)
+			}
+		})
+	}
+}

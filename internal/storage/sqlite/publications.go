@@ -163,9 +163,9 @@ func readPublicationTemplate(ctx context.Context, tx *sql.Tx, query, id string) 
 }
 
 func readPublicationRouterDraft(ctx context.Context, tx *sql.Tx, id string) (*publication.VersionedRouterDraft, error) {
-	var raw []byte
+	var raw, rawBasis []byte
 	var generation int64
-	err := tx.QueryRowContext(ctx, "SELECT snapshot, generation FROM router_settings WHERE id = ?", id).Scan(&raw, &generation)
+	err := tx.QueryRowContext(ctx, "SELECT snapshot, generation, order_basis FROM router_settings WHERE id = ?", id).Scan(&raw, &generation, &rawBasis)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
@@ -176,7 +176,14 @@ func readPublicationRouterDraft(ctx context.Context, tx *sql.Tx, id string) (*pu
 	if err != nil || generation < 1 || routersettings.ValidateDraft(draft) != nil {
 		return nil, publication.ErrStoredState
 	}
-	return &publication.VersionedRouterDraft{Draft: draft, Generation: generation}, nil
+	var basis *publication.OrderBasis
+	if rawBasis != nil {
+		basis, err = decodeStoredOrderBasis(draft, rawBasis)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &publication.VersionedRouterDraft{Draft: draft, Generation: generation, OrderBasis: basis}, nil
 }
 
 func readActivePublication(ctx context.Context, tx *sql.Tx, id string) (*publication.ActiveSettings, error) {
@@ -195,17 +202,25 @@ func readActivePublication(ctx context.Context, tx *sql.Tx, id string) (*publica
 	if err != nil || generation < 1 || draft.TemplateID != templateID || routersettings.ValidateDraft(draft) != nil {
 		return nil, publication.ErrStoredState
 	}
+	basis, err := decodeStoredOrderBasis(draft, rawBasis)
+	if err != nil {
+		return nil, err
+	}
+	return &publication.ActiveSettings{Draft: draft, OrderBasis: basis, Generation: generation}, nil
+}
+
+func decodeStoredOrderBasis(draft routersettings.Draft, raw []byte) (*publication.OrderBasis, error) {
 	var basis *publication.OrderBasis
-	if rawBasis != nil {
+	if raw != nil {
 		basis = new(publication.OrderBasis)
-		if err := jsonv2.Unmarshal(rawBasis, basis, jsonv2.RejectUnknownMembers(true)); err != nil {
+		if err := jsonv2.Unmarshal(raw, basis, jsonv2.RejectUnknownMembers(true)); err != nil {
 			return nil, publication.ErrStoredState
 		}
 	}
 	if !validStoredBasis(draft, basis) {
 		return nil, publication.ErrStoredState
 	}
-	return &publication.ActiveSettings{Draft: draft, OrderBasis: basis, Generation: generation}, nil
+	return basis, nil
 }
 
 func validStoredBasis(draft routersettings.Draft, basis *publication.OrderBasis) bool {

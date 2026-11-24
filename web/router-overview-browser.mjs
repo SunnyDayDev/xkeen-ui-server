@@ -1,3 +1,4 @@
+import { checkLocalRule } from './router-local-rule-browser.mjs';
 import { checkRouterVariables } from "./router-variable-browser.mjs";
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
@@ -20,6 +21,7 @@ export async function checkRouterOverview(page,{origin,database,enrolledRouter,r
   await drawer.getByText('Связь: на связи',{exact:true}).waitFor();
   await drawer.getByText('Применение: нет подтверждения',{exact:true}).waitFor();
   await checkRouterVariables(page, enrolledRouter, resetSession, password);
+  await checkLocalRule(page,enrolledRouter,database);
   await drawer.getByRole('button',{name:'Закрыть панель'}).click();
   assert.equal(await selected.evaluate(link=>document.activeElement===link),true);
   await page.goBack();
