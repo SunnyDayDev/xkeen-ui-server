@@ -63,6 +63,10 @@ func run(args []string) error {
 		return installServer(args[1:])
 	case args[0] == "server-service":
 		return serverService(args[1:])
+	case args[0] == "install-application-stage" && len(args) == 9:
+		return installApplication(args[1:])
+	case args[0] == "application-service" && len(args) == 2:
+		return applicationService(args[1])
 	case len(args) == 1 && (args[0] == "start" || args[0] == "stop" || args[0] == "status"):
 		lock, err := lockService()
 		if err != nil {
@@ -131,14 +135,14 @@ func install(args []string) error {
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return errSafety
 	}
-	invite, err := stateAdmission(p, invitation, hasPrior)
+	invite, err := stateAdmission(stateDir, p, invitation, hasPrior)
 	if err != nil {
 		return err
 	}
 	if err := persistProfile(p, ca, hasPrior); err != nil {
 		return err
 	}
-	if err := prepareState(p, invite); err != nil {
+	if err := prepareState(stateDir, p, invite); err != nil {
 		return err
 	}
 	published, err := existingGeneration(p, hasPrior)
@@ -193,9 +197,9 @@ func parsePrincipal(s string) (uint32, uint32, bool) {
 	return uint32(uid), uint32(gid), ok && errU == nil && errG == nil && uid != 0 && gid != 0
 }
 
-func stateAdmission(p profile, path string, hasPrior bool) ([]byte, error) {
+func stateAdmission(destination string, p profile, path string, hasPrior bool) ([]byte, error) {
 	stateErr := errors.New("agent state or invitation is unavailable")
-	info, err := os.Lstat(stateDir)
+	info, err := os.Lstat(destination)
 	if err == nil {
 		if !hasPrior || !owned(info, p.UID, os.ModeDir, 0700) || info.Sys().(*syscall.Stat_t).Gid != p.GID {
 			return nil, stateErr
@@ -221,7 +225,7 @@ func stateAdmission(p profile, path string, hasPrior bool) ([]byte, error) {
 	return raw, nil
 }
 
-func prepareState(p profile, invite []byte) error {
+func prepareState(destination string, p profile, invite []byte) error {
 	if len(invite) == 0 {
 		return nil
 	}
@@ -236,7 +240,7 @@ func prepareState(p profile, invite []byte) error {
 	if os.Chown(pending, int(p.UID), int(p.GID)) != nil || syncDir(pending) != nil {
 		return errSafety
 	}
-	if os.Rename(pending, stateDir) != nil || syncDir(stateBase) != nil {
+	if os.Rename(pending, destination) != nil || syncDir(stateBase) != nil {
 		return errSafety
 	}
 	return nil

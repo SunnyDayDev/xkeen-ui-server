@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -20,9 +21,10 @@ import (
 const receiptPath = control + "/agent-transport.process.json"
 
 var (
-	errProcess  = errors.New("agent instance ownership is unavailable")
-	errStopped  = errors.New("agent service is stopped")
-	errNotReady = errors.New("installed agent did not confirm HTTPS authentication")
+	errProcess      = errors.New("agent instance ownership is unavailable")
+	errStopped      = errors.New("agent service is stopped")
+	errPendingChild = errors.New("managed process startup is incomplete")
+	errNotReady     = errors.New("installed agent did not confirm HTTPS authentication")
 )
 
 type receipt struct {
@@ -63,12 +65,15 @@ func lifecycle(action string, p profile) error {
 }
 
 type managedProcess struct {
-	binary    string
-	receipt   string
-	uid, gid  uint32
-	arguments []string
-	notReady  error
-	probe     func(int) bool
+	binary          string
+	receipt         string
+	uid, gid        uint32
+	arguments       []string
+	notReady        error
+	probe           func(int) bool
+	readiness       func(string) bool
+	useReadyPipe    bool
+	noNewPrivileges bool
 }
 
 func (s managedProcess) control(action string) error {
@@ -98,7 +103,7 @@ func (s managedProcess) control(action string) error {
 			defer unix.Close(pidfd)
 			if action != "stop" {
 				if r.Pending {
-					return errProcess
+					return errPendingChild
 				}
 				if s.probe != nil && !s.probe(r.PID) {
 					return s.notReady
@@ -282,7 +287,7 @@ func (s managedProcess) launch(boot string, info os.FileInfo) error {
 		Credential: &syscall.Credential{Uid: s.uid, Gid: s.gid, Groups: []uint32{}},
 	}
 	var reader, writer *os.File
-	if s.probe == nil {
+	if s.probe == nil || s.useReadyPipe {
 		var err error
 		reader, writer, err = os.Pipe()
 		if err != nil {
@@ -290,14 +295,19 @@ func (s managedProcess) launch(boot string, info os.FileInfo) error {
 		}
 		defer reader.Close()
 		defer writer.Close()
-		cmd.Stdout = writer
+		if s.useReadyPipe {
+			cmd.ExtraFiles = []*os.File{writer}
+			cmd.Args = append(cmd.Args, "--ready-fd3")
+		} else {
+			cmd.Stdout = writer
+		}
 	}
 	// The zero receipt forbids another start after an interrupted launch for
 	// which an owned process has not yet been recorded.
 	if err := saveReceipt(s.receipt, receipt{Boot: boot}); err != nil {
 		return err
 	}
-	if err := cmd.Start(); err != nil {
+	if err := s.startCommand(cmd); err != nil {
 		_ = removePublished(s.receipt)
 		return s.notReady
 	}
@@ -325,7 +335,7 @@ func (s managedProcess) launch(boot string, info os.FileInfo) error {
 	if err := saveReceipt(s.receipt, r); err != nil {
 		return fail(err)
 	}
-	if !s.waitReady(r.PID, fd, reader) {
+	if (reader != nil && !s.waitMarker(reader)) || (s.probe != nil && !s.waitProbe(r.PID, fd)) {
 		return fail(s.notReady)
 	}
 	if dead, err := exited(fd, 0); err != nil || dead {
@@ -339,25 +349,43 @@ func (s managedProcess) launch(boot string, info os.FileInfo) error {
 	return nil
 }
 
-func (s managedProcess) waitReady(pid, fd int, reader io.Reader) bool {
-	if s.probe != nil {
-		deadline := time.Now().Add(15 * time.Second)
-		for time.Now().Before(deadline) {
-			dead, err := exited(fd, 50)
-			if err != nil || dead {
-				return false
-			}
-			if s.probe(pid) {
-				return true
-			}
-		}
-		return false
+func (s managedProcess) startCommand(cmd *exec.Cmd) error {
+	if !s.noNewPrivileges {
+		return cmd.Start()
 	}
+	result := make(chan error, 1)
+	go func() {
+		runtime.LockOSThread()
+		if err := unix.Prctl(unix.PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0); err != nil {
+			result <- err
+			return
+		}
+		result <- cmd.Start()
+	}()
+	return <-result
+}
+
+func (s managedProcess) waitProbe(pid, fd int) bool {
+	deadline := time.Now().Add(15 * time.Second)
+	for time.Now().Before(deadline) {
+		dead, err := exited(fd, 50)
+		if err != nil || dead {
+			return false
+		}
+		if s.probe(pid) {
+			return true
+		}
+	}
+	return false
+}
+
+func (s managedProcess) waitMarker(reader io.Reader) bool {
 	ready := make(chan bool, 1)
 	go func() {
 		scanner := bufio.NewScanner(io.LimitReader(reader, 4096))
 		for scanner.Scan() {
-			if scanner.Text() == "agent authenticated" {
+			line := scanner.Text()
+			if (s.readiness == nil && line == "agent authenticated") || (s.readiness != nil && s.readiness(line)) {
 				ready <- true
 				return
 			}

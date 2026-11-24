@@ -83,12 +83,13 @@ func writeFile(path string, raw []byte, mode os.FileMode, uid, gid int) error {
 	}
 	defer os.Remove(file.Name())
 	defer file.Close()
-	if err := file.Chown(uid, gid); err != nil {
-		return errSafety
-	}
 	if err := file.Chmod(mode); err != nil {
 		return errSafety
 	}
+	if err := file.Chown(uid, gid); err != nil {
+		return errSafety
+	}
+
 	if _, err := file.Write(raw); err != nil || file.Sync() != nil || file.Close() != nil {
 		return errSafety
 	}
