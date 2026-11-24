@@ -28,10 +28,11 @@ type InboundInUse struct{ Dependencies []InboundDependency }
 func (*InboundInUse) Error() string { return "inbound in use" }
 
 type DraftInbounds struct {
-	input configuration.InboundSnapshot
-	draft routersettings.Draft
-	items []DraftInbound
-	rules map[string]inboundRuleSource
+	input            configuration.InboundSnapshot
+	draft            routersettings.Draft
+	items            []DraftInbound
+	rules            map[string]inboundRuleSource
+	templateDisabled map[string]configuration.ElementRef
 }
 
 type inboundRuleSource struct {
@@ -58,6 +59,21 @@ func PrepareDraftInbounds(template *templates.Snapshot, draft routersettings.Dra
 			DisabledRules: input.DisabledRules, DisabledInbounds: input.DisabledInbounds,
 		},
 		draft: draft, items: []DraftInbound{}, rules: make(map[string]inboundRuleSource, len(input.Rules.Shared)+len(input.Rules.Local)),
+	}
+	for i, section := range template.Sections {
+		if section.Name != "inbounds" {
+			continue
+		}
+		for j, item := range section.Elements {
+			if item.Disabled {
+				if prepared.templateDisabled == nil {
+					prepared.templateDisabled = make(map[string]configuration.ElementRef)
+				}
+				prepared.templateDisabled[item.Element.ID] = configuration.ElementRef{
+					ID: item.Element.ID, Position: template.ElementLocation(i, j).Position,
+				}
+			}
+		}
 	}
 	for _, item := range input.Rules.Shared {
 		prepared.rules[item.Element.ID] = inboundRuleSource{shared: item.Element.Content}
