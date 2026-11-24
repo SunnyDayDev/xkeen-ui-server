@@ -147,7 +147,8 @@ func TestProcessExternalRouterVariableEditing(t *testing.T) {
 		t.Fatal(err)
 	}
 	replaced := call(http.MethodGet, pathToValues, "", "", "", 200)
-	if replaced.Tag == inherited.Tag || !bytes.Contains(replaced.Body, []byte(`"definitions":[]`)) ||
+	if replaced.Tag == inherited.Tag || !bytes.Contains(replaced.Body, []byte(`"mode":"replacement"`)) ||
+		!bytes.Contains(replaced.Body, []byte(`"definitions":[]`)) ||
 		bytes.Contains(replaced.Body, []byte(`"my"`)) {
 		t.Fatalf("replacement-only data leaked or mode/version did not change: %s", replaced.Body)
 	}
