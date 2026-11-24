@@ -160,10 +160,15 @@ func readContactStatus(ctx context.Context, tx *sql.Tx, id string, now time.Time
 	if err != nil {
 		return reporting.Status{}, err
 	}
-	status := reporting.Status{Presence: reporting.Unobserved, Applied: state.applied, Last: state.last}
-	if err := tx.QueryRowContext(ctx, `SELECT coalesce(max(revision),0) FROM desired_router_revisions WHERE router_id=?`, id).Scan(&status.Desired); err != nil {
+	var desired int64
+	if err := tx.QueryRowContext(ctx, `SELECT coalesce(max(revision),0) FROM desired_router_revisions WHERE router_id=?`, id).Scan(&desired); err != nil {
 		return reporting.Status{}, reporting.ErrUnavailable
 	}
+	return projectContactStatus(state, desired, now), nil
+}
+
+func projectContactStatus(state contactRecord, desired int64, now time.Time) reporting.Status {
+	status := reporting.Status{Presence: reporting.Unobserved, Desired: desired, Applied: state.applied, Last: state.last}
 	if state.observed {
 		status.LastContact = time.Unix(0, state.ns)
 		status.Presence = reporting.Online
@@ -176,5 +181,5 @@ func readContactStatus(ctx context.Context, tx *sql.Tx, id string, now time.Time
 	} else if state.applied > 0 {
 		status.Runtime = "verified"
 	}
-	return status, nil
+	return status
 }

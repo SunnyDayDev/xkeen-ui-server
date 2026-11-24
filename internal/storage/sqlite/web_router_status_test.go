@@ -48,6 +48,15 @@ func TestWebRouterStatusFollowsAcceptedContactAndVisibility(t *testing.T) {
 	if row := read(1)[0]; row.Contact != reporting.Online || row.Applied != 0 || row.Name != "new" || row.TemplateID != "A" || row.Desired != 2 {
 		t.Fatalf("heartbeat conflated with application: %+v", row)
 	}
+	// The overview reads only routing metadata and does not decode payloads that
+	// are irrelevant to status, even on an already observed router.
+	if _, err := db.ExecContext(ctx, `UPDATE active_router_publications SET
+		settings=CAST(json_set(CAST(settings AS TEXT), '$.Groups', 500) AS BLOB) WHERE router_id=?`, id.RouterID); err != nil {
+		t.Fatal(err)
+	}
+	if row := read(1)[0]; row.Name != "new" || row.TemplateID != "A" {
+		t.Fatalf("metadata lost: %+v", row)
+	}
 	if err := contacts.Accept(ctx, id, &reporting.Report{Sequence: 1, Revision: 1, State: "applied"}); err != nil {
 		t.Fatal(err)
 	}
@@ -79,6 +88,20 @@ func TestWebRouterStatusFollowsAcceptedContactAndVisibility(t *testing.T) {
 		t.Fatal(err)
 	}
 	read(1)
+	if _, err := db.ExecContext(ctx, `UPDATE active_router_publications SET
+		settings=CAST(json_remove(CAST(settings AS TEXT), '$.Name') AS BLOB) WHERE router_id=?`, id.RouterID); err != nil {
+		t.Fatal(err)
+	}
+	if row := read(1)[0]; row.Name != id.RouterID {
+		t.Fatalf("legacy name fallback: %+v", row)
+	}
+	if _, err := db.ExecContext(ctx, `UPDATE active_router_publications SET
+		settings=CAST(json_set(CAST(settings AS TEXT), '$.Name', 500) AS BLOB) WHERE router_id=?`, id.RouterID); err != nil {
+		t.Fatal(err)
+	}
+	if rows, err := status.List(ctx, digest, clock); rows != nil || err == nil {
+		t.Fatalf("invalid source metadata returned: %+v %v", rows, err)
+	}
 	now = issued.Add(webadmin.IdleLifetime)
 	if rows, err := status.List(ctx, digest, clock); rows != nil || !errors.Is(err, webadmin.ErrSignedOut) {
 		t.Fatalf("reads advanced session or exposed protected fields: %+v %v", rows, err)
