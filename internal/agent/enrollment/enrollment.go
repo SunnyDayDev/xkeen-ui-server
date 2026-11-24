@@ -63,11 +63,15 @@ func Connect(ctx context.Context, origin string, store Store, remote Remote) err
 			Origin: origin, Key: agentcredential.Generate(agentcredential.Working).Encode(),
 			InvitationDigest: invitationDigest(invitation),
 		}
+	} else if err := checkStoredState(*state, origin); err != nil {
+		return err
+	}
+	// A prior rename may have succeeded before its directory sync failed.
+	// Re-establish the durability barrier when recovering a pending record.
+	if state.RouterID == "" {
 		if err := store.Save(*state); err != nil {
 			return ErrState
 		}
-	} else if err := checkStoredState(*state, origin); err != nil {
-		return err
 	}
 
 	for attempt := range attempts {

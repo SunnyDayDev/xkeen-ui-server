@@ -213,3 +213,27 @@ func TestAgentRetriesOnlyTemporaryWorkWithinOneBudget(t *testing.T) {
 		t.Fatalf("temporary startup: calls=%d err=%v", calls, err)
 	}
 }
+
+func TestPendingRecoveryRequiresADurableLocalWriteBeforeNetwork(t *testing.T) {
+	store := &memoryState{invitation: invite()}
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	intoPending := remote{enroll: func(_ context.Context, _, _ string) (string, error) {
+		cancel()
+		return "", enrollment.ErrTemporary
+	}}
+	if err := enrollment.Connect(ctx, origin, store, intoPending); !errors.Is(err, context.Canceled) {
+		t.Fatal(err)
+	}
+	saved := *store.state
+	store.saveError = errors.New("private fixture directory sync failure")
+	requests := 0
+	server := remote{identity: func(context.Context, string) (string, error) {
+		requests++
+		return "router-example", nil
+	}}
+	if err := enrollment.Connect(t.Context(), origin, store, server); !errors.Is(err, enrollment.ErrState) ||
+		requests != 0 || *store.state != saved {
+		t.Fatalf("recovered pending without durable storage: requests=%d error=%v", requests, err)
+	}
+}
