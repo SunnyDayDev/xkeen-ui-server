@@ -3,15 +3,23 @@ package main
 import (
 	"bytes"
 	"crypto/tls"
+	"crypto/x509"
+	"errors"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/agenthttp"
+	"golang.org/x/sys/unix"
+
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/desired"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/enrollment"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agent/statefile"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agentcredential"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agentrevision"
@@ -19,6 +27,7 @@ import (
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/publication"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/server"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/storage/sqlite"
 )
 
@@ -152,4 +161,114 @@ func TestProcessAgentFetchesDesiredAcrossRestart(t *testing.T) {
 		t.Fatalf("no desired after registered snapshot removal = %v, %v", got.Kind, err)
 	}
 	stopAgentProcess(t, server)
+}
+
+func TestAgentDesiredTLSKeepsCacheAfterInterruptedBoundaryCatalog(t *testing.T) {
+	ctx := t.Context()
+	dbPath := filepath.Join(t.TempDir(), "server.sqlite")
+	invitation, credentials := fixtureEnrollment(t, dbPath)
+	key := agentcredential.Generate(agentcredential.Working).Encode()
+	id, err := credentials.Enroll(ctx, invitation, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	db, err := sqlite.Open(ctx, dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	publications := sqlite.NewPublications(db)
+	handler := server.NewAgentHandler(credentials, publications)
+	var truncate atomic.Bool
+	tlsServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !truncate.Load() {
+			handler.ServeHTTP(w, r)
+			return
+		}
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, r)
+		for name, values := range recorder.Header() {
+			w.Header()[name] = values
+		}
+		w.WriteHeader(recorder.Code)
+		raw := recorder.Body.Bytes()
+		if len(raw) != 0 {
+			_, _ = w.Write(raw[:len(raw)-1])
+		}
+	}))
+	defer tlsServer.Close()
+	roots := x509.NewCertPool()
+	roots.AddCert(tlsServer.Certificate())
+	transport, err := agenthttp.New(tlsServer.URL, roots)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer transport.CloseIdleConnections()
+	dir := filepath.Join(t.TempDir(), "state")
+	cache, err := statefile.Open(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cache.Close()
+	binding := enrollment.State{Origin: tlsServer.URL, Key: key, RouterID: id.RouterID}
+	first, err := desired.Sync(ctx, binding, cache, transport)
+	if err != nil || first == nil || first.Number != 1 {
+		t.Fatalf("initial fetch = %v, %v", first, err)
+	}
+
+	latest := fixtureDesiredCatalog("{}")
+	remaining := agentrevision.MaxCatalog
+	for _, file := range latest.Files[1:] {
+		remaining -= len(file.Content)
+	}
+	payload := make([]byte, remaining)
+	for i := range payload {
+		payload[i] = ' '
+	}
+	copy(payload, `{"log":{}}`)
+	latest.Files[0].Content = payload
+	prev, err := publications.Read(ctx, publication.ReadRequest{RouterID: id.RouterID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := publications.Commit(ctx, publication.CommitPlan{
+		Expected: publication.Expectations{RouterID: id.RouterID, TemplateID: prev.TemplateID,
+			AcceptedVersion: prev.Accepted.Version, ActiveGeneration: prev.Active.Generation, DesiredNumber: prev.Desired.Number},
+		Settings: prev.Active.Draft, NewRevision: latest,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	prior, err := cache.LoadDesired()
+	if err != nil {
+		t.Fatal(err)
+	}
+	truncate.Store(true)
+	if failed, err := desired.Sync(ctx, binding, cache, transport); failed != nil || !errors.Is(err, enrollment.ErrTemporary) {
+		t.Fatalf("interrupted verified TLS response = %v", err)
+	}
+	afterFailure, err := cache.LoadDesired()
+	if err != nil || !reflect.DeepEqual(prior, afterFailure) {
+		t.Fatalf("interrupted response replaced complete cache: %v", err)
+	}
+	truncate.Store(false)
+	start := time.Now()
+	got, err := desired.Sync(ctx, binding, cache, transport)
+	if err != nil || got == nil || got.Number != 2 || !reflect.DeepEqual(got.Files, latest.Files) {
+		t.Fatalf("retry at decoded size limit failed: %v", err)
+	}
+	if err := cache.Close(); err != nil {
+		t.Fatal(err)
+	}
+	reopened, err := statefile.Open(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reopened.Close()
+	if same, err := desired.Sync(ctx, binding, reopened, transport); err != nil || !reflect.DeepEqual(got, same) {
+		t.Fatalf("conditional read after reopen failed: %v", err)
+	}
+	var usage unix.Rusage
+	if err := unix.Getrusage(unix.RUSAGE_SELF, &usage); err == nil {
+		t.Logf("8 MiB TLS fetch, durable write, and conditional reopen in %s, process maxrss=%d (%s)", time.Since(start), usage.Maxrss, runtime.GOOS)
+	}
 }

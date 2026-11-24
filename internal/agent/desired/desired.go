@@ -64,6 +64,9 @@ func Sync(ctx context.Context, state enrollment.State, cache Cache, remote Remot
 	if err != nil {
 		return nil, err
 	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if reply.Kind == NotModified {
 		if local != nil && reply.Tag == tag && len(reply.Body) == 0 {
 			return local, nil
@@ -74,6 +77,9 @@ func Sync(ctx context.Context, state enrollment.State, cache Cache, remote Remot
 			return nil, err
 		}
 	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	switch reply.Kind {
 	case Absent:
 		if reply.Tag == "" && len(reply.Body) == 0 {
@@ -83,6 +89,17 @@ func Sync(ctx context.Context, state enrollment.State, cache Cache, remote Remot
 		snapshot, err := agentrevision.Decode(state.RouterID, reply.Tag, reply.Body)
 		if err != nil {
 			return nil, enrollment.ErrProtocol
+		}
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		if local != nil {
+			if snapshot.Number < local.Number || (snapshot.Number == local.Number && reply.Tag != tag) {
+				return nil, enrollment.ErrProtocol
+			}
+			if reply.Tag == tag {
+				return snapshot, nil
+			}
 		}
 		if err := cache.SaveDesired(Entry{Origin: state.Origin, RouterID: state.RouterID, Tag: reply.Tag, Body: reply.Body}); err != nil {
 			return nil, enrollment.ErrState

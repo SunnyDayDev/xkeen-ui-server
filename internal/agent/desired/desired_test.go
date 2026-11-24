@@ -133,3 +133,51 @@ func TestDesiredRetryPreservesTheOldCopyUntilACompleteFetch(t *testing.T) {
 		t.Fatalf("cancel = %v", err)
 	}
 }
+
+func TestDesiredSyncRejectsRegressedAndChangedImmutableRevisions(t *testing.T) {
+	scope, previous := desiredFixture(t, 3)
+	_, old := desiredFixture(t, 2)
+	_, newest := desiredFixture(t, 4)
+	changed, err := agentrevision.Decode(scope.RouterID, previous.Tag, previous.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	changed.Files[0].Content = []byte("{ }")
+	tag, body, err := agentrevision.Encode(scope.RouterID, *changed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, late := range map[string]Entry{"older": old, "divergent": {Tag: tag, Body: body}} {
+		t.Run(name, func(t *testing.T) {
+			cache := &fakeCache{entry: &previous}
+			remote := fakeRemote(func(_ context.Context, _, condition string) (Response, error) {
+				if condition != previous.Tag {
+					t.Fatal("late transfer advanced the condition")
+				}
+				return Response{Kind: Complete, Tag: late.Tag, Body: late.Body}, nil
+			})
+			if got, err := Sync(t.Context(), scope, cache, remote); got != nil || !errors.Is(err, enrollment.ErrProtocol) || cache.saves != 0 {
+				t.Fatalf("late immutable candidate was accepted, saves=%d, error=%v", cache.saves, err)
+			}
+			late = newest
+			if got, err := Sync(t.Context(), scope, cache, remote); err != nil || got == nil || got.Number != 4 || cache.saves != 1 {
+				t.Fatalf("newest candidate did not recover, saves=%d, error=%v", cache.saves, err)
+			}
+		})
+	}
+}
+
+func TestDesiredSyncDoesNotWriteCanceledFetch(t *testing.T) {
+	scope, previous := desiredFixture(t, 3)
+	_, next := desiredFixture(t, 4)
+	cache := &fakeCache{entry: &previous}
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	got, err := Sync(ctx, scope, cache, fakeRemote(func(context.Context, string, string) (Response, error) {
+		cancel()
+		return Response{Kind: Complete, Tag: next.Tag, Body: next.Body}, nil
+	}))
+	if got != nil || !errors.Is(err, context.Canceled) || cache.saves != 0 {
+		t.Fatalf("canceled fetch changed state, saves=%d, error=%v", cache.saves, err)
+	}
+}
