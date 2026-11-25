@@ -146,20 +146,7 @@ func (p DraftInbounds) Change(id string, action configuration.InboundAction) (ro
 		return next, nil
 	}
 	next.DisabledInbounds = slices.DeleteFunc(next.DisabledInbounds, func(value string) bool { return value == id })
-	next.Groups = slices.Clone(next.Groups)
-	group := slices.IndexFunc(next.Groups, func(group routersettings.Group) bool { return group.Name == "inbounds" })
-	if group < 0 {
-		group = len(next.Groups)
-		next.Groups = append(next.Groups, routersettings.Group{Name: "inbounds"})
-	}
-	if item.Origin == "local" {
-		next.Groups[group].Local = slices.DeleteFunc(slices.Clone(next.Groups[group].Local),
-			func(element routersettings.LocalElement) bool { return element.ID == id })
-	} else {
-		next.Groups[group].Exclusions = append(slices.Clone(next.Groups[group].Exclusions),
-			configuration.ElementSource{TemplateID: next.TemplateID, ElementID: id})
-	}
-	return next, nil
+	return removeDraftIOElement(next, "inbounds", id, item.Origin), nil
 }
 
 func (p DraftInbounds) index(id string) int {

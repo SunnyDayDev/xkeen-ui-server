@@ -221,6 +221,10 @@ Offline описывает контакт. При `runtime: "unknown"` ране�
 
 `GET /api/v1/routers/io?routerId=example-router` возвращает массивы `inbounds` и `outbounds`. Каждый элемент содержит UUID в `id` и происхождение `shared` или `local` в `origin`. Выключенные и исключённые записи пропускаются. Ошибка выбора возвращает 422 без частичного списка, смена снимка во время чтения — 409. [OpenAPI инвентаря](../openspec/changes/archive/2026-11-24-list-external-effective-router-io/openapi.json).
 
+### Удаление или исключение входа и выхода
+
+Прочитайте последствия через `GET /api/v1/routers/io/item?routerId=example-router&section=outbounds&elementId=550e8400-e29b-41d4-a716-446655440000`. Вызовите DELETE с теми же параметрами, `confirm=remove` и одним сильным `If-Match` из ответа. Тело запроса отсутствует. Общая запись получает персональное исключение, локальная удаляется. Действующие ссылки и потеря последнего пригодного участника балансировщика дают 409 без записи. Успешный ответ содержит точное сохранённое действие `excluded` или `removed`. [OpenAPI удаления](../openspec/changes/archive/2026-11-24-remove-external-router-io/openapi.json).
+
 ## Состояние применения ревизии
 
 `GET /api/v1/routers/application?routerId=router-example&revision=2` читает точный известный номер. Версии передаются каноническими десятичными строками. `latestDesiredRevision` показывает текущее назначение, а `historicallyAppliedRevision` — последний подтверждённый номер. `contact` и `runtime` сообщают состояние отдельно.
