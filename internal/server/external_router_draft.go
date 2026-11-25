@@ -65,6 +65,9 @@ func externalRouterElementOperation(path string, store ExternalRouterDraftStore,
 			return
 		}
 		body, tag, err := representation(snapshot, elementID)
+		if (r.Method == http.MethodGet || err != nil) && !recheckExternalRouterDraft(w, r, store, permit, snapshot.Basis) {
+			return
+		}
 		if err != nil {
 			externalRouterFailure(w, err)
 			return
@@ -76,6 +79,9 @@ func externalRouterElementOperation(path string, store ExternalRouterDraftStore,
 			}
 			snapshot.Editable, err = mutation(snapshot, elementID)
 			if err != nil {
+				if !recheckExternalRouterDraft(w, r, store, permit, snapshot.Basis) {
+					return
+				}
 				externalRouterFailure(w, err)
 				return
 			}
@@ -139,6 +145,9 @@ func externalRouterDocument(scope string, result any) ([]byte, string, error) {
 }
 
 func externalRouterFailure(w http.ResponseWriter, err error) {
+	if writeInboundStateFailure(w, err) {
+		return
+	}
 	var local *publication.LocalRuleSourceError
 	var order *publication.PreparationError
 	var invalid *routersettings.VariableSourceError

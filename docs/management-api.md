@@ -225,6 +225,10 @@ Offline описывает контакт. При `runtime: "unknown"` ране�
 
 Прочитайте последствия через `GET /api/v1/routers/io/item?routerId=example-router&section=outbounds&elementId=550e8400-e29b-41d4-a716-446655440000`. Вызовите DELETE с теми же параметрами, `confirm=remove` и одним сильным `If-Match` из ответа. Тело запроса отсутствует. Общая запись получает персональное исключение, локальная удаляется. Действующие ссылки и потеря последнего пригодного участника балансировщика дают 409 без записи. Успешный ответ содержит точное сохранённое действие `excluded` или `removed`. [OpenAPI удаления](../openspec/changes/archive/2026-11-24-remove-external-router-io/openapi.json).
 
+### Состояние входа роутера
+
+Вызовите `GET /api/v1/routers/inbounds?routerId=example-router&elementId=550e8400-e29b-41d4-a716-446655440000`. Передайте сильный ETag в `If-Match` при PATCH с `{"action":"disable"}` или `{"action":"enable"}`. Действующая ссылка блокирует выключение. Включение снимает персональную отметку и сохраняет общее отключение или исключение. Если кандидат содержит неоднозначные теги или неверную форму, сервер возвращает 409 без записи. [OpenAPI состояния входа](../openspec/changes/archive/2026-11-24-change-external-router-inbound-state/openapi.json).
+
 ## Состояние применения ревизии
 
 `GET /api/v1/routers/application?routerId=router-example&revision=2` читает точный известный номер. Версии передаются каноническими десятичными строками. `latestDesiredRevision` показывает текущее назначение, а `historicallyAppliedRevision` — последний подтверждённый номер. `contact` и `runtime` сообщают состояние отдельно.
