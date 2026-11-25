@@ -95,6 +95,7 @@ var migrations = []string{
 	`SELECT 1`,
 	createRouterDisplayName,
 	createRouterVisibilityEpoch,
+	createInactiveProfileDrafts,
 }
 
 func Open(ctx context.Context, path string) (*sql.DB, error) {
