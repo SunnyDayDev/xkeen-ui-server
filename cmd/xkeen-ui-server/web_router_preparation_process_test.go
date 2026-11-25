@@ -105,6 +105,7 @@ func TestProcessWebRouterPreparation(t *testing.T) {
 	}
 	publicationPath := "/ui/v1/templates/publication?templateId=" + url.QueryEscape(unpublishedID)
 	request(http.MethodGet, publicationPath, nil, 401)
+	request(http.MethodGet, "/ui/v1/routers/profile?routerId=router-example&targetTemplateId="+url.QueryEscape(unpublishedID), nil, 401)
 	const route = "/ui/v1/routers/prepare"
 	selectedRoute := route + "?templateId=" + url.QueryEscape(templateID)
 	request(http.MethodGet, selectedRoute, nil, 401)
@@ -340,4 +341,82 @@ func TestProcessWebRouterPreparation(t *testing.T) {
 		strings.Contains(string(currentGroup), `"receipt"`) || !strings.Contains(string(currentGroup), `"offline.example"`) {
 		t.Fatalf("unsafe or incomplete recovery: %s", currentGroup)
 	}
+
+	const officeID = "office / example"
+	const officeElement = "650e8400-e29b-41d4-a716-446655440000"
+	if _, err := repo.Create(ctx, configuration.TemplateDraft{ID: officeID, Sections: []configuration.TemplateSection{{
+		Name: "outbounds", Elements: []configuration.TemplateElement{{Element: configuration.Element{ID: officeElement, Content: `{"protocol":"blackhole","tag":"${officeTag}"}`}}},
+	}}}); err != nil {
+		t.Fatal(err)
+	}
+	officePublication := "/ui/v1/templates/publication?templateId=" + url.QueryEscape(officeID)
+	rawOffice, _ := request(http.MethodPost, officePublication, []byte(`{"action":"preview","version":"1"}`), 200)
+	var officeReceipt struct{ Receipt string }
+	if json.Unmarshal(rawOffice, &officeReceipt) != nil || officeReceipt.Receipt == "" {
+		t.Fatal("missing office acceptance receipt")
+	}
+	acceptedOffice, _ := json.Marshal(map[string]string{"action": "confirm", "receipt": officeReceipt.Receipt})
+	request(http.MethodPost, officePublication, acceptedOffice, 200)
+	profilePath := "/ui/v1/routers/profile?routerId=" + url.QueryEscape(form.RouterID)
+	officePath := profilePath + "&targetTemplateId=" + url.QueryEscape(officeID)
+	request(http.MethodGet, officePath, nil, 404)
+	if _, err := databaseHandle.ExecContext(ctx, "INSERT INTO agent_contacts(router_id,contact_ns,report,applied,uncertain) VALUES (?,?,NULL,0,0)", form.RouterID, time.Now().UnixNano()); err != nil {
+		t.Fatal(err)
+	}
+	readOffice, _ := request(http.MethodGet, officePath, nil, 200)
+	var office struct {
+		ActiveTemplateID, TargetTemplateID string
+		Restoring                          bool
+		Fields                             []struct {
+			ElementID, Name string
+			Required        bool
+		}
+	}
+	if json.Unmarshal(readOffice, &office) != nil || office.ActiveTemplateID != templateID || office.TargetTemplateID != officeID || office.Restoring || len(office.Fields) != 1 ||
+		office.Fields[0].ElementID != officeElement || office.Fields[0].Name != "officeTag" || !office.Fields[0].Required {
+		t.Fatalf("unexpected office profile: %s", readOffice)
+	}
+	setValue := func(action, target, value, receipt string) []byte {
+		t.Helper()
+		values := []map[string]string{}
+		if value != "" {
+			values = append(values, map[string]string{"elementId": officeElement, "name": "officeTag", "source": value})
+		}
+		body := map[string]any{"action": action, "targetTemplateId": target, "values": values}
+		if receipt != "" {
+			body["receipt"] = receipt
+		}
+		raw, err := json.Marshal(body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return raw
+	}
+	request(http.MethodPost, profilePath, setValue("preview", officeID, "", ""), 422)
+	previewPayload := setValue("preview", officeID, `"office.example"`, "")
+	officePlan, _ := request(http.MethodPost, profilePath, previewPayload, 200)
+	var plan struct {
+		Receipt string
+		Changed bool
+	}
+	if json.Unmarshal(officePlan, &plan) != nil || plan.Receipt == "" || !plan.Changed {
+		t.Fatalf("unexpected office plan: %s", officePlan)
+	}
+	overview, _ := request(http.MethodGet, "/ui/v1/routers", nil, 200)
+	if !strings.Contains(string(overview), `"templateId":"`+templateID+`"`) {
+		t.Fatal("preparation changed active assignment")
+	}
+	request(http.MethodPost, profilePath, setValue("confirm", officeID, `"changed.example"`, plan.Receipt), 409)
+	officeCommit, _ := request(http.MethodPost, profilePath, setValue("confirm", officeID, `"office.example"`, plan.Receipt), 200)
+	if !strings.Contains(string(officeCommit), `"templateId":"`+officeID+`"`) || !strings.Contains(string(officeCommit), `"desiredRevision":"3"`) ||
+		strings.Contains(string(officeCommit), `"appliedRevision"`) {
+		t.Fatalf("invalid office result: %s", officeCommit)
+	}
+	request(http.MethodPost, profilePath, setValue("confirm", officeID, `"office.example"`, plan.Receipt), 409)
+	homePath := profilePath + "&targetTemplateId=" + url.QueryEscape(templateID)
+	readHome, _ := request(http.MethodGet, homePath, nil, 200)
+	if !strings.Contains(string(readHome), `"restoring":true`) || !strings.Contains(string(readHome), `"activeTemplateId":"`+officeID+`"`) {
+		t.Fatalf("missing retained home: %s", readHome)
+	}
+
 }
