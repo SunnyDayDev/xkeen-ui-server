@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 export async function checkTemplateEditor(page, id, password, reset, addSibling, screenshotPrefix) {
   const selector = page.getByRole('link', {name:id.trim(), exact:true});
-  await selector.click();
+  await selector.press('Enter');
   await page.getByRole('heading', {name:'Первый элемент'}).waitFor();
   await page.getByLabel('Секция Xray').selectOption('outbounds');
   const input = page.getByLabel('JSON', {exact:true});
@@ -23,7 +23,7 @@ export async function checkTemplateEditor(page, id, password, reset, addSibling,
   assert.match(await input.inputValue(),/правка/);
   await input.press(process.platform === 'darwin' ? 'Meta+z' : 'Control+z');
   assert.equal(await input.inputValue(),raw.replaceAll('\r\n','\n'));
-  await page.getByRole('button',{name:'Создать элемент'}).click();
+  await page.getByRole('button',{name:'Создать элемент'}).press('Enter');
   await page.getByRole('heading',{name:'Сырой JSON элемента'}).waitFor();
   const state = await page.evaluate(async id => {
     const response = await fetch('/ui/v1/templates/item?'+new URLSearchParams({templateId:id}));
@@ -33,7 +33,7 @@ export async function checkTemplateEditor(page, id, password, reset, addSibling,
   assert.equal(state.version,'2');
 
   await input.fill('{"слово": }');
-  await page.getByRole('button',{name:'Сохранить черновик'}).click();
+  await page.getByRole('button',{name:'Сохранить черновик'}).press('Enter');
   await page.getByRole('alert').getByText(/Строка 1, столбец/).waitFor();
   assert.equal(await input.inputValue(),'{"слово": }');
   await input.fill('{"tag":"draft.example"}');
@@ -46,17 +46,17 @@ export async function checkTemplateEditor(page, id, password, reset, addSibling,
     return response.status;
   },{id,state});
   assert.equal(competing,200);
-  await page.getByRole('button',{name:'Сохранить черновик'}).click();
+  await page.getByRole('button',{name:'Сохранить черновик'}).press('Enter');
   await page.getByText('Шаблон изменился в другой вкладке. Ваш JSON остался в редакторе.').waitFor();
-  await page.getByRole('button',{name:'Показать актуальную версию'}).click();
+  await page.getByRole('button',{name:'Показать актуальную версию'}).press('Enter');
   await page.getByText('{"tag":"winner.example"}',{exact:true}).waitFor();
   assert.equal(await input.inputValue(),'{"tag":"draft.example"}');
-  await page.setViewportSize({width:390,height:730});
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth),390);
+  await page.setViewportSize({width:320,height:730});
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth),320);
   if(screenshotPrefix) await page.screenshot({path:screenshotPrefix+'-editor.png'});
   await page.setViewportSize({width:1080,height:660});
 
-  await page.getByRole('button',{name:'Продолжить от актуальной версии'}).click();
+  await page.getByRole('button',{name:'Продолжить от актуальной версии'}).press('Enter');
   let unblock, requestEntered;
   const gate = new Promise(resolve => { unblock = resolve; });
   const queued = new Promise(resolve => { requestEntered = resolve; });
@@ -67,7 +67,7 @@ export async function checkTemplateEditor(page, id, password, reset, addSibling,
     await route.abort();
   };
   await page.route(/\/ui\/v1\/templates\/item\?/,hold);
-  await page.getByRole('button',{name:'Сохранить черновик'}).click();
+  await page.getByRole('button',{name:'Сохранить черновик'}).press('Enter');
   await Promise.race([queued,new Promise((_,reject)=>setTimeout(()=>reject(new Error('save did not reach browser transport')),5000))]);
   const rotated = await page.evaluate(async pass => (await fetch('/ui/v1/login',{
     method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pass})
@@ -100,8 +100,8 @@ export async function checkTemplateEditor(page, id, password, reset, addSibling,
 
   const sibling = '550e8400-e29b-41d4-a716-446655440019';
   addSibling(id, sibling);
-  await page.getByRole('link',{name:'Шаблоны'}).click();
-  await page.getByRole('link',{name:id.trim(),exact:true}).click();
+  await page.getByRole('link',{name:'Шаблоны'}).press('Enter');
+  await page.getByRole('link',{name:id.trim(),exact:true}).press('Enter');
   await input.waitFor();
   await input.fill('{"tag":"held.example"}');
   let releaseSelection, selectionEntered;
@@ -139,23 +139,23 @@ export async function checkAppendTemplateElement(page, id, password, reset, scre
   const original = await input.inputValue();
   await input.fill('{"tag":"held.example"}');
   page.once('dialog',dialog=>dialog.dismiss());
-  await add.click();
+  await add.press('Enter');
   assert.equal(await input.inputValue(),'{"tag":"held.example"}');
   await page.reload();
   await input.waitFor();
-  await add.click();
+  await add.press('Enter');
   await page.getByRole('heading',{name:'Новый элемент'}).waitFor();
   await section.selectOption('log');
   await input.fill('{"loglevel":"warning"}');
-  await page.getByRole('button',{name:'Отмена',exact:true}).click();
+  await page.getByRole('button',{name:'Отмена',exact:true}).press('Enter');
   assert.equal((await snapshot()).version,prior.version);
   assert.equal(await input.inputValue(),original);
-  await add.click();
+  await add.press('Enter');
   await section.selectOption('log');
   await input.fill('{"loglevel":"warning"}');
-  await add.click();
+  await add.press('Enter');
   await page.getByText('Черновик сохранён.',{exact:true}).waitFor();
-  await add.click();
+  await add.press('Enter');
   assert.equal(await section.locator('option[value=log]').count(),0);
   await section.selectOption('rules');
   const raw = '{\r\n  "type":"field",\n  "outboundTag":"example-outbound"\r\n}\n';
@@ -164,8 +164,8 @@ export async function checkAppendTemplateElement(page, id, password, reset, scre
     clipboardData.setData('text/plain',value);
     area.dispatchEvent(new ClipboardEvent('paste',{clipboardData,bubbles:true,cancelable:true}));
   },raw);
-  await page.setViewportSize({width:390,height:730});
-  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),390);
+  await page.setViewportSize({width:320,height:730});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),320);
   if(screenshotPrefix) await page.screenshot({path:screenshotPrefix+'-append.png'});
   await page.setViewportSize({width:1080,height:660});
   const base = await snapshot();
@@ -178,11 +178,11 @@ export async function checkAppendTemplateElement(page, id, password, reset, scre
     return {status:response.status,body:await response.json()};
   },{id,base});
   assert.equal(winner.status,200);
-  await add.click();
+  await add.press('Enter');
   await page.getByText('Шаблон изменился в другой вкладке. Ваш JSON остался в редакторе.').waitFor();
   assert.equal(await input.inputValue(),raw.replaceAll('\r\n','\n'));
-  await page.getByRole('button',{name:'Показать актуальную версию'}).click();
-  await page.getByRole('button',{name:'Продолжить от актуальной версии'}).click();
+  await page.getByRole('button',{name:'Показать актуальную версию'}).press('Enter');
+  await page.getByRole('button',{name:'Продолжить от актуальной версии'}).press('Enter');
   reset();
   await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
   await page.getByRole('heading',{name:'Сессия истекла'}).waitFor();
@@ -192,7 +192,7 @@ export async function checkAppendTemplateElement(page, id, password, reset, scre
   await input.waitFor();
   assert.equal(await input.inputValue(),raw.replaceAll('\r\n','\n'));
   assert.equal((await snapshot()).version,winner.body.version);
-  await add.click();
+  await add.press('Enter');
   await page.getByText('Черновик сохранён.',{exact:true}).waitFor();
   const result=await snapshot();
   const rules=result.sections.find(entry=>entry.name==='rules').members;

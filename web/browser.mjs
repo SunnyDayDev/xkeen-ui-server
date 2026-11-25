@@ -144,8 +144,8 @@ try {
   await page.getByText('branch-east', {exact:true}).waitFor();
   assert.equal(await page.locator('.console-header').count(), 1);
   if (process.env.XKEEN_BROWSER_SCREENSHOT) await page.screenshot({path:process.env.XKEEN_BROWSER_SCREENSHOT + '-templates-wide.png'});
-  await page.setViewportSize({width:360,height:640});
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 360);
+  await page.setViewportSize({width:320,height:640});
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 320);
   if (process.env.XKEEN_BROWSER_SCREENSHOT) {
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     await page.screenshot({path:process.env.XKEEN_BROWSER_SCREENSHOT + '-templates.png'});
@@ -201,8 +201,8 @@ try {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 320);
   assert.equal(await templateID.inputValue(),exactID);
   if (process.env.XKEEN_BROWSER_SCREENSHOT) await page.screenshot({path:process.env.XKEEN_BROWSER_SCREENSHOT + '-create-wide.png'});
-  await page.setViewportSize({width:360,height:640});
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth),360);
+  await page.setViewportSize({width:320,height:640});
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth),320);
   if (process.env.XKEEN_BROWSER_SCREENSHOT) {
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     await page.screenshot({path:process.env.XKEEN_BROWSER_SCREENSHOT + '-create.png'});
@@ -403,8 +403,8 @@ try {
     await page.getByText('Проверка Xray сейчас недоступна.',{exact:true}).waitFor();
     assert.equal(await duration.inputValue(),'9007199254740993');
   }
-  await page.setViewportSize({width:360,height:740});
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth),360);
+  await page.setViewportSize({width:320,height:740});
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth),320);
   if (process.env.XKEEN_BROWSER_SCREENSHOT) {
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     await page.screenshot({path:process.env.XKEEN_BROWSER_SCREENSHOT + '-router-preparation.png'});
@@ -434,8 +434,8 @@ try {
   assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), 'Synthetic focus target');
   assert.equal(await page.getByLabel('Synthetic focus target').inputValue(), 'draft fixture');
 
-  await page.setViewportSize({width: 360, height: 640});
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 360);
+  await page.setViewportSize({width: 320, height: 640});
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 320);
   if (process.env.XKEEN_BROWSER_SCREENSHOT) await page.screenshot({path:process.env.XKEEN_BROWSER_SCREENSHOT + '-active.png'});
   await checkRouterExclusions(page.context(),origin,database);
   await page.route('**/ui/v1/logout', route => route.abort(), {times: 1});

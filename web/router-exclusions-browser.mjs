@@ -8,6 +8,7 @@ export async function checkRouterExclusions(parent,origin,database) {
   const ctx=await parent.browser().newContext({storageState:await parent.storageState()});
   const page=await ctx.newPage();
   page.setDefaultTimeout(5000);
+  await page.setViewportSize({width:320,height:740});
   try {
     // Seed accepted snapshots in this browser run's disposable SQLite database.
     db.prepare('UPDATE shared_xkeen_exclusions SET source=?,variables=? WHERE template_id=?')
@@ -21,41 +22,42 @@ export async function checkRouterExclusions(parent,origin,database) {
     }
     async function open(id) {
       await page.goto(origin+'/ui/?'+new URLSearchParams({routerId:id}));
-      await page.getByRole('link',{name:'Исключения XKeen',exact:true}).click();
+      await page.getByRole('link',{name:'Исключения XKeen',exact:true}).press('Enter');
       await page.getByRole('button',{name:'Сохранить значения'}).waitFor();
     }
     const file=()=>page.locator('pre').last().innerText();
     await open(routers[0]);
-    await page.getByLabel('Своё значение network').check();
+    await page.getByLabel('Своё значение network').press('Space');
     await page.getByLabel('network',{exact:true}).fill('198.51.100.7');
-    await page.getByRole('button',{name:'Сохранить значения'}).click();
+    await page.getByRole('button',{name:'Сохранить значения'}).press('Enter');
     await page.locator('pre').last().getByText('198.51.100.7',{exact:false}).waitFor();
-    await page.getByRole('button',{name:'Заменить список'}).click();
+    await page.getByRole('button',{name:'Заменить список'}).press('Enter');
     await page.getByLabel('Свой список').fill('');
-    await page.getByRole('button',{name:'Сохранить список'}).click();
-    await page.getByRole('button',{name:'Вернуться к значениям'}).click();
-    await page.getByRole('button',{name:'Подтвердить'}).click();
+    await page.getByRole('button',{name:'Сохранить список'}).press('Enter');
+    await page.getByRole('button',{name:'Вернуться к значениям'}).press('Enter');
+    await page.getByRole('button',{name:'Подтвердить'}).press('Enter');
     await page.getByRole('button',{name:'Сохранить значения'}).waitFor();
     assert.equal((await file()).trim(),'198.51.100.7');
     await open(routers[1]);
     assert.equal((await file()).trim(),'192.0.2.4');
     await open(routers[0]);
-    await page.getByRole('button',{name:'Сбросить настройки'}).click();
-    await page.getByRole('button',{name:'Подтвердить'}).click();
+    await page.getByRole('button',{name:'Сбросить настройки'}).press('Enter');
+    await page.getByRole('button',{name:'Подтвердить'}).press('Enter');
     await page.locator('pre').last().getByText('192.0.2.4',{exact:false}).waitFor();
     assert.equal(await page.getByLabel('Своё значение network').isChecked(),false);
     const rival=await ctx.newPage();
     await rival.goto(page.url());
-    await rival.getByRole('button',{name:'Сохранить значения'}).click();
+    await rival.getByRole('button',{name:'Сохранить значения'}).press('Enter');
     await rival.getByText('Черновик сохранён.').waitFor();
-    await page.getByRole('button',{name:'Сохранить значения'}).click();
+    await page.getByRole('button',{name:'Сохранить значения'}).press('Enter');
     await page.getByText('Настройки изменились. Перечитайте актуальные данные.').waitFor();
-    await page.getByRole('button',{name:'Перечитать'}).click();
+    await page.getByRole('button',{name:'Перечитать'}).press('Enter');
     await page.getByRole('button',{name:'Сохранить значения',disabled:false}).waitFor();
     db.prepare('INSERT INTO hidden_router_visibility VALUES (?)').run(routers[0]);
-    await page.getByRole('button',{name:'Сохранить значения'}).click();
+    await page.getByRole('button',{name:'Сохранить значения'}).press('Enter');
     await page.getByText('Роутер или общий список недоступен.').waitFor();
     assert.equal(await page.locator('textarea, pre').count(),0);
     await rival.close();
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),320);
   } finally {db.close();await ctx.close()}
 }
