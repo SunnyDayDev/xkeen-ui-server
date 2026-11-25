@@ -59,6 +59,7 @@ type ProfileSwitchProof struct {
 }
 
 type ProfileSwitchPreview struct {
+	Order              ProfileOrder
 	Proof              ProfileSwitchProof
 	Changed, Restoring bool
 	PersonalOrder      []string
@@ -228,5 +229,6 @@ func prepareProfileSwitch(in *ProfileSwitchInputs, edits []ProfileVariableEdit) 
 		Proof:   ProfileSwitchProof{Basis: in.Basis, Fingerprint: fingerprintProfileCandidate(in.Basis, edits, prepared)},
 		Changes: changes, Restoring: in.TargetDraft != nil, PersonalOrder: draft.PersonalOrder, OrderBasis: prepared.OrderBasis,
 	}
+	preview.Order = summarizeProfileSwitchOrder(in.TargetDraft, preview)
 	return plan, preview, files, nil
 }

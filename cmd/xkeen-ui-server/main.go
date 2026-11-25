@@ -151,6 +151,8 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 	externalOperations = server.NewExternalRouterApplication(external, externalOperations)
 	externalPreparation := externalaccess.NewRouterPreparation(sqlite.NewExternalRouterPreparation(publications), validator)
 	externalOperations = server.NewExternalRouterPreparation(ctx, externalPreparation, externalOperations)
+	externalSwitch := externalaccess.NewProfileSwitches(sqlite.NewExternalProfileSwitches(publications), validator, time.Now)
+	externalOperations = server.NewExternalProfileSwitch(ctx, externalSwitch, externalOperations)
 	externalOperations = server.NewExternalRouterName(external, externalOperations)
 	externalOperations = server.NewExternalRouterVisibility(external, externalOperations)
 	handler = server.NewExternalAccessHandler(cfg.webOrigin, external, externalOperations, handler)
