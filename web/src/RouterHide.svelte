@@ -130,4 +130,5 @@
 <style>
   .visibility-actions { display: grid; gap: .55rem; justify-items: start; }
   .visibility-actions p { margin: 0; overflow-wrap: anywhere; }
+  button.secondary { background: white; color: var(--ink); border: 1px solid var(--line); }
 </style>
