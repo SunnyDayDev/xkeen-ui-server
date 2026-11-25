@@ -95,8 +95,11 @@ func TestProcessExternalProfileSwitchConfirmation(t *testing.T) {
 	}
 	preview := func(target string) string {
 		response := f.call("POST", root+target, "", `{"action":"preview","values":[]}`, "", 200)
-		var doc struct{ Receipt string }
-		if json.Unmarshal(response.Body, &doc) != nil || doc.Receipt == "" {
+		var doc struct {
+			Receipt string
+			Order   struct{ State string }
+		}
+		if json.Unmarshal(response.Body, &doc) != nil || doc.Receipt == "" || doc.Order.State != "inherit" {
 			t.Fatal("missing receipt")
 		}
 		return doc.Receipt

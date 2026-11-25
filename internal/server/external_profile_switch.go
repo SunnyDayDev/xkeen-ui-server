@@ -80,7 +80,7 @@ func NewExternalProfileSwitch(lifetime context.Context, svc externalaccess.Profi
 				externalSwitchFailure(w, err)
 				return
 			}
-			_ = json.NewEncoder(w).Encode(map[string]any{"routerId": id, "activeTemplateId": preview.Proof.Basis.SourceTemplateID, "targetTemplateId": target, "restoring": preview.Restoring, "changed": preview.Changed, "files": preview.Changes, "receipt": receipt})
+			_ = json.NewEncoder(w).Encode(map[string]any{"routerId": id, "activeTemplateId": preview.Proof.Basis.SourceTemplateID, "targetTemplateId": target, "restoring": preview.Restoring, "changed": preview.Changed, "order": preview.Order, "files": preview.Changes, "receipt": receipt})
 		case cmd.Action == "confirm" && json.Unmarshal(cmd.Receipt, &receiptText) == nil && receiptText != "":
 			result, err := svc.Confirm(ctx, permit, req, receiptText)
 			if err != nil {
