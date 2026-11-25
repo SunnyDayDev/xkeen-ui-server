@@ -10,6 +10,7 @@ import (
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/agentcredential"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/agentcredentials"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/externalaccess"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/publication"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/webadmin"
@@ -212,5 +213,75 @@ func TestRouterVisibilityMigrationKeepsExistingContact(t *testing.T) {
 	}
 	if status, err := NewContacts(db, time.Now).Status(ctx, "router"); err != nil || status.Presence != reporting.Online || status.Desired != 2 {
 		t.Fatal("migration changed existing contact")
+	}
+}
+
+func TestRouterVisibilityEpochMigratesAnExistingHiddenRecord(t *testing.T) {
+	ctx := t.Context()
+	path := filepath.Join(t.TempDir(), "old.sqlite")
+	old, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer old.Close()
+	previous := len(migrations) - 1
+	if err := migrate(ctx, old, migrations[:previous]); err != nil {
+		t.Fatal(err)
+	}
+	plan := storeCurrentPublication(t, old)
+	if _, err := NewPublications(old).Commit(ctx, plan); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := old.ExecContext(ctx, `INSERT INTO agent_contacts(router_id,contact_ns,report,applied,uncertain)
+		VALUES('router',?,NULL,0,0);
+		INSERT INTO hidden_router_visibility(router_id) VALUES('router');
+		UPDATE external_access SET enabled=1,protected=0,version=2`, time.Now().UnixNano()); err != nil {
+		t.Fatal(err)
+	}
+	if err := old.Close(); err != nil {
+		t.Fatal(err)
+	}
+	db, err := Open(ctx, path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	store := NewExternalAccess(db, time.Now)
+	permit := externalaccess.Permit{Version: 2}
+	value, err := store.ReadExternalRouterVisibility(ctx, permit, "router")
+	if err != nil || value.Visible || value.Epoch != 1 {
+		t.Fatalf("migration changed existing hidden projection: %+v, %v", value, err)
+	}
+	if _, err := db.ExecContext(ctx, "UPDATE external_access SET protected=1,version=3"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.HideExternalRouter(ctx, permit, value); !errors.Is(err, externalaccess.ErrUnauthorized) {
+		t.Fatal("write accepted a stale permit")
+	}
+}
+
+func TestRouterVisibilityDoesNotClaimUnwrittenMarkerOrEpoch(t *testing.T) {
+	ctx := t.Context()
+	db, _ := openPublicationDB(t)
+	plan := storeCurrentPublication(t, db)
+	if _, err := NewPublications(db).Commit(ctx, plan); err != nil {
+		t.Fatal(err)
+	}
+	view := NewRouterVisibility(db)
+	for _, table := range []string{"hidden_router_visibility", "router_visibility_epochs"} {
+		t.Run(table, func(t *testing.T) {
+			if _, err := db.ExecContext(ctx, "CREATE TRIGGER fixture_skip_hide BEFORE INSERT ON "+table+
+				" BEGIN SELECT RAISE(IGNORE); END"); err != nil {
+				t.Fatal(err)
+			}
+			defer db.ExecContext(ctx, "DROP TRIGGER fixture_skip_hide")
+			if err := view.Hide(ctx, "router"); !errors.Is(err, routersettings.ErrVisibilityUnavailable) {
+				t.Fatalf("suppressed %s reported successful hide: %v", table, err)
+			}
+			var hidden bool
+			if err := db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM hidden_router_visibility WHERE router_id='router')").Scan(&hidden); err != nil || hidden {
+				t.Fatal("half-written hide survived")
+			}
+		})
 	}
 }
