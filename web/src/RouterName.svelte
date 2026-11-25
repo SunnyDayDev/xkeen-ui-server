@@ -153,4 +153,5 @@
   .name-editor { display: grid; gap: .55rem; justify-items: start; }
   .name-editor p { margin: 0; overflow-wrap: anywhere; }
   .name-editor input { box-sizing: border-box; width: 100%; min-width: 0; }
+  button.secondary { background: white; color: var(--ink); border: 1px solid var(--line); }
 </style>
