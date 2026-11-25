@@ -36,7 +36,7 @@ type externalRouterFixture struct {
 	call     func(method, route, tag, body, bearer string, want int) externalRouterResponse
 }
 
-func newExternalRouterFixture(t *testing.T) externalRouterFixture {
+func newExternalRouterFixture(t *testing.T, validatorArgs ...string) externalRouterFixture {
 	t.Helper()
 	ctx := t.Context()
 	path := filepath.Join(t.TempDir(), "server.sqlite")
@@ -78,7 +78,8 @@ func newExternalRouterFixture(t *testing.T) externalRouterFixture {
 	if err := reservation.Close(); err != nil {
 		t.Fatal(err)
 	}
-	process := startProcess(t, testBinary, "--listen", listen, "--db-path", path, "--tls-cert", cert, "--tls-key", key)
+	args := []string{"--listen", listen, "--db-path", path, "--tls-cert", cert, "--tls-key", key}
+	process := startProcess(t, testBinary, append(args, validatorArgs...)...)
 	client := &http.Client{Timeout: 5 * time.Second, Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: roots}}}
 	t.Cleanup(client.CloseIdleConnections)
 	process.readyWithClient(t, client, "https")
