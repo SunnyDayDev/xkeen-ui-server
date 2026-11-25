@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, tick } from 'svelte';
+  import { onMount, tick, untrack } from 'svelte';
   import RouterHide from './RouterHide.svelte';
   import RouterName from './RouterName.svelte';
 
@@ -12,12 +12,13 @@
     nameDrafts: Map<string,{text: string; unknown: boolean}>;
     retainName: (id: string, value?: {text: string; unknown: boolean}) => void;
     refreshSession: () => void; openRouter: (event: MouseEvent, path: string) => void;
+    profileReturnID: string; clearProfileReturn: () => void; openProfile: (event: MouseEvent, path: string) => void;
     openInbounds: (event: MouseEvent, path: string) => void;
     openCatalog: (event: MouseEvent, path: string) => void;
     openEnrollment: (event: MouseEvent, path: string) => void;
     closeRouter: () => void; openVariables: (event: MouseEvent, path: string) => void; openRules: (event: MouseEvent, path: string) => void; signedOut: () => void;
   };
-  let {selectedId, csrf, unconfirmedHide, setUnconfirmedHide, nameDrafts, retainName, refreshSession, openRouter, openEnrollment, closeRouter, openVariables, openRules, openInbounds, openCatalog, signedOut}: Props = $props();
+  let {selectedId, csrf, unconfirmedHide, setUnconfirmedHide, nameDrafts, retainName, refreshSession, profileReturnID, clearProfileReturn, openProfile, openRouter, openEnrollment, closeRouter, openVariables, openRules, openInbounds, openCatalog, signedOut}: Props = $props();
 
   let rows = $state<Router[]>();
   let failed = $state(false);
@@ -25,6 +26,7 @@
   let group = $state<HTMLElement>();
   let panel = $state<HTMLElement>();
   let focusTarget = $state<HTMLElement>();
+  let profileLink = $state<HTMLAnchorElement>();
   let pending: AbortController | undefined;
   let detail = $derived(rows?.find(row => row.routerId === selectedId));
 
@@ -90,7 +92,9 @@
 
   $effect(() => {
     if (selectedId && panel) {
-      panel.focus();
+      const target = untrack(()=>profileReturnID)===selectedId && profileLink ? profileLink : panel;
+      target.focus();
+      if(target===profileLink) clearProfileReturn();
     }
   });
 
@@ -181,6 +185,8 @@
             retain={value => retainName(nameID,value)} onSaved={name => applyName(nameID,name)}
             {signedOut} {refreshSession} />
         {/key}
+        <a href={'/ui/routers/profile?'+new URLSearchParams({routerId:detail.routerId})}
+          bind:this={profileLink} onclick={event=>openProfile(event,event.currentTarget.pathname+event.currentTarget.search)}>Сменить профиль</a>
       {/if}
     </aside>
   {/if}

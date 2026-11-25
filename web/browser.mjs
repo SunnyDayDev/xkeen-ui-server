@@ -1,3 +1,4 @@
+import { checkRouterProfileSwitch } from './router-profile-browser.mjs';
 import { checkRouterVisibility } from './router-visibility-browser.mjs';
 import { checkRouterName } from './router-name-browser.mjs';
 import { checkTemplatePublication } from './template-publication-browser.mjs';
@@ -396,6 +397,7 @@ try {
       await checkRouterName(page,{origin,enrolledRouter,resetSession: () => admin('reset',first),password:first});
       await checkRouterOverview(page,{origin, database, enrolledRouter, resetSession: () => admin('reset',first), password:first});
       await checkTemplatePublication(page,{origin,database,resetSession: () => admin('reset',first),password:first});
+      await checkRouterProfileSwitch(page,{origin,resetSession: () => admin('reset',first),password:first});
     }
   } else {
     await page.getByText('Проверка Xray сейчас недоступна.',{exact:true}).waitFor();

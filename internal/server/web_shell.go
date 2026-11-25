@@ -16,7 +16,7 @@ var webAssets embed.FS
 func NewWebShellHandler(origin WebOrigin, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		name := r.URL.Path
-		if name != "/ui" && name != "/ui/" && name != "/ui/templates" && name != "/ui/templates/item" && name != "/ui/templates/exclusions" && name != "/ui/templates/copy" && name != "/ui/templates/publication" && name != "/ui/settings" && name != "/ui/routers/connect" && name != "/ui/routers/enroll" && name != "/ui/routers/variables" && name != "/ui/routers/replacement" && name != "/ui/routers/exclusions" && name != "/ui/routers/rules" && name != "/ui/routers/inbounds" && name != "/ui/routers/catalog" && !strings.HasPrefix(name, "/ui/assets/") {
+		if name != "/ui" && name != "/ui/" && name != "/ui/templates" && name != "/ui/templates/item" && name != "/ui/templates/exclusions" && name != "/ui/templates/copy" && name != "/ui/templates/publication" && name != "/ui/settings" && name != "/ui/routers/connect" && name != "/ui/routers/enroll" && name != "/ui/routers/variables" && name != "/ui/routers/replacement" && name != "/ui/routers/exclusions" && name != "/ui/routers/rules" && name != "/ui/routers/inbounds" && name != "/ui/routers/catalog" && name != "/ui/routers/profile" && !strings.HasPrefix(name, "/ui/assets/") {
 			next.ServeHTTP(w, r)
 			return
 		}
