@@ -41,18 +41,12 @@ type ProfileTarget struct {
 	Fields           []ProfileVariable `json:"fields"`
 }
 
-type ProfileOrder struct {
-	State   string `json:"state"`
-	Added   int    `json:"added"`
-	Removed int    `json:"removed"`
-}
-
 type WebProfilePreview struct {
 	Receipt   string                          `json:"receipt"`
 	Changed   bool                            `json:"changed"`
 	Restoring bool                            `json:"restoring"`
 	Changes   []publication.CatalogFileChange `json:"changes"`
-	Order     ProfileOrder                    `json:"order"`
+	Order     publication.ProfileOrder        `json:"order"`
 }
 
 func (s *RouterProfileSwitch) Read(ctx context.Context, token, routerID, targetID string) (ProfileTarget, error) {
@@ -127,7 +121,7 @@ func (s *RouterProfileSwitch) Preview(ctx context.Context, token, csrf string, r
 	return WebProfilePreview{
 		Receipt: s.receipts.Issue(digest, profileBasisHash(in.Basis), preview.Proof.Fingerprint, s.clock()),
 		Changed: preview.Changed, Restoring: preview.Restoring, Changes: append([]publication.CatalogFileChange{}, preview.Changes...),
-		Order: profileSwitchOrder(in.TargetDraft, preview),
+		Order: preview.Order,
 	}, nil
 }
 
@@ -166,30 +160,4 @@ func profileWebError(err error) error {
 func profileBasisHash(basis publication.ProfileSwitchBasis) [32]byte {
 	raw, _ := json.Marshal(basis)
 	return sha256.Sum256(raw)
-}
-
-func profileSwitchOrder(previous *publication.VersionedRouterDraft, preview *publication.ProfileSwitchPreview) ProfileOrder {
-	if preview.PersonalOrder == nil {
-		return ProfileOrder{State: "inherit"}
-	}
-	if previous == nil || previous.OrderBasis == nil || preview.OrderBasis == nil {
-		return ProfileOrder{State: "retained"}
-	}
-	out := ProfileOrder{State: "reconciled"}
-	old, next := make(map[string]bool), make(map[string]bool)
-	for _, id := range previous.OrderBasis.SharedRuleIDs {
-		old[id] = true
-	}
-	for _, id := range preview.OrderBasis.SharedRuleIDs {
-		next[id] = true
-		if !old[id] {
-			out.Added++
-		}
-	}
-	for id := range old {
-		if !next[id] {
-			out.Removed++
-		}
-	}
-	return out
 }
