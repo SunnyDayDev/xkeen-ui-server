@@ -13,11 +13,11 @@ export async function checkRouterOverview(page,{origin,database,enrolledRouter,r
     await new Promise(resolve=>setTimeout(resolve,200));
     await route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({state:'unavailable'})});
   },{times:1});
-  await overview.click();
+  await overview.press('Enter');
   await page.getByText('Загружаем роутеры…',{exact:true}).waitFor();
   await page.getByText('Не удалось загрузить список роутеров.',{exact:true}).waitFor();
-  await page.getByRole('button',{name:'Повторить'}).click();
-  await selected.click();
+  await page.getByRole('button',{name:'Повторить'}).press('Enter');
+  await selected.press('Enter');
   assert.equal(new URL(page.url()).searchParams.get('routerId'),enrolledRouter);
   const drawer=page.getByRole('complementary',{name:'Сведения о роутере'});
   await drawer.getByText(enrolledRouter,{exact:true}).waitFor();
@@ -34,12 +34,12 @@ export async function checkRouterOverview(page,{origin,database,enrolledRouter,r
   assert.equal(await page.getByRole('button',{name:'Скачать файл',exact:true}).count(),0);
   await page.getByRole('link',{name:'К роутеру'}).press('Enter');
   await drawer.getByText(enrolledRouter,{exact:true}).waitFor();
-  await drawer.getByRole('button',{name:'Закрыть панель'}).click();
+  await drawer.getByRole('button',{name:'Закрыть панель'}).press('Enter');
   assert.equal(await selected.evaluate(link=>document.activeElement===link),true);
   await page.goBack();
   await drawer.getByText(enrolledRouter,{exact:true}).waitFor();
-  await page.setViewportSize({width:360,height:740});
-  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),360);
+  await page.setViewportSize({width:320,height:740});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),320);
   if (process.env.XKEEN_BROWSER_SCREENSHOT) await page.screenshot({path:process.env.XKEEN_BROWSER_SCREENSHOT+'-router-overview-mobile.png'});
   await page.setViewportSize({width:1080,height:660});
 
@@ -85,7 +85,7 @@ export async function checkRouterOverview(page,{origin,database,enrolledRouter,r
     await page.getByRole('button',{name:'Действующие файлы',exact:true}).press('Enter');
     await page.getByText('Роутер недоступен в текущем обзоре.',{exact:true}).waitFor();
     assert.equal(await page.getByRole('button',{name:'Скачать файл',exact:true}).count(),0);
-    await page.getByRole('link',{name:'К роутеру'}).click();
+    await page.getByRole('link',{name:'К роутеру'}).press('Enter');
     await drawer.getByText('Роутер недоступен в текущем списке.',{exact:true}).waitFor();
 
   } finally { db.close(); }

@@ -3,7 +3,7 @@ import { DatabaseSync } from 'node:sqlite';
 
 export async function checkLocalRule(page, routerId, database) {
   const panel = page.getByRole('complementary',{name:'Сведения о роутере'});
-  await panel.getByRole('link',{name:'Маршрутизация',exact:true}).click();
+  await panel.getByRole('link',{name:'Маршрутизация',exact:true}).press('Enter');
   await page.getByRole('heading',{name:'Маршрутизация роутера'}).waitFor();
   const common='550e8400-e29b-41d4-a716-446655440030';
   const disabled='550e8400-e29b-41d4-a716-446655440031';
@@ -15,18 +15,18 @@ export async function checkLocalRule(page, routerId, database) {
   assert.deepEqual(first.data.rules.map(({id,disabled})=>[id,disabled]),[[common,false],[disabled,true]]);
   await page.getByText('Общее · отключено',{exact:true}).waitFor();
   const add=page.getByRole('button',{name:'Добавить локальное правило',exact:true});
-  await add.click();
+  await add.press('Enter');
   const position=page.getByLabel('Место в полном порядке',{exact:true});
   await position.selectOption(disabled);
   const input=page.getByLabel('JSON правила',{exact:true});
   await input.fill('{"broken":}');
-  await page.getByRole('button',{name:'Отмена',exact:true}).click();
+  await page.getByRole('button',{name:'Отмена',exact:true}).press('Enter');
   assert.equal((await initial()).data.draftGeneration,first.data.draftGeneration);
-  await add.click();
+  await add.press('Enter');
   await position.selectOption(disabled);
   await input.fill('{"broken":}');
   const save=page.getByRole('button',{name:'Добавить правило',exact:true});
-  await save.click();
+  await save.press('Enter');
   await page.getByRole('alert').getByText(/JSON/).waitFor();
   assert.equal((await initial()).data.draftGeneration,first.data.draftGeneration);
   const competing=await page.evaluate(async ({url,data})=>{
@@ -44,20 +44,20 @@ export async function checkLocalRule(page, routerId, database) {
     clipboardData.setData('text/plain',value);
     area.dispatchEvent(new ClipboardEvent('paste',{clipboardData,bubbles:true,cancelable:true}));
   },exact);
-  await save.click();
+  await save.press('Enter');
   await page.getByText('Порядок изменился. Ваш JSON остался в форме.',{exact:true}).waitFor();
-  await page.getByRole('button',{name:'Перечитать настройки'}).click();
+  await page.getByRole('button',{name:'Перечитать настройки'}).press('Enter');
   await save.waitFor();
   assert.equal(await position.inputValue(),disabled);
   assert.equal(await input.inputValue(),exact.replaceAll('\r\n','\n'));
-  await page.setViewportSize({width:390,height:730});
-  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),390);
+  await page.setViewportSize({width:320,height:730});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),320);
   if(process.env.XKEEN_BROWSER_SCREENSHOT) {
     await page.evaluate(()=>window.scrollTo(0,0));
     await page.screenshot({path:process.env.XKEEN_BROWSER_SCREENSHOT+'-local-rule.png'});
   }
   await page.setViewportSize({width:1080,height:660});
-  await save.click();
+  await save.press('Enter');
   await page.getByText('Черновик сохранён. Локальное правило добавлено.',{exact:true}).waitFor();
   const latest=(await initial()).data;
   assert.deepEqual(latest.rules.map(({label,origin})=>[label,origin]),[
@@ -75,6 +75,6 @@ export async function checkLocalRule(page, routerId, database) {
   } finally { db.close(); }
   await page.reload();
   await page.getByText('new-local',{exact:true}).waitFor();
-  await page.getByRole('link',{name:'К роутеру'}).click();
+  await page.getByRole('link',{name:'К роутеру'}).press('Enter');
   await panel.getByText(routerId,{exact:true}).waitFor();
 }

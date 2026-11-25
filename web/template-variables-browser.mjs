@@ -7,13 +7,13 @@ export async function checkTemplateVariables(page, password, reset, screenshotPr
   const ref = name => '$'+'{'+name+'}';
   const base = {tag:'variable.example',port:ref('port'),flag:ref('flag'),object:ref('object'),list:ref('list')};
   await input.fill(JSON.stringify({...base,old:ref('old')}));
-  await saveRaw.click();
+  await saveRaw.press('Enter');
   await notice.waitFor();
   const raw = JSON.stringify(base);
   await input.fill(raw);
-  await saveRaw.click();
+  await saveRaw.press('Enter');
   await notice.waitFor();
-  await page.getByRole('button',{name:'Переменные',exact:true}).click();
+  await page.getByRole('button',{name:'Переменные',exact:true}).press('Enter');
   await page.getByRole('heading',{name:'Переменные элемента'}).waitFor();
   if(screenshotPrefix) await page.screenshot({path:screenshotPrefix+'-variables-wide.png'});
 
@@ -36,7 +36,7 @@ export async function checkTemplateVariables(page, password, reset, screenshotPr
   await value('object').fill('{}');
   await type('list').selectOption('array');
   await value('list').fill('[]');
-  await save.click();
+  await save.press('Enter');
   await saved.waitFor();
   const first = await snapshot();
   const rows = new Map(first.data.definitions.map(row=>[row.name,row]));
@@ -49,12 +49,12 @@ export async function checkTemplateVariables(page, password, reset, screenshotPr
   }
 
   await value('port').fill('{');
-  await save.click();
+  await save.press('Enter');
   await page.getByRole('alert').getByText(/синтаксис JSON/i).waitFor();
   assert.equal(await value('port').inputValue(),'{');
   assert.equal((await snapshot()).data.version,first.data.version);
   await value('port').fill('"443"');
-  await save.click();
+  await save.press('Enter');
   await saved.waitFor();
   await page.getByText('Дефолт должен соответствовать выбранному типу.',{exact:true}).waitFor();
   const invalid = await snapshot();
@@ -80,16 +80,16 @@ export async function checkTemplateVariables(page, password, reset, screenshotPr
       body:JSON.stringify({version:data.version,definitions})})).status;
   },invalid);
   assert.equal(raced,200);
-  await save.click();
+  await save.press('Enter');
   await page.getByText('Шаблон изменился. Ваши определения остались в редакторе.').waitFor();
   assert.equal(await value('port').inputValue(),'0');
-  await page.setViewportSize({width:390,height:730});
-  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),390);
+  await page.setViewportSize({width:320,height:730});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),320);
   if(screenshotPrefix) {
     await page.evaluate(()=>window.scrollTo(0,0));
     await page.screenshot({path:screenshotPrefix+'-variables.png'});
   }
   await page.setViewportSize({width:1080,height:660});
-  await page.getByRole('button',{name:'К JSON',exact:true}).click();
+  await page.getByRole('button',{name:'К JSON',exact:true}).press('Enter');
   assert.equal(await input.inputValue(),raw);
 }
