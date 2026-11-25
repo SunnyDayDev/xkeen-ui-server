@@ -93,6 +93,15 @@ func TestProcessExternalProfileSwitchConfirmation(t *testing.T) {
 	if bytes.Contains(get.Body, []byte(canary)) || !bytes.Contains(get.Body, []byte(`"label"`)) {
 		t.Fatal("unsafe or incomplete field projection")
 	}
+	required := strings.Replace(office, `,"default":"`+canary+`"`, "", 1)
+	if _, err = f.db.Exec("INSERT INTO accepted_templates(template_id,version,draft) VALUES ('required',1,?)", []byte(required)); err != nil {
+		t.Fatal(err)
+	}
+	fields := f.call("GET", root+"required", "", "", "", 200)
+	if !bytes.Contains(fields.Body, []byte(`"required":true`)) {
+		t.Fatal("missing mandatory field")
+	}
+	f.call("POST", root+"required", "", `{"action":"preview","values":[]}`, "", 422)
 	preview := func(target string) string {
 		response := f.call("POST", root+target, "", `{"action":"preview","values":[]}`, "", 200)
 		var doc struct {
@@ -120,6 +129,29 @@ func TestProcessExternalProfileSwitchConfirmation(t *testing.T) {
 	}
 	back := preview("template-example")
 	confirm("template-example", back, 200)
+	const personalCanary = "synthetic-personal-label"
+	const edits = `"values":[{"elementId":"` + externalRouterElement + `","name":"label","source":"\"synthetic-personal-label\""}]`
+	edited := f.call("POST", root+"office", "", `{"action":"preview",`+edits+`}`, "", 200)
+	var selected struct{ Receipt string }
+	if json.Unmarshal(edited.Body, &selected) != nil || selected.Receipt == "" || bytes.Contains(edited.Body, []byte(personalCanary)) {
+		t.Fatal("unsafe personal preview")
+	}
+	f.call("POST", root+"office", "", `{"action":"confirm","receipt":"`+selected.Receipt+`",`+edits+`}`, "", 200)
+	confirm("template-example", preview("template-example"), 200)
+	restored := f.call("GET", root+"office", "", "", "", 200)
+	if !bytes.Contains(restored.Body, []byte(`"hasPersonalValue":true`)) || bytes.Contains(restored.Body, []byte(personalCanary)) {
+		t.Fatal("lost or exposed saved value")
+	}
+	// A replaced shared UUID leaves the saved override intact and blocks a new preparation.
+	oldID := externalRouterElement
+	stale := strings.ReplaceAll(office, oldID, "550e8400-e29b-41d4-a716-446655440099")
+	if _, err = f.db.Exec("INSERT INTO accepted_templates(template_id,version,draft) VALUES ('office',2,?)", []byte(stale)); err != nil {
+		t.Fatal(err)
+	}
+	f.call("POST", root+"office", "", `{"action":"preview","values":[]}`, "", 422)
+	if _, err = f.db.Exec("INSERT INTO accepted_templates(template_id,version,draft) VALUES ('office',3,?)", []byte(office)); err != nil {
+		t.Fatal(err)
+	}
 	ticket = preview("office")
 	// Rotation invalidates an old permit and a receipt from the previous policy,
 	// even when the current caller has the newly issued bearer.
