@@ -50,6 +50,7 @@
   let busy = $state(false);
   let password = $state('');
   let csrf = $state('');
+  let unconfirmedHide = $state(new Set<string>());
   let templateRevision = $state(0);
   let passwordField = $state<HTMLInputElement>();
   let workspace = $state<HTMLElement>();
@@ -306,7 +307,12 @@
           onclick={(event)=>navigate(event,'/ui/routers/connect','router-connect')}>Подключить роутер</a>
         {#if view === 'active' && !busy}
           {#key mutation}
-            <RouterOverview selectedId={routerID}
+            <RouterOverview selectedId={routerID} {csrf} {unconfirmedHide} refreshSession={() => {void refresh();}}
+              setUnconfirmedHide={(id,pending) => {
+                const next = new Set(unconfirmedHide);
+                if (pending) next.add(id); else next.delete(id);
+                unconfirmedHide = next;
+              }}
               openRouter={(event,path) => navigate(event,path,'overview')} closeRouter={closeRouterDetail}
               openVariables={(event,path) => navigate(event,path,'router-variables')}
               openEnrollment={(event,path) => navigate(event,path,'router-enroll')}

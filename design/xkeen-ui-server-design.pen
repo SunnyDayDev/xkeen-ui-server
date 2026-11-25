@@ -59532,6 +59532,2736 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "GAlyF",
+      "x": 0,
+      "y": 111630,
+      "name": "43 / Обзор роутеров / Действие скрытия",
+      "width": 1080,
+      "height": 1010,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "jZdlG",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "IIsQq",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "PqJ0O",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "UxigQ",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "rO0FE",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "AAsoy",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "s5nFkZ",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "IrPet",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "w3ZAGZ",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Обзор",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "j2zA9",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Подключить роутер",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Подключить роутер"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "jy73Q",
+              "name": "Список и панель",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "BRZAd",
+                  "name": "Наблюдавшиеся роутеры",
+                  "width": "fill_container",
+                  "fill": "$surface",
+                  "cornerRadius": 6,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 20,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "r8M8e",
+                      "name": "Филиал Восток",
+                      "fill": "$accent",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Филиал Восток",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Q80fPk",
+                      "name": "Связь: на связи",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Связь: на связи",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "XuUVO",
+                      "name": "Желаемая ревизия 12",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Желаемая ревизия 12",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "z3DqJ",
+                      "name": "Последняя подтверждённая ревизия 11",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Последняя подтверждённая ревизия 11",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "r1AqUq",
+                      "name": "Филиал Север",
+                      "fill": "$accent",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Филиал Север",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ArVgT",
+                      "name": "Связь: нет связи",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Связь: нет связи",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "uNe2d",
+                      "name": "Желаемая ревизия 7",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Желаемая ревизия 7",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "BSYQo",
+                      "name": "Применение: нет подтверждения",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Применение: нет подтверждения",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "t5j8t",
+                  "name": "Боковая панель",
+                  "width": 340,
+                  "fill": "$surface",
+                  "cornerRadius": 6,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 20,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "rwL74",
+                      "name": "Филиал Восток",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Филиал Восток",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "id": "DshD8",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Закрыть панель",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Закрыть панель"
+                        }
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "id": "D55hnQ",
+                      "name": "ID: router-east-example",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "ID: router-east-example",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "HIYyV",
+                      "name": "Шаблон: edge-example",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Шаблон: edge-example",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "HNHQ4",
+                      "name": "Связь: на связи",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Связь: на связи",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Nz7tB",
+                      "name": "Желаемая ревизия 12",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Желаемая ревизия 12",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "mgNPP",
+                      "name": "Последняя подтверждённая ревизия 11",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Последняя подтверждённая ревизия 11",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "JDAQh",
+                      "name": "Текущее состояние Xray неизвестно.",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Текущее состояние Xray неизвестно.",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "id": "hStXP",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть персональные переменные",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Переменные"
+                        }
+                      }
+                    },
+                    {
+                      "id": "k11vn",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть рабочий ключ",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Рабочий ключ"
+                        }
+                      }
+                    },
+                    {
+                      "id": "NalNv",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть правила роутера",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Маршрутизация"
+                        }
+                      }
+                    },
+                    {
+                      "id": "xljrY",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть входы роутера",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Входы"
+                        }
+                      }
+                    },
+                    {
+                      "id": "r2GemP",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть файлы роутера",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Файлы"
+                        }
+                      }
+                    },
+                    {
+                      "type": "frame",
+                      "id": "D2d3O",
+                      "name": "Действия скрытия",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "children": [
+                        {
+                          "id": "XZshi",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Скрыть из списка",
+                          "fill": "#e8eef9",
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Скрыть из списка",
+                              "fill": "$ink"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "pEOym",
+      "x": 0,
+      "y": 112710,
+      "name": "43 / Обзор роутеров / Подтвердить скрытие",
+      "width": 1080,
+      "height": 1010,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "YcVyU",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "j3pol",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "w7sB5",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "pv8pc",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "FqU7H",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "h4BwV7",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "pOC54",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "gc6hg",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "q1rFE",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Обзор",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "shgAY",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Подключить роутер",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Подключить роутер"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "TAOC0",
+              "name": "Список и панель",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "F5cEl",
+                  "name": "Наблюдавшиеся роутеры",
+                  "width": "fill_container",
+                  "fill": "$surface",
+                  "cornerRadius": 6,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 20,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "E6A2d",
+                      "name": "Филиал Восток",
+                      "fill": "$accent",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Филиал Восток",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "dscZo",
+                      "name": "Связь: на связи",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Связь: на связи",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "tarwb",
+                      "name": "Желаемая ревизия 12",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Желаемая ревизия 12",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "h9awf",
+                      "name": "Последняя подтверждённая ревизия 11",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Последняя подтверждённая ревизия 11",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "iXYcU",
+                      "name": "Филиал Север",
+                      "fill": "$accent",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Филиал Север",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "othtP",
+                      "name": "Связь: нет связи",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Связь: нет связи",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "RuoaO",
+                      "name": "Желаемая ревизия 7",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Желаемая ревизия 7",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "keIW4",
+                      "name": "Применение: нет подтверждения",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Применение: нет подтверждения",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "a5SZv",
+                  "name": "Боковая панель",
+                  "width": 340,
+                  "fill": "$surface",
+                  "cornerRadius": 6,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 20,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "xhuXq",
+                      "name": "Филиал Восток",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Филиал Восток",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "id": "WqZsg",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Закрыть панель",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Закрыть панель"
+                        }
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "id": "yhNd5",
+                      "name": "ID: router-east-example",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "ID: router-east-example",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "lqC3a",
+                      "name": "Шаблон: edge-example",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Шаблон: edge-example",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "yzEVZ",
+                      "name": "Связь: на связи",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Связь: на связи",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "y2wVo",
+                      "name": "Желаемая ревизия 12",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Желаемая ревизия 12",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "C5Xqg",
+                      "name": "Последняя подтверждённая ревизия 11",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Последняя подтверждённая ревизия 11",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "O9wRCf",
+                      "name": "Текущее состояние Xray неизвестно.",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Текущее состояние Xray неизвестно.",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "id": "L1nVV",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть персональные переменные",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Переменные"
+                        }
+                      }
+                    },
+                    {
+                      "id": "r1oBgq",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть рабочий ключ",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Рабочий ключ"
+                        }
+                      }
+                    },
+                    {
+                      "id": "T6CCw5",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть правила роутера",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Маршрутизация"
+                        }
+                      }
+                    },
+                    {
+                      "id": "ZL0fv",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть входы роутера",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Входы"
+                        }
+                      }
+                    },
+                    {
+                      "id": "DCJlY",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть файлы роутера",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Файлы"
+                        }
+                      }
+                    },
+                    {
+                      "type": "frame",
+                      "id": "lliag",
+                      "name": "Действия скрытия",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "pGJGR",
+                          "name": "Заголовок подтверждения",
+                          "fill": "$ink",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Скрыть Филиал Восток из списка?",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "n8JPAK",
+                          "name": "Последствия скрытия",
+                          "fill": "$ink",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Роутер появится снова после следующего допустимого контакта. Ключ, настройки и история сохранятся.",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "id": "M7lx3E",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Скрыть роутер",
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Скрыть роутер"
+                            }
+                          }
+                        },
+                        {
+                          "type": "frame",
+                          "id": "mldVl",
+                          "name": "Видимый клавиатурный фокус",
+                          "fill": "#497DE5",
+                          "cornerRadius": 11,
+                          "padding": 2,
+                          "children": [
+                            {
+                              "id": "Lsm7K",
+                              "type": "ref",
+                              "ref": "ARxJx",
+                              "name": "Отмена",
+                              "fill": "#e8eef9",
+                              "descendants": {
+                                "GyrRR": {
+                                  "content": "Отмена",
+                                  "fill": "$ink"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "CMWdz",
+      "x": 0,
+      "y": 113790,
+      "name": "43 / Обзор роутеров / Результат скрытия неизвестен",
+      "width": 1080,
+      "height": 1010,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "ItMM7",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "FH1Lb",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "cFTta",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "RGJxY",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "ddTWo",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "ihO01",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "Qb3J4",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "fgg3f",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "KUwSF",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Обзор",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "kxj4F",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Подключить роутер",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Подключить роутер"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "uO17Z",
+              "name": "Список и панель",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "s7hX2",
+                  "name": "Наблюдавшиеся роутеры",
+                  "width": "fill_container",
+                  "fill": "$surface",
+                  "cornerRadius": 6,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 20,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "leK10",
+                      "name": "Филиал Восток",
+                      "fill": "$accent",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Филиал Восток",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "K8Oah6",
+                      "name": "Связь: на связи",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Связь: на связи",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "GFySy",
+                      "name": "Желаемая ревизия 12",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Желаемая ревизия 12",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "U14Tu",
+                      "name": "Последняя подтверждённая ревизия 11",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Последняя подтверждённая ревизия 11",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Mk7U5",
+                      "name": "Филиал Север",
+                      "fill": "$accent",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Филиал Север",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "lxZs7",
+                      "name": "Связь: нет связи",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Связь: нет связи",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "M4xb2r",
+                      "name": "Желаемая ревизия 7",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Желаемая ревизия 7",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "r2X18",
+                      "name": "Применение: нет подтверждения",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Применение: нет подтверждения",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "gVe91",
+                  "name": "Боковая панель",
+                  "width": 340,
+                  "fill": "$surface",
+                  "cornerRadius": 6,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 20,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "BlBUV",
+                      "name": "Филиал Восток",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Филиал Восток",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "id": "WrxfI",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Закрыть панель",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Закрыть панель"
+                        }
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "id": "fscmY",
+                      "name": "ID: router-east-example",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "ID: router-east-example",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "rYhQa",
+                      "name": "Шаблон: edge-example",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Шаблон: edge-example",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "wIVXW",
+                      "name": "Связь: на связи",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Связь: на связи",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "T7TJZU",
+                      "name": "Желаемая ревизия 12",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Желаемая ревизия 12",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "a73kWh",
+                      "name": "Последняя подтверждённая ревизия 11",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Последняя подтверждённая ревизия 11",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "CLHMa",
+                      "name": "Текущее состояние Xray неизвестно.",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Текущее состояние Xray неизвестно.",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "id": "r5WNN",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть персональные переменные",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Переменные"
+                        }
+                      }
+                    },
+                    {
+                      "id": "Et9su",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть рабочий ключ",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Рабочий ключ"
+                        }
+                      }
+                    },
+                    {
+                      "id": "fS3lu",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть правила роутера",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Маршрутизация"
+                        }
+                      }
+                    },
+                    {
+                      "id": "amC9p",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть входы роутера",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Входы"
+                        }
+                      }
+                    },
+                    {
+                      "id": "m8eGx",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть файлы роутера",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Файлы"
+                        }
+                      }
+                    },
+                    {
+                      "type": "frame",
+                      "id": "bA1l1",
+                      "name": "Действия скрытия",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "lLyaY",
+                          "name": "Неопределённый результат",
+                          "fill": "$ink",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Не удалось подтвердить результат. Проверьте текущее состояние.",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "mCEdh",
+                          "name": "Видимый клавиатурный фокус",
+                          "fill": "#497DE5",
+                          "cornerRadius": 11,
+                          "padding": 2,
+                          "children": [
+                            {
+                              "id": "hIM2b",
+                              "type": "ref",
+                              "ref": "ARxJx",
+                              "name": "Проверить состояние",
+                              "fill": "#e8eef9",
+                              "descendants": {
+                                "GyrRR": {
+                                  "content": "Проверить состояние",
+                                  "fill": "$ink"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "ISYOl",
+      "x": 0,
+      "y": 114870,
+      "name": "43 / Обзор роутеров / Видимость изменилась",
+      "width": 1080,
+      "height": 1010,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "hJ5L9",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "ekQYj",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "Snuyp",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "wbZNi",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "v6LlQ",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "NZxVi",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "XadFp",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "HtABw",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "HFYLw",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Обзор",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "IZtb0",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Подключить роутер",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Подключить роутер"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "fWV9S",
+              "name": "Список и панель",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "N7dMvb",
+                  "name": "Наблюдавшиеся роутеры",
+                  "width": "fill_container",
+                  "fill": "$surface",
+                  "cornerRadius": 6,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 20,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "yiUdo",
+                      "name": "Филиал Восток",
+                      "fill": "$accent",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Филиал Восток",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "O0rMG",
+                      "name": "Связь: на связи",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Связь: на связи",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Ul4le",
+                      "name": "Желаемая ревизия 12",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Желаемая ревизия 12",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "quliC",
+                      "name": "Последняя подтверждённая ревизия 11",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Последняя подтверждённая ревизия 11",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "y0kVuo",
+                      "name": "Филиал Север",
+                      "fill": "$accent",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Филиал Север",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "UNaey",
+                      "name": "Связь: нет связи",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Связь: нет связи",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "E0aJb9",
+                      "name": "Желаемая ревизия 7",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Желаемая ревизия 7",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Q8Tas",
+                      "name": "Применение: нет подтверждения",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Применение: нет подтверждения",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Z5Z8FF",
+                  "name": "Боковая панель",
+                  "width": 340,
+                  "fill": "$surface",
+                  "cornerRadius": 6,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 20,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "j8oAQN",
+                      "name": "Филиал Восток",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Филиал Восток",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "semibold"
+                    },
+                    {
+                      "id": "SRL0C",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Закрыть панель",
+                      "fill": "$accent",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Закрыть панель"
+                        }
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "id": "s1ouFZ",
+                      "name": "ID: router-east-example",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "ID: router-east-example",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "FbHRt",
+                      "name": "Шаблон: edge-example",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Шаблон: edge-example",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "X9jjt",
+                      "name": "Связь: на связи",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Связь: на связи",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Z3Xk5",
+                      "name": "Желаемая ревизия 12",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Желаемая ревизия 12",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "KXDt0",
+                      "name": "Последняя подтверждённая ревизия 11",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Последняя подтверждённая ревизия 11",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "yzsID",
+                      "name": "Текущее состояние Xray неизвестно.",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Текущее состояние Xray неизвестно.",
+                      "fontFamily": "$font",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "id": "e3ZwW",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть персональные переменные",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Переменные"
+                        }
+                      }
+                    },
+                    {
+                      "id": "zeinL",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть рабочий ключ",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Рабочий ключ"
+                        }
+                      }
+                    },
+                    {
+                      "id": "B0BE0",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть правила роутера",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Маршрутизация"
+                        }
+                      }
+                    },
+                    {
+                      "id": "oH88N",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть входы роутера",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Входы"
+                        }
+                      }
+                    },
+                    {
+                      "id": "qObVP",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Открыть файлы роутера",
+                      "fill": "$surface",
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "descendants": {
+                        "GyrRR": {
+                          "fill": "$ink",
+                          "content": "Файлы"
+                        }
+                      }
+                    },
+                    {
+                      "type": "frame",
+                      "id": "jl9Dy",
+                      "name": "Действия скрытия",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "xwAON",
+                          "name": "Устаревший выбор",
+                          "fill": "$ink",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Состояние изменилось. Проверьте текущую видимость перед подтверждением.",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Nj2UR",
+                          "name": "Видимый клавиатурный фокус",
+                          "fill": "#497DE5",
+                          "cornerRadius": 11,
+                          "padding": 2,
+                          "children": [
+                            {
+                              "id": "dh9SI",
+                              "type": "ref",
+                              "ref": "ARxJx",
+                              "name": "Проверить состояние",
+                              "fill": "#e8eef9",
+                              "descendants": {
+                                "GyrRR": {
+                                  "content": "Проверить состояние",
+                                  "fill": "$ink"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "LO8mc",
+      "x": 0,
+      "y": 115950,
+      "name": "43 / Обзор роутеров / Роутер скрыт",
+      "width": 1080,
+      "height": 1010,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "o81LNd",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "gap": 24,
+          "padding": [
+            16,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "usd1s",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "a0pelZ",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 104,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layout-dashboard"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Обзор"
+                }
+              }
+            },
+            {
+              "id": "Ohsl1",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Текущий раздел",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "layers"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Шаблоны"
+                }
+              }
+            },
+            {
+              "id": "ghTmW",
+              "type": "ref",
+              "ref": "oQHGq",
+              "name": "Настройки",
+              "width": 124,
+              "fill": "$ink",
+              "descendants": {
+                "uzKPJ": {
+                  "fill": "#FFFFFF",
+                  "icon": "settings"
+                },
+                "G2nPu4": {
+                  "fill": "#FFFFFF",
+                  "content": "Настройки"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "zNyuX",
+              "name": "Свободное место",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "id": "YMz5z",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Завершить сессию",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Выйти"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "NLulf",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "Ip4BE",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Обзор",
+              "fontFamily": "$font",
+              "fontSize": 28,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "NjJOn",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Подключить роутер",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Подключить роутер"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "HpCYh",
+              "name": "Наблюдавшиеся роутеры",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "tizwF",
+                  "name": "Подтверждённое скрытие",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Роутер скрыт. Следующий допустимый контакт вернёт его в список.",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "tSQY3",
+                  "name": "Филиал Север",
+                  "fill": "$accent",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Филиал Север",
+                  "fontFamily": "$font",
+                  "fontSize": 16,
+                  "fontWeight": "semibold"
+                },
+                {
+                  "type": "text",
+                  "id": "N3CeZu",
+                  "name": "Связь: нет связи",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Связь: нет связи",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "Qcbxd",
+                  "name": "Желаемая ревизия 7",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Желаемая ревизия 7",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "BpJI9",
+                  "name": "Применение: нет подтверждения",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Применение: нет подтверждения",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Z4rBt7",
+      "x": 0,
+      "y": 117030,
+      "name": "43 / Обзор роутеров / Подтверждение, 320 px",
+      "width": 320,
+      "height": 1360,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "t4a56J",
+          "name": "Шапка и навигация",
+          "width": "fill_container",
+          "fill": "$ink",
+          "layout": "vertical",
+          "gap": 12,
+          "padding": [
+            14,
+            16
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "v326x",
+              "name": "Имя продукта",
+              "fill": "#FFFFFF",
+              "content": "XKeen Console",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "semibold"
+            },
+            {
+              "type": "frame",
+              "id": "qDjdx",
+              "name": "Действия консоли",
+              "width": "fill_container",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "K2WGg",
+                  "name": "Ссылки консоли",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "fZd9Y",
+                      "name": "Первая строка навигации",
+                      "width": "fill_container",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "id": "X9Upf7",
+                          "type": "ref",
+                          "ref": "oQHGq",
+                          "name": "Текущий раздел",
+                          "width": 94,
+                          "fill": "$ink",
+                          "descendants": {
+                            "uzKPJ": {
+                              "fill": "#FFFFFF",
+                              "icon": "layout-dashboard"
+                            },
+                            "G2nPu4": {
+                              "fill": "#FFFFFF",
+                              "content": "Обзор"
+                            }
+                          }
+                        },
+                        {
+                          "id": "EXR5R",
+                          "type": "ref",
+                          "ref": "oQHGq",
+                          "name": "Текущий раздел",
+                          "width": 108,
+                          "fill": "$ink",
+                          "descendants": {
+                            "uzKPJ": {
+                              "fill": "#FFFFFF",
+                              "icon": "layers"
+                            },
+                            "G2nPu4": {
+                              "fill": "#FFFFFF",
+                              "content": "Шаблоны"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "s8NSB",
+                      "type": "ref",
+                      "ref": "oQHGq",
+                      "name": "Настройки",
+                      "width": 112,
+                      "fill": "$ink",
+                      "descendants": {
+                        "uzKPJ": {
+                          "fill": "#FFFFFF",
+                          "icon": "settings"
+                        },
+                        "G2nPu4": {
+                          "fill": "#FFFFFF",
+                          "content": "Настройки"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "oJS6X",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Завершить сессию",
+                  "fill": "$accent",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Выйти"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "BbwAX",
+          "name": "Главная область",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "EoLNp",
+              "name": "Заголовок экрана",
+              "fill": "$ink",
+              "content": "Обзор",
+              "fontFamily": "$font",
+              "fontSize": 24,
+              "fontWeight": "semibold"
+            },
+            {
+              "id": "Md06u",
+              "type": "ref",
+              "ref": "ARxJx",
+              "name": "Подключить роутер",
+              "fill": "$accent",
+              "descendants": {
+                "GyrRR": {
+                  "content": "Подключить роутер"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "WFzVq",
+              "name": "Боковая панель",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "diK0X",
+                  "name": "Филиал Восток",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Филиал Восток",
+                  "fontFamily": "$font",
+                  "fontSize": 16,
+                  "fontWeight": "semibold"
+                },
+                {
+                  "id": "ElNer",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Закрыть панель",
+                  "fill": "$accent",
+                  "descendants": {
+                    "GyrRR": {
+                      "content": "Закрыть панель"
+                    }
+                  }
+                },
+                {
+                  "type": "text",
+                  "id": "AKV7i",
+                  "name": "ID: router-east-example",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "ID: router-east-example",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "wVpX0",
+                  "name": "Шаблон: edge-example",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Шаблон: edge-example",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "LZnFk",
+                  "name": "Связь: на связи",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Связь: на связи",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "yufxO",
+                  "name": "Желаемая ревизия 12",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Желаемая ревизия 12",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "balw4",
+                  "name": "Последняя подтверждённая ревизия 11",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Последняя подтверждённая ревизия 11",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "XnhlO",
+                  "name": "Текущее состояние Xray неизвестно.",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Текущее состояние Xray неизвестно.",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "id": "SRXE1",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Открыть персональные переменные",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "fill": "$ink",
+                      "content": "Переменные"
+                    }
+                  }
+                },
+                {
+                  "id": "zXAj3",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Открыть рабочий ключ",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "fill": "$ink",
+                      "content": "Рабочий ключ"
+                    }
+                  }
+                },
+                {
+                  "id": "kM7Qr",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Открыть правила роутера",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "fill": "$ink",
+                      "content": "Маршрутизация"
+                    }
+                  }
+                },
+                {
+                  "id": "xrRyS",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Открыть входы роутера",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "fill": "$ink",
+                      "content": "Входы"
+                    }
+                  }
+                },
+                {
+                  "id": "XdONV",
+                  "type": "ref",
+                  "ref": "ARxJx",
+                  "name": "Открыть файлы роутера",
+                  "fill": "$surface",
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "descendants": {
+                    "GyrRR": {
+                      "fill": "$ink",
+                      "content": "Файлы"
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "FcoxH",
+                  "name": "Действия скрытия",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 10,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "W9Wt3i",
+                      "name": "Заголовок подтверждения",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Скрыть Филиал Восток из списка?",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "qtQtb",
+                      "name": "Последствия скрытия",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Роутер появится снова после следующего допустимого контакта. Ключ, настройки и история сохранятся.",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "id": "s2K9H1",
+                      "type": "ref",
+                      "ref": "ARxJx",
+                      "name": "Скрыть роутер",
+                      "descendants": {
+                        "GyrRR": {
+                          "content": "Скрыть роутер"
+                        }
+                      }
+                    },
+                    {
+                      "type": "frame",
+                      "id": "OAuO0",
+                      "name": "Видимый клавиатурный фокус",
+                      "fill": "#497DE5",
+                      "cornerRadius": 11,
+                      "padding": 2,
+                      "children": [
+                        {
+                          "id": "v7pC0",
+                          "type": "ref",
+                          "ref": "ARxJx",
+                          "name": "Отмена",
+                          "fill": "#e8eef9",
+                          "descendants": {
+                            "GyrRR": {
+                              "content": "Отмена",
+                              "fill": "$ink"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "BuIX3",
+              "name": "Наблюдавшиеся роутеры",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 6,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "p0CiP",
+                  "name": "Филиал Восток",
+                  "fill": "$accent",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Филиал Восток",
+                  "fontFamily": "$font",
+                  "fontSize": 16,
+                  "fontWeight": "semibold"
+                },
+                {
+                  "type": "text",
+                  "id": "IJ3v4",
+                  "name": "Связь: на связи",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Связь: на связи",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "WHA4X",
+                  "name": "Желаемая ревизия 12",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Желаемая ревизия 12",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "GMuPv",
+                  "name": "Последняя подтверждённая ревизия 11",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Последняя подтверждённая ревизия 11",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "c9mzkz",
+                  "name": "Филиал Север",
+                  "fill": "$accent",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Филиал Север",
+                  "fontFamily": "$font",
+                  "fontSize": 16,
+                  "fontWeight": "semibold"
+                },
+                {
+                  "type": "text",
+                  "id": "T2HKUl",
+                  "name": "Связь: нет связи",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Связь: нет связи",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "U9UoJ",
+                  "name": "Желаемая ревизия 7",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Желаемая ревизия 7",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "H9aypK",
+                  "name": "Применение: нет подтверждения",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Применение: нет подтверждения",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "variables": {

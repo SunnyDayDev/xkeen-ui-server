@@ -30,12 +30,26 @@ func (s *ExternalAccess) HideExternalRouter(ctx context.Context, permit external
 	if err := requireExternalPermit(ctx, tx, permit); err != nil {
 		return routersettings.VisibilitySnapshot{}, err
 	}
+	result, err := hideMatchingRouter(ctx, tx, expected)
+	if errors.Is(err, routersettings.ErrVisibilityConflict) {
+		return routersettings.VisibilitySnapshot{}, externalaccess.ErrConflict
+	}
+	if err != nil {
+		return routersettings.VisibilitySnapshot{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return routersettings.VisibilitySnapshot{}, err
+	}
+	return result, nil
+}
+
+func hideMatchingRouter(ctx context.Context, tx *sql.Tx, expected routersettings.VisibilitySnapshot) (routersettings.VisibilitySnapshot, error) {
 	current, err := readRouterVisibility(ctx, tx, expected.RouterID)
 	if err != nil {
 		return routersettings.VisibilitySnapshot{}, err
 	}
 	if current != expected {
-		return routersettings.VisibilitySnapshot{}, externalaccess.ErrConflict
+		return routersettings.VisibilitySnapshot{}, routersettings.ErrVisibilityConflict
 	}
 	if err := hideRouter(ctx, tx, expected.RouterID); err != nil {
 		return routersettings.VisibilitySnapshot{}, err
@@ -46,9 +60,6 @@ func (s *ExternalAccess) HideExternalRouter(ctx context.Context, permit external
 	}
 	if current.Visible {
 		return routersettings.VisibilitySnapshot{}, routersettings.ErrVisibilityUnavailable
-	}
-	if err := tx.Commit(); err != nil {
-		return routersettings.VisibilitySnapshot{}, err
 	}
 	return current, nil
 }

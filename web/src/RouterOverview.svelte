@@ -1,21 +1,24 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
+  import RouterHide from './RouterHide.svelte';
 
   type Router = {
     routerId: string; name: string; templateId: string; contact: 'online' | 'offline';
     desiredRevision: string; appliedRevision?: string; runtime?: 'unknown' | 'verified';
   };
   type Props = {
-    selectedId: string; openRouter: (event: MouseEvent, path: string) => void;
+    selectedId: string; csrf: string; unconfirmedHide: Set<string>; setUnconfirmedHide: (id: string, pending: boolean) => void;
+    refreshSession: () => void; openRouter: (event: MouseEvent, path: string) => void;
     openInbounds: (event: MouseEvent, path: string) => void;
     openCatalog: (event: MouseEvent, path: string) => void;
     openEnrollment: (event: MouseEvent, path: string) => void;
     closeRouter: () => void; openVariables: (event: MouseEvent, path: string) => void; openRules: (event: MouseEvent, path: string) => void; signedOut: () => void;
   };
-  let {selectedId, openRouter, openEnrollment, closeRouter, openVariables, openRules, openInbounds, openCatalog, signedOut}: Props = $props();
+  let {selectedId, csrf, unconfirmedHide, setUnconfirmedHide, refreshSession, openRouter, openEnrollment, closeRouter, openVariables, openRules, openInbounds, openCatalog, signedOut}: Props = $props();
 
   let rows = $state<Router[]>();
   let failed = $state(false);
+  let visibilityNotice = $state('');
   let group = $state<HTMLElement>();
   let panel = $state<HTMLElement>();
   let focusTarget = $state<HTMLElement>();
@@ -50,6 +53,20 @@
     } finally {
       if (pending === controller) pending = undefined;
     }
+  }
+
+  async function closeHidden(confirmed: boolean) {
+    const hidden = selectedId;
+    visibilityNotice = confirmed
+      ? 'Роутер скрыт. Следующий допустимый контакт вернёт его в список.'
+      : 'Роутер сейчас скрыт.';
+    rows = rows?.filter(item => item.routerId !== hidden);
+    pending?.abort();
+    pending = undefined;
+    closeRouter();
+    await tick();
+    focusTarget?.focus();
+    void load(true);
   }
 
   async function close() {
@@ -96,6 +113,7 @@
 
 <div class:with-detail={!!selectedId && !!rows} class="router-overview">
   <section class="overview-card" aria-label="Подключённые роутеры" bind:this={focusTarget} tabindex="-1">
+    {#if visibilityNotice}<p role="status">{visibilityNotice}</p>{/if}
     {#if failed}
       <p role="alert">Не удалось загрузить список роутеров.</p>
       <button onclick={() => { void load(true); }}>Повторить</button>
@@ -140,6 +158,12 @@
         <a href={'/ui/routers/catalog?' + new URLSearchParams({routerId:detail.routerId})}
           onclick={(event) => openCatalog(event,event.currentTarget.pathname+event.currentTarget.search)}>Файлы</a>
       {/if}
+      {#key selectedId}
+        {@const actionID = selectedId}
+        <RouterHide id={actionID} name={detail?.name ?? ''} {csrf}
+          unconfirmed={unconfirmedHide.has(actionID)} setUnconfirmed={pending => setUnconfirmedHide(actionID,pending)}
+          onHidden={closeHidden} refreshList={() => {void load(true);}} {signedOut} {refreshSession} />
+      {/key}
     </aside>
   {/if}
 </div>
