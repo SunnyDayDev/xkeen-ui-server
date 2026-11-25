@@ -125,3 +125,17 @@ func TestProfileSwitchRechecksAfterValidatorAndRetainsEquivalentRevision(t *test
 		t.Fatalf("same-file switch = %#v %v", result, err)
 	}
 }
+
+func TestProfileSwitchDoesNotAuthorizeUnsupportedBypass(t *testing.T) {
+	store, request := profileSwitchFixture(t)
+	exact := `"direct"`
+	request.Values = []ProfileVariableEdit{{ElementID: switchOutbound, Name: "label", Source: &exact}}
+	store.inputs.Exclusions = &configuration.ExclusionSource{ElementID: switchOutbound, Text: "192.0.2.0/24"}
+	service := NewProfileSwitchService(store, catalogValidatorFunc(func(context.Context, string, []configuration.CatalogFile) error {
+		t.Fatal("sent unsupported bypass candidate to validator")
+		return nil
+	}))
+	if _, err := service.Preview(t.Context(), request); !errors.Is(err, ErrBypassUnavailable) || len(store.commits) != 0 {
+		t.Fatalf("unsupported bypass was prepared: %v", err)
+	}
+}

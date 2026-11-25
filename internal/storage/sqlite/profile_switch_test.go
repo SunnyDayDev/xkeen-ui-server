@@ -6,10 +6,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"path/filepath"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/publication"
+	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routerdraft"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/routersettings"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/application/templates"
 	"github.com/SunnyDayDev/xkeen-ui-server/internal/configuration"
@@ -25,6 +28,7 @@ const (
 	switchOutbound  = "550e8400-e29b-41d4-a716-446655440983"
 	switchInbound   = "550e8400-e29b-41d4-a716-446655440984"
 	switchNewShared = "550e8400-e29b-41d4-a716-446655440985"
+	switchExclusion = "550e8400-e29b-41d4-a716-446655440986"
 )
 
 func switchTemplate(id, tag string) configuration.TemplateDraft {
@@ -53,10 +57,21 @@ func switchSQLiteFixture(t *testing.T, validator publication.CatalogValidator) (
 		if err != nil {
 			t.Fatal(err)
 		}
+		if draft.ID == switchHome {
+			if _, err := db.ExecContext(ctx, `INSERT INTO shared_xkeen_exclusions
+				(template_id,element_id,version,source,variables) VALUES (?,?,1,'','[]')`, switchHome, switchExclusion); err != nil {
+				t.Fatal(err)
+			}
+		}
 		storeRawAccepted(t, db, snapshot)
 	}
+	empty := ""
 	draft := routersettings.Draft{ID: switchRouterID, Name: "Example router", TemplateID: switchHome,
 		PersonalOrder: []string{switchLocal, switchShared}, DisabledInbounds: []string{switchInbound},
+		Exclusion: &routersettings.ExclusionOverride{
+			Source:      configuration.ElementSource{TemplateID: switchHome, ElementID: switchExclusion},
+			Replacement: &empty, Values: map[string]string{"inactive": " exact "},
+		},
 		Groups: []routersettings.Group{
 			{Name: "rules", Local: []routersettings.LocalElement{{ID: switchLocal, Content: json.RawMessage(" {\r\n \"type\":\"field\",\"network\":\"udp\",\"outboundTag\":\"direct\"\n}\r\n")}},
 				Exclusions: []configuration.ElementSource{{TemplateID: switchHome, ElementID: switchShared}}},
@@ -141,7 +156,7 @@ func checkProfileSwitchSQLiteRoundTrip(t *testing.T, validator publication.Catal
 	store = NewPublications(db)
 	service = publication.NewProfileSwitchService(store, validator)
 	current, err := service.Read(ctx, switchRouterID, switchOffice)
-	if err != nil || !current.AlreadyActive || current.Current.Draft.Name != home.Name || len(current.Current.Draft.Groups) != 0 {
+	if err != nil || !current.AlreadyActive || current.Current.Draft.Name != home.Name || len(current.Current.Draft.Groups) != 0 || current.Current.Draft.Exclusion != nil {
 		t.Fatalf("restart restored wrong office: %#v %v", current, err)
 	}
 	if _, err := service.Confirm(ctx, req, preview.Proof); !errors.Is(err, publication.ErrConflict) {
@@ -179,6 +194,7 @@ func checkProfileSwitchSQLiteRoundTrip(t *testing.T, validator publication.Catal
 		final.RouterDraft.Generation != before.RouterDraft.Generation+2 ||
 		!reflect.DeepEqual(final.RouterDraft.Draft.Groups, home.Groups) ||
 		!reflect.DeepEqual(final.RouterDraft.Draft.DisabledInbounds, home.DisabledInbounds) ||
+		!reflect.DeepEqual(final.RouterDraft.Draft.Exclusion, home.Exclusion) ||
 		final.RouterDraft.OrderBasis.TemplateVersion != latest.Version {
 		t.Fatalf("return lost exact values, mode, order or generations: %#v %v", final, err)
 	}
@@ -305,5 +321,95 @@ func TestProfileSwitchSharesMembershipCASWithC07(t *testing.T) {
 	current, err = service.Read(ctx, switchRouterID, switchOffice)
 	if err != nil || !current.AlreadyActive {
 		t.Fatalf("late group replaced new assignment: %#v %v", current, err)
+	}
+}
+
+func TestProfileSwitchMigrationPreservesLegacySlot(t *testing.T) {
+	ctx := t.Context()
+	path := filepath.Join(t.TempDir(), "earlier.sqlite")
+	prior, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer prior.Close()
+	if err := migrate(ctx, prior, migrations[:17]); err != nil {
+		t.Fatal(err)
+	}
+	legacy := routersettings.Draft{ID: switchRouterID, TemplateID: switchHome, PersonalOrder: []string{}}
+	draft, _ := json.Marshal(encodeRouterDraft(legacy))
+	basis, _ := json.Marshal(publication.OrderBasis{TemplateID: switchHome, TemplateVersion: 1, SharedRuleIDs: []string{}})
+	if _, err := prior.ExecContext(ctx, "INSERT INTO router_settings (id,snapshot,generation,order_basis) VALUES (?,?,7,?)", legacy.ID, draft, basis); err != nil {
+		t.Fatal(err)
+	}
+	if err := prior.Close(); err != nil {
+		t.Fatal(err)
+	}
+	db, err := Open(ctx, path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	var foundDraft, foundBasis []byte
+	var generation, saved int
+	if err := db.QueryRowContext(ctx, "SELECT snapshot,generation,order_basis FROM router_settings WHERE id=?", legacy.ID).Scan(&foundDraft, &generation, &foundBasis); err != nil ||
+		!bytes.Equal(foundDraft, draft) || !bytes.Equal(foundBasis, basis) || generation != 7 {
+		t.Fatalf("legacy migration rewrote snapshot: version=%d, error=%v", generation, err)
+	}
+	if err := db.QueryRowContext(ctx, "SELECT count(*) FROM inactive_router_profile_drafts").Scan(&saved); err != nil || saved != 0 {
+		t.Fatalf("unexpected inactive rows after migration: %d %v", saved, err)
+	}
+}
+
+func TestProfileSwitchEqualFilesStillInvalidateOldDraftWriter(t *testing.T) {
+	ctx := t.Context()
+	db, _ := openPublicationDB(t)
+	templateStore := templates.New(NewTemplateRepository(db))
+	for _, id := range []string{"equal-a", "equal-b"} {
+		snapshot, err := templateStore.Create(ctx, switchTemplate(id, "direct"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		storeRawAccepted(t, db, snapshot)
+	}
+	draft := routersettings.Draft{ID: switchRouterID, TemplateID: "equal-a", Name: "Example router"}
+	validator := testPublicationValidator(func(context.Context, string, []configuration.CatalogFile) error { return nil })
+	signals := 0
+	store := NewPublications(db, func(string) { signals++ })
+	result, err := publication.NewService(store, validator).Publish(ctx, publication.PublishRequest{
+		Mode: publication.ConfirmAccepted, Source: publication.SourceCandidate, Candidate: &draft,
+		Expected: publication.Expectations{RouterID: switchRouterID, TemplateID: draft.TemplateID, AcceptedVersion: 1},
+	})
+	requirePublicationOutcome(t, result, err, 1, true)
+	if err := NewRouterSettings(db).Save(ctx, draft); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.ExecContext(ctx, `INSERT INTO agent_contacts(router_id,contact_ns,report,applied,uncertain)
+		VALUES(?,?,NULL,0,0)`, switchRouterID, time.Now().UnixNano()); err != nil {
+		t.Fatal(err)
+	}
+	tx, err := db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	old, err := readVisibleRouterDraftBasis(ctx, tx, switchRouterID)
+	tx.Rollback()
+	if err != nil {
+		t.Fatal(err)
+	}
+	service := publication.NewProfileSwitchService(store, validator)
+	for _, id := range []string{"equal-b", "equal-a"} {
+		req, preview := switchPreview(t, service, id)
+		if preview.Changed || len(preview.Changes) != 0 {
+			t.Fatalf("same-name bytes unexpectedly changed: %#v", preview)
+		}
+		result, err := service.Confirm(ctx, req, preview.Proof)
+		requirePublicationOutcome(t, result, err, 1, false)
+	}
+	if _, err := writeRouterDraft(ctx, db, old, draft, nil, func(context.Context, *sql.Tx) error { return nil }); !errors.Is(err, routerdraft.ErrConflict) {
+		t.Fatalf("pre-switch C04 edit was accepted after A-B-A: %v", err)
+	}
+	current, err := service.Read(ctx, switchRouterID, "equal-a")
+	if err != nil || !current.AlreadyActive || current.Basis.ActiveGeneration != 3 || current.Basis.SlotGeneration != old.DraftGeneration+2 || signals != 1 {
+		t.Fatalf("wrong no-op generations or notification: %#v, %v, %d", current, err, signals)
 	}
 }
