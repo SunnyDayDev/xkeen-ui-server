@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 export async function checkRouterProfileSwitch(page,{origin,resetSession,password}) {
   const home='f18 / example';
-  const office='Офис + example';
+  const office='Z-Office + example';
   const query=new URLSearchParams({templateId:office});
   async function call(path, body, status=200) {
     const reply=await page.evaluate(async ({path,body})=>{
@@ -55,8 +55,10 @@ export async function checkRouterProfileSwitch(page,{origin,resetSession,passwor
   await page.getByRole('heading',{name:'Смена профиля',exact:true}).waitFor();
   assert.equal(new URL(page.url()).searchParams.get('routerId'),current.routerId);
   const choose=page.getByLabel('Новый профиль');
-  await choose.selectOption(office);
+  await choose.getByRole('option',{name:office,exact:true}).waitFor({state:'attached'});
+  await choose.press('z');
   await page.getByText('У этого профиля ещё нет сохранённых настроек.',{exact:true}).waitFor();
+  assert.equal(await choose.inputValue(),office);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),320);
   const prepare=page.getByRole('button',{name:'Подготовить смену',exact:true});
   const proceed=page.getByRole('button',{name:'Перейти к подтверждению',exact:true});
@@ -69,7 +71,7 @@ export async function checkRouterProfileSwitch(page,{origin,resetSession,passwor
   await prepare.press('Enter');
   await page.getByText('04_outbounds.json',{exact:true}).waitFor();
   await proceed.press('Enter');
-  await page.waitForFunction(()=>document.activeElement?.textContent?.trim()==='Отмена');
+  await page.waitForFunction(()=>document.activeElement?.textContent?.trim()==='Отмена' && document.activeElement.matches(':focus-visible'));
   assert.equal((await data()).templateId,home);
   await cancel.press('Enter');
   await page.waitForFunction(()=>document.activeElement?.textContent?.trim()==='Подготовить смену');
@@ -77,7 +79,7 @@ export async function checkRouterProfileSwitch(page,{origin,resetSession,passwor
   assert.equal((await data()).templateId,home);
   await prepare.press('Enter');
   await proceed.press('Enter');
-  await page.waitForFunction(()=>document.activeElement?.textContent?.trim()==='Отмена');
+  await page.waitForFunction(()=>document.activeElement?.textContent?.trim()==='Отмена' && document.activeElement.matches(':focus-visible'));
   await cancel.press('Shift+Tab');
   await page.waitForFunction(()=>document.activeElement?.textContent?.trim()==='Подтвердить смену');
   await page.keyboard.press('Enter');
