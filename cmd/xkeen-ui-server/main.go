@@ -111,6 +111,8 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 		handler = server.NewWebRouterStatusHandler(cfg.webOrigin, overview, handler)
 		visibility := webadmin.NewRouterVisibility(sqlite.NewWebRouterVisibility(db), time.Now)
 		handler = server.NewWebRouterVisibilityHandler(cfg.webOrigin, visibility, sessions, handler)
+		name := webadmin.NewRouterName(sqlite.NewWebRouterName(db), time.Now)
+		handler = server.NewWebRouterNameHandler(cfg.webOrigin, name, sessions, handler)
 		routerDrafts := sqlite.NewWebRouterDrafts(db)
 		variables := webadmin.NewRouterVariableEditor(routerDrafts, time.Now)
 		handler = server.NewWebRouterVariableHandler(cfg.webOrigin, variables, sessions, handler)
