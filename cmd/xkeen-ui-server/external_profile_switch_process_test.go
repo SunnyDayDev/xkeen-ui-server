@@ -121,6 +121,24 @@ func TestProcessExternalProfileSwitchConfirmation(t *testing.T) {
 	back := preview("template-example")
 	confirm("template-example", back, 200)
 	ticket = preview("office")
+	// Rotation invalidates an old permit and a receipt from the previous policy,
+	// even when the current caller has the newly issued bearer.
+	settings, _, err = f.access.Owner(ctx, f.owner, &externalaccess.Change{Version: settings.Version, Enabled: true, Protected: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings, bearer, err := f.access.Owner(ctx, f.owner, &externalaccess.Change{Version: settings.Version, Rotate: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.call("GET", root+"office", "", "", "", 401)
+	f.call("POST", root+"office", "", `{"action":"confirm","values":[],"receipt":"`+ticket+`"}`, bearer, 409)
+	checked := f.call("POST", root+"office", "", `{"action":"preview","values":[]}`, bearer, 200)
+	var renewed struct{ Receipt string }
+	if json.Unmarshal(checked.Body, &renewed) != nil || renewed.Receipt == "" {
+		t.Fatal("missing protected preview")
+	}
+	ticket = renewed.Receipt
 	disable := func() {
 		_, _, err := f.access.Owner(ctx, f.owner, &externalaccess.Change{Version: settings.Version})
 		if err != nil {
@@ -128,7 +146,7 @@ func TestProcessExternalProfileSwitchConfirmation(t *testing.T) {
 		}
 	}
 	beforeReply.Store(&disable)
-	f.call("POST", root+"office", "", `{"action":"confirm","receipt":"`+ticket+`","values":[]}`, "", 404)
+	f.call("POST", root+"office", "", `{"action":"confirm","receipt":"`+ticket+`","values":[]}`, bearer, 404)
 	var active string
 	if err := f.db.QueryRow("SELECT template_id FROM active_router_publications WHERE router_id='router-example'").Scan(&active); err != nil || active != "template-example" {
 		t.Fatal("late revoke changed assignment", active, err)
