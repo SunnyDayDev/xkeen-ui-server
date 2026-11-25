@@ -395,9 +395,9 @@ try {
       await checkAgentKeys(page,{origin,dir,cert,database,enrolledRouter});
       await checkRouterVisibility(page,{origin,dir,cert,enrolledRouter,resetSession: () => admin('reset',first),password:first});
       await checkRouterName(page,{origin,enrolledRouter,resetSession: () => admin('reset',first),password:first});
-      await checkRouterProfileSwitch(page,{origin,enrolledRouter});
       await checkRouterOverview(page,{origin, database, enrolledRouter, resetSession: () => admin('reset',first), password:first});
       await checkTemplatePublication(page,{origin,database,resetSession: () => admin('reset',first),password:first});
+      await checkRouterProfileSwitch(page,{origin,resetSession: () => admin('reset',first),password:first});
     }
   } else {
     await page.getByText('Проверка Xray сейчас недоступна.',{exact:true}).waitFor();

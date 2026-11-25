@@ -125,6 +125,8 @@ func run(args []string, stdout, stderr io.Writer) (exitCode int) {
 		handler = server.NewWebRouterInboundHandler(cfg.webOrigin, inbounds, sessions, handler)
 		catalog := webadmin.NewRouterCatalogPreview(sqlite.NewWebRouterCatalog(publications), time.Now)
 		handler = server.NewWebRouterCatalogHandler(cfg.webOrigin, catalog, handler)
+		profile := webadmin.NewRouterProfileSwitch(sqlite.NewWebRouterProfiles(publications), validator, time.Now)
+		handler = server.NewWebRouterProfileSwitchHandler(cfg.webOrigin, profile, sessions, handler)
 		handler = server.NewWebTemplatesHandler(cfg.webOrigin, webadmin.NewTemplates(webStore, time.Now), handler)
 		handler = server.NewWebTemplateCopyHandler(cfg.webOrigin, webadmin.NewTemplateCopy(webStore, time.Now), sessions, handler)
 		handler = server.NewWebTemplateEditorHandler(cfg.webOrigin, webadmin.NewTemplateEditor(webStore, time.Now), sessions, handler)

@@ -9,7 +9,7 @@
 
   type SeenRouter = {routerId:string; name:string; templateId:string; desiredRevision:string; appliedRevision?:string};
   type Field = {elementId:string; section:string; name:string; type:string; required:boolean; defaultSource?:string; personalSource?:string; issue?:string};
-  type Scope = {activeTemplateId:string; targetTemplateId:string; restoring:boolean; alreadyActive:boolean; fields:Field[]};
+  type Scope = {activeTemplateId:string; targetTemplateId:string; restoring:boolean; fields:Field[]};
   type Preview = {receipt:string; changed:boolean; restoring:boolean; changes:{name:string; kind:string}[]; order:{state:string; added:number; removed:number}};
   type Result = {templateId:string; desiredRevision:string; changed:boolean};
   let {id, csrf, retained, retain, signedOut, refreshSession, back}: {
@@ -126,14 +126,16 @@
         message='Целевой профиль не принят или роутер недоступен.';
         return;
       }
+      if (reply.status===409) {
+        const current=await readCurrent(signal);
+        if (!current) return;
+        retain();
+        message='Активный профиль изменился. Выберите другую цель.';
+        return;
+      }
       if (reply.status!==200 || reply.value.targetTemplateId!==target || !Array.isArray(reply.value.fields)) throw new Error('profile state unavailable');
       const targetScope=reply.value as Scope;
       if (router) router={...router,templateId:targetScope.activeTemplateId};
-      if (targetScope.alreadyActive) {
-        retain();
-        message='Этот профиль уже действует. Выберите другой профиль.';
-        return;
-      }
       scope=targetScope;
     });
   }
@@ -205,7 +207,9 @@
           clearPlan();
           message=reply.value.state==='catalog_rejected'
             ? 'Xray отклонил каталог. Проверьте значения или выберите другой профиль.'
-            : 'Проверьте обязательные значения и совместимость настроек.';
+            : reply.value.state==='bypass_unavailable'
+              ? 'Для исключений этого профиля требуется подтверждённая поддержка XKeen.'
+              : 'Проверьте обязательные значения и совместимость настроек.';
           return;
         }
         if (reply.status!==200) throw new Error('profile response unavailable');
@@ -327,7 +331,9 @@
               placeholder={field.defaultSource??'Введите JSON'}
               oninput={event=>edit(field,event.currentTarget)} onpaste={event=>paste(field,event)}></textarea>
           </label>
-          {#if !field.required && fieldValue(field)!==''}<button class="secondary" onclick={()=>update(field,null)}>Использовать шаблон</button>{/if}
+          {#if !field.required && (field.personalSource!==undefined || fieldValue(field)!=='')}
+            <button class="secondary" onclick={()=>update(field,null)}>Использовать шаблон</button>
+          {/if}
         </fieldset>
       {/each}
       <button bind:this={prepareButton} disabled={busy} onclick={event=>submit('preview',event.currentTarget)}>Подготовить смену</button>

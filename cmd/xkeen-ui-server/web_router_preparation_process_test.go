@@ -345,7 +345,7 @@ func TestProcessWebRouterPreparation(t *testing.T) {
 	const officeID = "office / example"
 	const officeElement = "650e8400-e29b-41d4-a716-446655440000"
 	if _, err := repo.Create(ctx, configuration.TemplateDraft{ID: officeID, Sections: []configuration.TemplateSection{{
-		Name: "outbounds", Elements: []configuration.TemplateElement{{Element: configuration.Element{ID: officeElement, Content: `{"protocol":"blackhole","tag":"${officeTag}"}`}}},
+		Name: "outbounds", Elements: []configuration.TemplateElement{{Element: configuration.Element{ID: officeElement, Content: `{"protocol":"${officeProtocol}","tag":"${officeTag}"}`}}},
 	}}}); err != nil {
 		t.Fatal(err)
 	}
@@ -372,13 +372,17 @@ func TestProcessWebRouterPreparation(t *testing.T) {
 			Required        bool
 		}
 	}
-	if json.Unmarshal(readOffice, &office) != nil || office.ActiveTemplateID != templateID || office.TargetTemplateID != officeID || office.Restoring || len(office.Fields) != 1 ||
-		office.Fields[0].ElementID != officeElement || office.Fields[0].Name != "officeTag" || !office.Fields[0].Required {
+	if json.Unmarshal(readOffice, &office) != nil || office.ActiveTemplateID != templateID || office.TargetTemplateID != officeID || office.Restoring || len(office.Fields) != 2 ||
+		office.Fields[0].ElementID != officeElement || office.Fields[0].Name != "officeProtocol" || !office.Fields[0].Required ||
+		office.Fields[1].Name != "officeTag" || !office.Fields[1].Required {
 		t.Fatalf("unexpected office profile: %s", readOffice)
 	}
-	setValue := func(action, target, value, receipt string) []byte {
+	setValue := func(action, target, protocol, value, receipt string) []byte {
 		t.Helper()
 		values := []map[string]string{}
+		if protocol != "" {
+			values = append(values, map[string]string{"elementId": officeElement, "name": "officeProtocol", "source": protocol})
+		}
 		if value != "" {
 			values = append(values, map[string]string{"elementId": officeElement, "name": "officeTag", "source": value})
 		}
@@ -392,8 +396,13 @@ func TestProcessWebRouterPreparation(t *testing.T) {
 		}
 		return raw
 	}
-	request(http.MethodPost, profilePath, setValue("preview", officeID, "", ""), 422)
-	previewPayload := setValue("preview", officeID, `"office.example"`, "")
+	request(http.MethodPost, profilePath, setValue("preview", officeID, "", "", ""), 422)
+	badProfile, _ := request(http.MethodPost, profilePath, setValue("preview", officeID, `"not-a-supported-protocol"`, `"office.example"`, ""), 422)
+	if !strings.Contains(string(badProfile), `"state":"catalog_rejected"`) || strings.Contains(string(badProfile), "not-a-supported-protocol") {
+		t.Fatalf("unexpected validator failure: %s", badProfile)
+	}
+	request(http.MethodPost, profilePath, []byte(`{"action":"preview","targetTemplateId":"office / example","values":[],"receipt":null}`), 400)
+	previewPayload := setValue("preview", officeID, `"blackhole"`, `"office.example"`, "")
 	officePlan, _ := request(http.MethodPost, profilePath, previewPayload, 200)
 	var plan struct {
 		Receipt string
@@ -406,13 +415,13 @@ func TestProcessWebRouterPreparation(t *testing.T) {
 	if !strings.Contains(string(overview), `"templateId":"`+templateID+`"`) {
 		t.Fatal("preparation changed active assignment")
 	}
-	request(http.MethodPost, profilePath, setValue("confirm", officeID, `"changed.example"`, plan.Receipt), 409)
-	officeCommit, _ := request(http.MethodPost, profilePath, setValue("confirm", officeID, `"office.example"`, plan.Receipt), 200)
+	request(http.MethodPost, profilePath, setValue("confirm", officeID, `"blackhole"`, `"changed.example"`, plan.Receipt), 409)
+	officeCommit, _ := request(http.MethodPost, profilePath, setValue("confirm", officeID, `"blackhole"`, `"office.example"`, plan.Receipt), 200)
 	if !strings.Contains(string(officeCommit), `"templateId":"`+officeID+`"`) || !strings.Contains(string(officeCommit), `"desiredRevision":"3"`) ||
 		strings.Contains(string(officeCommit), `"appliedRevision"`) {
 		t.Fatalf("invalid office result: %s", officeCommit)
 	}
-	request(http.MethodPost, profilePath, setValue("confirm", officeID, `"office.example"`, plan.Receipt), 409)
+	request(http.MethodPost, profilePath, setValue("confirm", officeID, `"blackhole"`, `"office.example"`, plan.Receipt), 409)
 	homePath := profilePath + "&targetTemplateId=" + url.QueryEscape(templateID)
 	readHome, _ := request(http.MethodGet, homePath, nil, 200)
 	if !strings.Contains(string(readHome), `"restoring":true`) || !strings.Contains(string(readHome), `"activeTemplateId":"`+officeID+`"`) {
