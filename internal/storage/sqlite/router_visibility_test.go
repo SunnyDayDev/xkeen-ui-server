@@ -224,7 +224,7 @@ func TestRouterVisibilityEpochMigratesAnExistingHiddenRecord(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer old.Close()
-	previous := len(migrations) - 1
+	const previous = 16 // The visibility epoch backfill was introduced in migration 17.
 	if err := migrate(ctx, old, migrations[:previous]); err != nil {
 		t.Fatal(err)
 	}
