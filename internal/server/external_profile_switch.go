@@ -39,28 +39,17 @@ func NewExternalProfileSwitch(lifetime context.Context, svc externalaccess.Profi
 				externalSwitchFailure(w, err)
 				return
 			}
-			type field struct {
-				ElementID string `json:"elementId"`
-				Name      string `json:"name"`
-				Type      string `json:"type"`
-				Required  bool   `json:"required"`
-			}
-			fields := []field{}
-			if !current.AlreadyActive {
-				for _, section := range current.Target.Sections {
-					for _, element := range section.Elements {
-						for _, v := range element.Element.Variables {
-							fields = append(fields, field{element.Element.ID, v.Name, v.Type, len(v.Default) == 0})
-						}
-					}
-				}
+			fields, err := externalaccess.ProfileSwitchFields(current)
+			if err != nil {
+				externalSwitchFailure(w, err)
+				return
 			}
 			_ = json.NewEncoder(w).Encode(map[string]any{"routerId": id, "activeTemplateId": current.Basis.SourceTemplateID, "targetTemplateId": target, "alreadyActive": current.AlreadyActive, "restoring": current.TargetDraft != nil, "desiredRevision": strconv.FormatInt(current.Basis.DesiredNumber, 10), "fields": fields})
 			return
 		}
 		var cmd struct {
-			Action  string `json:"action"`
-			Receipt string `json:"receipt"`
+			Action  string          `json:"action"`
+			Receipt json.RawMessage `json:"receipt"`
 			Values  []struct {
 				ElementID string          `json:"elementId"`
 				Name      string          `json:"name"`
@@ -70,6 +59,11 @@ func NewExternalProfileSwitch(lifetime context.Context, svc externalaccess.Profi
 		if !readExternalPublicationJSON(w, r, maxWebEditorBody, &cmd) {
 			return
 		}
+		if cmd.Values == nil {
+			externalError(w, 400, "invalid_request")
+			return
+		}
+		var receiptText string
 		req := publication.ProfileSwitchRequest{RouterID: id, TargetTemplateID: target}
 		for _, v := range cmd.Values {
 			var source *string
@@ -80,15 +74,15 @@ func NewExternalProfileSwitch(lifetime context.Context, svc externalaccess.Profi
 			req.Values = append(req.Values, publication.ProfileVariableEdit{ElementID: v.ElementID, Name: v.Name, Source: source})
 		}
 		switch {
-		case cmd.Action == "preview" && cmd.Receipt == "":
+		case cmd.Action == "preview" && len(cmd.Receipt) == 0:
 			preview, receipt, err := svc.Preview(ctx, permit, req)
 			if err != nil {
 				externalSwitchFailure(w, err)
 				return
 			}
 			_ = json.NewEncoder(w).Encode(map[string]any{"routerId": id, "activeTemplateId": preview.Proof.Basis.SourceTemplateID, "targetTemplateId": target, "restoring": preview.Restoring, "changed": preview.Changed, "files": preview.Changes, "receipt": receipt})
-		case cmd.Action == "confirm" && cmd.Receipt != "":
-			result, err := svc.Confirm(ctx, permit, req, cmd.Receipt)
+		case cmd.Action == "confirm" && json.Unmarshal(cmd.Receipt, &receiptText) == nil && receiptText != "":
+			result, err := svc.Confirm(ctx, permit, req, receiptText)
 			if err != nil {
 				externalSwitchFailure(w, err)
 				return

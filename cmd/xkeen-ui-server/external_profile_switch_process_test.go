@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
 )
@@ -24,7 +25,10 @@ func TestProcessExternalProfileSwitchCurrent(t *testing.T) {
 	if !bytes.Contains(got.Body, []byte(`"alreadyActive":true`)) || bytes.Contains(got.Body, []byte("443")) {
 		t.Fatal(string(got.Body))
 	}
-	f.call("POST", route, "", `{"action":"preview"}`, "", 409)
+	f.call("POST", route, "", `{"action":"preview","values":[]}`, "", 409)
+	for _, body := range []string{`{"action":"preview"}`, `{"action":"preview","values":null}`, `{"action":"preview","values":[],"receipt":null}`, `{"action":"preview","values":[],"receipt":""}`} {
+		f.call("POST", route, "", body, "", 400)
+	}
 	f.call("POST", route, "", `{"action":"confirm"}`, "", 400)
 }
 
@@ -79,12 +83,18 @@ func TestProcessExternalProfileSwitchConfirmation(t *testing.T) {
 	if _, err = f.db.ExecContext(ctx, "UPDATE accepted_templates SET draft=?", []byte(sections)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = f.db.ExecContext(ctx, "INSERT INTO accepted_templates(template_id,version,draft) VALUES ('office',1,?)", []byte(sections)); err != nil {
+	const canary = "synthetic-private-office"
+	office := strings.Replace(sections, `"name":"outbounds","elements":[]`, `"name":"outbounds","elements":[{"disabled":false,"record":{"id":"`+externalRouterElement+`","content":"{\"protocol\":\"freedom\",\"tag\":\"`+"$"+`{label}\"}","variables":[{"name":"label","type":"string","default":"`+canary+`"}]}}]`, 1)
+	if _, err = f.db.ExecContext(ctx, "INSERT INTO accepted_templates(template_id,version,draft) VALUES ('office',1,?)", []byte(office)); err != nil {
 		t.Fatal(err)
 	}
 	const root = "/api/v1/routers/profile-switch?routerId=router-example&templateId="
+	get := f.call("GET", root+"office", "", "", "", 200)
+	if bytes.Contains(get.Body, []byte(canary)) || !bytes.Contains(get.Body, []byte(`"label"`)) {
+		t.Fatal("unsafe or incomplete field projection")
+	}
 	preview := func(target string) string {
-		response := f.call("POST", root+target, "", `{"action":"preview"}`, "", 200)
+		response := f.call("POST", root+target, "", `{"action":"preview","values":[]}`, "", 200)
 		var doc struct{ Receipt string }
 		if json.Unmarshal(response.Body, &doc) != nil || doc.Receipt == "" {
 			t.Fatal("missing receipt")
@@ -92,13 +102,14 @@ func TestProcessExternalProfileSwitchConfirmation(t *testing.T) {
 		return doc.Receipt
 	}
 	confirm := func(target, receipt string, status int) {
-		f.call("POST", root+target, "", `{"action":"confirm","receipt":"`+receipt+`"}`, "", status)
+		f.call("POST", root+target, "", `{"action":"confirm","receipt":"`+receipt+`","values":[]}`, "", status)
 	}
 	reject.Store(true)
-	f.call("POST", root+"office", "", `{"action":"preview"}`, "", 422)
+	f.call("POST", root+"office", "", `{"action":"preview","values":[]}`, "", 422)
 	reject.Store(false)
 	ticket := preview("office")
 	confirm("template-example", ticket, 409)
+	f.call("POST", root+"office", "", `{"action":"confirm","receipt":"`+ticket+`","values":[{"elementId":"`+externalRouterElement+`","name":"label","source":"\"changed\""}]}`, "", 409)
 	confirm("office", ticket, 200)
 	confirm("office", ticket, 409)
 	if got := f.call("GET", root+"office", "", "", "", 200); !bytes.Contains(got.Body, []byte(`"alreadyActive":true`)) {
@@ -114,7 +125,7 @@ func TestProcessExternalProfileSwitchConfirmation(t *testing.T) {
 		}
 	}
 	beforeReply.Store(&disable)
-	f.call("POST", root+"office", "", `{"action":"confirm","receipt":"`+ticket+`"}`, "", 404)
+	f.call("POST", root+"office", "", `{"action":"confirm","receipt":"`+ticket+`","values":[]}`, "", 404)
 	var active string
 	if err := f.db.QueryRow("SELECT template_id FROM active_router_publications WHERE router_id='router-example'").Scan(&active); err != nil || active != "template-example" {
 		t.Fatal("late revoke changed assignment", active, err)
