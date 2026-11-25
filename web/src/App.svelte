@@ -17,9 +17,10 @@
   import RouterRules from './RouterRules.svelte';
   import RouterInbounds from './RouterInbounds.svelte';
   import RouterCatalog from './RouterCatalog.svelte';
+  import RouterProfileSwitch, {type ProfileSelection} from './RouterProfileSwitch.svelte';
   import TemplatePublication from './TemplatePublication.svelte';
 
-  type Section = 'router-exclusions' | 'template-exclusions' | 'overview' | 'templates' | 'settings' | 'template-editor' | 'template-copy' | 'router-connect' | 'router-enroll' | 'router-variables' | 'router-replacement' | 'router-rules' | 'router-inbounds' | 'router-catalog' | 'template-publication';
+  type Section = 'router-exclusions' | 'template-exclusions' | 'overview' | 'templates' | 'settings' | 'template-editor' | 'template-copy' | 'router-connect' | 'router-enroll' | 'router-variables' | 'router-replacement' | 'router-rules' | 'router-inbounds' | 'router-catalog' | 'template-publication' | 'router-profile';
 
   function sectionForPath(): Section {
     if (location.pathname === '/ui/templates/copy') return 'template-copy';
@@ -27,6 +28,7 @@
     if (location.pathname === '/ui/templates/exclusions') return 'template-exclusions';
     if (location.pathname === '/ui/templates/item') return 'template-editor';
     if (location.pathname === '/ui/routers/inbounds') return 'router-inbounds';
+    if (location.pathname === '/ui/routers/profile') return 'router-profile';
     if (location.pathname === '/ui/routers/catalog') return 'router-catalog';
     if (location.pathname === '/ui/routers/rules') return 'router-rules';
     if (location.pathname === '/ui/routers/exclusions') return 'router-exclusions';
@@ -51,6 +53,8 @@
   let password = $state('');
   let csrf = $state('');
   let unconfirmedHide = $state(new Set<string>());
+  let profileSelections = $state(new Map<string,ProfileSelection>());
+  let profileReturnID = $state('');
   let nameDrafts = $state(new Map<string,{text: string; unknown: boolean}>());
   let templateRevision = $state(0);
   let passwordField = $state<HTMLInputElement>();
@@ -262,6 +266,20 @@
         <RouterPreparation canSubmit={view === 'active' && !busy} sessionEpoch={mutation} {csrf}
           signedOut={() => { void endAccess('signed_out'); }} refreshSession={() => { void refresh(); }}
           openEnrollment={(event,path) => navigate(event,path,'router-enroll')} />
+      {:else if section === 'router-profile'}
+        {#if view === 'active' && !busy}
+          {#key routerID + ':' + mutation}
+            {@const profileID = routerID}
+            <RouterProfileSwitch id={profileID} {csrf} retained={profileSelections.get(profileID)}
+              retain={selection => {
+                const next = new Map(profileSelections);
+                if (selection) next.set(profileID,selection); else next.delete(profileID);
+                profileSelections = next;
+              }}
+              signedOut={() => {void endAccess('signed_out');}} refreshSession={() => {void refresh();}}
+              back={(event,path) => { profileReturnID=profileID; navigate(event,path,'overview'); }} />
+          {/key}
+        {/if}
       {:else if section === 'router-catalog'}
         {#key routerID}
           <RouterCatalog id={routerID} active={view === 'active' && !busy} sessionEpoch={mutation}
@@ -308,7 +326,8 @@
           onclick={(event)=>navigate(event,'/ui/routers/connect','router-connect')}>Подключить роутер</a>
         {#if view === 'active' && !busy}
           {#key mutation}
-            <RouterOverview selectedId={routerID} {csrf} {unconfirmedHide} {nameDrafts} refreshSession={() => {void refresh();}}
+            <RouterOverview selectedId={routerID} {csrf} {unconfirmedHide} {nameDrafts} {profileReturnID}
+              clearProfileReturn={() => {profileReturnID='';}} openProfile={(event,path) => navigate(event,path,'router-profile')} refreshSession={() => {void refresh();}}
               setUnconfirmedHide={(id,pending) => {
                 const next = new Set(unconfirmedHide);
                 if (pending) next.add(id); else next.delete(id);
